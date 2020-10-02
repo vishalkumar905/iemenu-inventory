@@ -94,3 +94,11 @@ $db['default'] = array(
 	'failover' => array(),
 	'save_queries' => TRUE
 );
+
+if (ENVIRONMENT !== 'production')
+{
+	$db['default']['hostname'] = 'localhost';
+	$db['default']['username'] = 'root';
+	$db['default']['password'] = '123456';
+	$db['default']['database'] = 'ie_inventory';
+}
