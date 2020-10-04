@@ -10,9 +10,10 @@
 
     <link href="<?=base_url()?>assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="<?=base_url()?>assets/css/material-dashboard.css" rel="stylesheet" />
-    <link href="<?=base_url()?>assets/css/demo.css" rel="stylesheet" />
     <link href="<?=base_url()?>assets/font-awesome/css/font-awesome.min.css" rel="stylesheet">
     <link href="<?=base_url()?>assets/css/materialise.font.css" rel="stylesheet" type="text/css" />
+    <link href="<?=base_url()?>assets/css/custom.css" rel="stylesheet" />
+    <link href="<?=base_url()?>assets/css/common.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -69,8 +70,8 @@
             <div class="content">
                 <div class="container-fluid">
                     <?php 
-                        if (isset($view_file)){
-                            $this->load->view($view_file);
+                        if (isset($viewFile)){
+                            $this->load->view($viewFile);
                         }
                     ?>
                 </div>
@@ -79,6 +80,10 @@
     </div>
 </body>
 <!--   Core JS Files   -->
+<script>
+    var BASE_URL = '<?=base_url()?>';
+</script>
+
 <script src="<?=base_url()?>assets/js/jquery-3.1.1.min.js" type="text/javascript"></script>
 <script src="<?=base_url()?>assets/js/jquery-ui.min.js" type="text/javascript"></script>
 <script src="<?=base_url()?>assets/js/bootstrap.min.js" type="text/javascript"></script>
@@ -90,9 +95,9 @@ if (isset($footerJs) && !empty($footerJs))
 {
     foreach($footerJs as $javascript)
     {
-        echo sprintf("<script src='%s'></script>", $javascript);
+        echo sprintf("<script src='%s%s'></script>", base_url(), $javascript);
     }
 }
-
 ?>
+<script src="<?=base_url()?>assets/js/IEWebsite.js" type="text/javascript"></script>
 </html>
