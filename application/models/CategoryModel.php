@@ -1,6 +1,6 @@
 <?php
 
-class CategoriesModel extends CI_Model
+class CategoryModel extends CI_Model
 {
 	private $tableName = 'ie_categories';
 	private $primaryKey = 'id';
@@ -47,20 +47,27 @@ class CategoriesModel extends CI_Model
 	
 	public function insert($data)
 	{
-		$data['createOn'] = time();
-		$this->db->insert($this->tableName, $data);
+		$data['createdOn'] = time();
+		if($this->db->insert($this->tableName, $data))
+		{
+			return $this->db->insert_id();
+		}
+		else
+		{
+			return false;
+		}
 	}
 	
 	public function update($id, $data)
 	{
-		$data['createOn'] = time();
+		$data['updatedOn'] = time();
 		$this->db->where($this->primaryKey, $id);
 		$this->db->update($this->tableName, $data);
 	}
 
 	public function updateWithCustom($data, $condition)
 	{
-		$data['createOn'] = time();
+		$data['updatedOn'] = time();
 		$this->db->where($condition);
 		$this->db->update($this->tableName, $data);
 	}

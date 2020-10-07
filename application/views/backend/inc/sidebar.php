@@ -15,7 +15,7 @@
 		<div class="collapse" id="products">
 			<ul class="nav">
 				<li>
-					<a href="<?=base_url()?>tax/create">Create Products</a>
+					<a href="<?=base_url()?>backend/products/create">Create Product</a>
 				</li>
 				<li>
 					<a href="<?=base_url()?>backend/products/manage">Manage Products</a>
@@ -26,9 +26,7 @@
 	<li>
 		<a data-toggle="collapse" href="#tax">
 			<i class="material-icons">style</i>
-			<p>Tax
-				<b class="caret"></b>
-			</p>
+			<p>Tax<b class="caret"></b></p>
 		</a>
 		<div class="collapse" id="tax">
 			<ul class="nav">

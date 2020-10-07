@@ -36,11 +36,7 @@ IEWebsite.Utils = (function() {
 			url : url,
 			data : data,
 			beforeSend: function (xhr) {
-				if(localStorage.getItem(LOCAL_STORAGE_JWT_TOKEN))
-				{
-					var bearer = localStorage.getItem(LOCAL_STORAGE_JWT_TOKEN);
-					xhr.setRequestHeader("Authorization", 'Bearer '+ bearer);
-				}
+				
 			}
 		}).responseText;
 		return jQuery.parseJSON(responseText);
@@ -51,15 +47,6 @@ IEWebsite.Utils = (function() {
 			scrollTop: elementOffset
 		}, 1000);
 	}
-	
-	var saveErrorMessage = function (videoFileUploaded, adId) {
-		var videoUploadErrorMessage =
-		{
-			adId: adId,
-			videoFileName: videoFileUploaded
-		};
-		EatWebsite.Utils.AjaxPost(ACTION_VIDEOUPLOADERRORS, videoUploadErrorMessage, function() {});
-	};
 
 	var ajaxRequest = function (url, data, responseHandler, httpMethod, dataType, error) {
 		dataType = dataType || "json";
@@ -76,11 +63,7 @@ IEWebsite.Utils = (function() {
 			success: responseHandler,
 			error: error,
 			beforeSend: function (xhr) {
-				if(localStorage.getItem(LOCAL_STORAGE_JWT_TOKEN))
-				{
-					var bearer = localStorage.getItem(LOCAL_STORAGE_JWT_TOKEN);
-					xhr.setRequestHeader("Authorization", 'Bearer '+ bearer);
-				}
+				
 			}
 		});
 	};

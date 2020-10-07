@@ -8,7 +8,7 @@ class Categories extends CI_Controller
 	{
 		parent::__construct();
 		$this->template = 'backend/backend.template.php';
-		$this->load->model('CategoriesModel', 'categories');
+		$this->load->model('CategoryModel', 'category');
 	}
 
 	public function index()
@@ -27,14 +27,14 @@ class Categories extends CI_Controller
 
 		$columns = ['id', 'categoryName'];
 		$condition = ['parentId IS NULL' => NULL];
-		$categories = $this->categories->getWhereCustom($columns, $condition);
+		$categories = $this->category->getWhereCustom($columns, $condition);
 
 		if ($categories->num_rows() > 0)
 		{
 			$jsonResult = $categories->result_array();
 		}
 
-		$this->output->set_content_type('application/json')->set_output(json_encode($jsonResult));
+		responseJson(true, null, $jsonResult);
 	}
 
 	public function fetchSubCategories($parentId = null)
@@ -49,14 +49,14 @@ class Categories extends CI_Controller
 			$condition = ['parentId' => $parentId];
 		}
 
-		$categories = $this->categories->getWhereCustom($columns, $condition);
+		$categories = $this->category->getWhereCustom($columns, $condition);
 
 		if ($categories->num_rows() > 0)
 		{
 			$jsonResult = $categories->result_array();
 		}
 
-		$this->output->set_content_type('application/json')->set_output(json_encode($jsonResult));
+		responseJson(true, null, $jsonResult);
 	}
 
 	public function _remap($method, $params)

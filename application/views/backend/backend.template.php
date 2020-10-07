@@ -79,9 +79,10 @@
         </div>
     </div>
 </body>
-<!--   Core JS Files   -->
+
 <script>
     var BASE_URL = '<?=base_url()?>';
+    var BACKEND_BASE_URL = BASE_URL + 'backend';
 </script>
 
 <script src="<?=base_url()?>assets/js/jquery-3.1.1.min.js" type="text/javascript"></script>
@@ -89,6 +90,26 @@
 <script src="<?=base_url()?>assets/js/bootstrap.min.js" type="text/javascript"></script>
 <script src="<?=base_url()?>assets/js/material.min.js" type="text/javascript"></script>
 <script src="<?=base_url()?>assets/js/perfect-scrollbar.jquery.min.js" type="text/javascript"></script>
+<script src="<?=base_url()?>assets/js/jquery.validate.min.js" type="text/javascript"></script>
+
+<script>
+    $("#alertMessage").fadeOut(6000, function(){
+        this.remove();
+    });
+
+    (function(){
+        isWindows = navigator.platform.indexOf('Win') > -1 ? true : false;
+
+        if (isWindows && !$('body').hasClass('sidebar-mini')){
+            // if we are on windows OS we activate the perfectScrollbar function
+            $('.sidebar .sidebar-wrapper, .main-panel').perfectScrollbar();
+
+            $('html').addClass('perfect-scrollbar-on');
+        } else {
+            $('html').addClass('perfect-scrollbar-off');
+        }
+    })();
+</script>
 
 <?php
 if (isset($footerJs) && !empty($footerJs))
@@ -99,5 +120,8 @@ if (isset($footerJs) && !empty($footerJs))
     }
 }
 ?>
+<script src="<?=base_url()?>assets/js/Constant.js" type="text/javascript"></script>
+<script src="<?=base_url()?>assets/js/Lodash.js" type="text/javascript"></script>
 <script src="<?=base_url()?>assets/js/IEWebsite.js" type="text/javascript"></script>
+<script src="<?=base_url()?>assets/js/IEWebsiteAdmin.js" type="text/javascript"></script>
 </html>

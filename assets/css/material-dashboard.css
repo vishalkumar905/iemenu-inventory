@@ -1556,11 +1556,17 @@ table.dataTable > tfoot > tr > th,
 table.dataTable > thead > tr > td,
 table.dataTable > tbody > tr > td,
 table.dataTable > tfoot > tr > td {
-  padding: 5px !important;
   outline: 0;
 }
+
 table.dataTable > thead > tr > th {
-  border: none;
+  padding: 8px 8px !important;
+  /* border: none; */
+}
+
+table.dataTable > tbody > tr > td {
+  padding: 0px 8px !important;
+  /* border: none; */
 }
 
 .dataTables_paginate a {
@@ -8026,7 +8032,7 @@ select.form-control[multiple], .form-group.is-focused select.form-control[multip
 
 .table > thead > tr > th {
   border-bottom-width: 1px;
-  font-size: 1.25em;
+  font-size: 1.10em;
   font-weight: 300;
 }
 .table .radio,

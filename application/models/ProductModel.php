@@ -1,6 +1,6 @@
 <?php
 
-class ProductsModel extends CI_Model
+class ProductModel extends CI_Model
 {
 	private $tableName = 'ie_products';
 	private $primaryKey = 'id';
@@ -46,20 +46,29 @@ class ProductsModel extends CI_Model
 	
 	public function insert($data)
 	{
-		$data['createOn'] = time();
+		$data['createdOn'] = time();
 		$this->db->insert($this->tableName, $data);
+		if($this->db->insert($this->tableName, $data))
+		{
+			return $this->db->insert_id();
+		}
+		else
+		{
+			return false;
+		}
 	}
 	
 	public function update($id, $data)
 	{
-		$data['createOn'] = time();
+		$data['updatedOn'] = time();
 		$this->db->where($this->primaryKey, $id);
 		$this->db->update($this->tableName, $data);
+		return true;
 	}
 
 	public function updateWithCustom($data, $condition)
 	{
-		$data['createOn'] = time();
+		$data['updatedOn'] = time();
 		$this->db->where($condition);
 		$this->db->update($this->tableName, $data);
 	}
