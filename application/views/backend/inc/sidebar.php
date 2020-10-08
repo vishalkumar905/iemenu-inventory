@@ -1,10 +1,17 @@
-<ul class="nav">
+<ul class="nav main-menu">
 	<li>
 		<a href="<?=base_url()?>backend/dashboard">
 			<i class="material-icons">dashboard</i>
 			<p>Dashboard</p>
 		</a>
 	</li>
+	<li>
+		<a href="<?=base_url()?>backend/products">
+			<i class="material-icons">menu</i>
+			<p>Products</p>
+		</a>
+	</li>
+	<?php /* ?>
 	<li>
 		<a data-toggle="collapse" href="#products">
 			<i class="material-icons">menu</i>
@@ -23,6 +30,8 @@
 			</ul>
 		</div>
 	</li>
+	<?php */ ?>
+
 	<li>
 		<a data-toggle="collapse" href="#tax">
 			<i class="material-icons">style</i>

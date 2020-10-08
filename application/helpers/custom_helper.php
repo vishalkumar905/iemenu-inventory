@@ -40,4 +40,14 @@ if (!function_exists('showAlertMessage'))
 	}
 }
 
+if (!function_exists('p'))
+{
+	function p($data)
+	{
+		echo "<pre>";
+		print_r($data);
+		echo "<pre>";
+		die();
+	}
+}
 ?>

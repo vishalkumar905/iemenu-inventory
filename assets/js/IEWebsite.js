@@ -42,6 +42,12 @@ IEWebsite.Utils = (function() {
 		return jQuery.parseJSON(responseText);
 	};
 
+    var getFileExtension = function(filename)
+    {
+        var parts = filename.split('.');
+        return parts[parts.length - 1];
+    }
+
 	var scrollToRef = (elementOffset) => {
 		$('html, body').animate({
 			scrollTop: elementOffset
@@ -138,5 +144,6 @@ IEWebsite.Utils = (function() {
 		ScrollToRef :scrollToRef,
 		CreateLink: createLink,
 		FormatString: formatString,
+		GetFileExtension: getFileExtension,
 	};
 })();

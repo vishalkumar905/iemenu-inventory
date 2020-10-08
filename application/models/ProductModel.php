@@ -4,7 +4,8 @@ class ProductModel extends CI_Model
 {
 	private $tableName = 'ie_products';
 	private $primaryKey = 'id';
-
+    private $columnSearch = array('productCode', 'productName'); //set column field database for datatable searchable 
+	
 	public function __construct()
 	{
 		parent::__construct();
@@ -47,7 +48,6 @@ class ProductModel extends CI_Model
 	public function insert($data)
 	{
 		$data['createdOn'] = time();
-		$this->db->insert($this->tableName, $data);
 		if($this->db->insert($this->tableName, $data))
 		{
 			return $this->db->insert_id();
@@ -93,6 +93,14 @@ class ProductModel extends CI_Model
 		$num_rows = $query->num_rows();
 		return $num_rows;
 	}
+
+	public function getCountWithCustom($condition)
+	{
+		$this->db->where($condition);
+		$query=$this->db->get($this->tableName);
+		$num_rows = $query->num_rows();
+		return $num_rows;
+	}
 	
 	public function getMax()
 	{
@@ -109,6 +117,65 @@ class ProductModel extends CI_Model
 		$query = $this->db->query($mysqlQuery);
 		return $query;
 	}
+
+	public function getProducts($limit, $offset)
+	{
+		$this->getDatatableQuery();
+		$this->db->limit($limit, $offset);
+		$query=$this->db->get();
+		return $query;
+	}
+
+	public function getAllProductsCount()
+	{
+		$this->getDatatableQuery();
+		$query=$this->db->get();
+		return $query->num_rows();
+	}
+
+	public function getDatatableQuery()
+    {
+		$searchText = $this->input->post('search');
+		$orderBy = $this->input->post('order');
+        $this->db->from($this->tableName);
+		
+		$i = 0;
+
+		if (!empty($searchText['value']))
+		{
+			foreach ($this->columnSearch as $item) // loop column 
+			{
+				if($i === 0)
+				{
+					$this->db->group_start();
+					$this->db->like($item, $searchText['value']);
+				}
+				else
+				{
+					$this->db->or_like($item, $searchText['value']);
+				}
+	
+				if(count($this->columnSearch) - 1 == $i)
+				{
+					$this->db->group_end(); //close bracket
+				}
+
+				$i++;
+			}	
+		}
+
+		$this->db->order_by('id', 'desc');
+		// Not Need
+        // if(!empty($orderBy))
+        // {
+        //     $this->db->order_by($this->column_order[$_POST['order']['0']['column']], $_POST['order']['0']['dir']);
+		// }
+        // else if(isset($this->order))
+        // {
+        //     $order = $this->order;
+        //     $this->db->order_by(key($order), $order[key($order)]);
+        // }
+    }
 }
 
 ?>

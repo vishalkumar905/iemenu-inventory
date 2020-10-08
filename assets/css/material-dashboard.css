@@ -1322,6 +1322,7 @@ table.dataTable th {
 table.dataTable td.dataTables_empty,
 table.dataTable th.dataTables_empty {
   text-align: center;
+  padding: 10px !important;
 }
 
 table.dataTable.nowrap th,
@@ -7729,6 +7730,15 @@ select.form-control[multiple], .form-group.is-focused select.form-control[multip
   width: 100%;
   height: 100%;
   z-index: 100;
+}
+
+.form-group input[type=file].default  {
+  opacity: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  margin-top: 9px;
 }
 
 .form-control-feedback {

@@ -2,15 +2,61 @@
 
 class Products extends Backend_Controller
 {
+	public $productImageUpload = false;
+	public $exportUrl;
+
 	public function __construct()
 	{
 		parent::__construct();
+
+		$this->exportUrl = base_url() . 'backend/products/export/';
+
 		$this->load->model('CategoryModel', 'category');
 		$this->load->model('ProductModel', 'product');
 		$this->load->model('SIUnitModel', 'siunit');
 	}
 
-	public function create()
+	public function export($extension)
+	{
+		if (empty($this->referrerUrl))
+		{
+			show_404();
+		}
+
+		$this->load->library('PhpExcel');
+
+		$counter = 0;
+		$columns = [];
+		$results = $this->product->get('id desc')->result_array();
+
+		foreach ($results as $productIndex => &$result)
+		{
+			if ($productIndex == 0)
+			{
+				$columns = [
+					['title' => 'SN', 'name' => 'sn'],
+					['title' => 'Product Code', 'name' => 'productCode'],
+					['title' => 'Product Name', 'name' => 'productName'],
+					['title' => 'Product Type', 'name' => 'productType'],
+					['title' => 'Shelf Life', 'name' => 'shelfLife'],
+					['title' => 'Date', 'name' => 'createdOn']
+				];
+			}
+
+			$result['sn'] = ++$counter;
+			$result['createdOn'] = date('Y-m-d H:i:s', $result['createdOn']);
+			$result['productType'] = $this->getProductTypeName($result['productType']);
+		}
+
+		$data['extension'] = $extension;
+		$data['columns'] = $columns;
+		$data['results'] = $results;
+		$data['redirectUrl'] = base_url() . 'backend/products';
+
+		$this->phpexcel->export($data);
+	}
+
+	public function index()
 	{
 		$updateId = $this->uri->segment(4);
 		$this->pageTitle = $this->navTitle = 'Products';
@@ -88,18 +134,25 @@ class Products extends Backend_Controller
 
 				$flashMessage = 'Something went wrong.';
 				$flashMessageType = 'danger';
+				$isUploadError = 0;
 
-				$uploadImage = $this->doUpload('productImage', PRODUCT_UPLOADS_IMAGE_DIR);
-				$isUploadError = $uploadImage['err'];
-
-				if ($updateId > 0)
+				if ($this->productImageUpload)
 				{
-					$isUploadError = 0;
-					if (isset($_FILES) && isset($_FILES['productImage']['name']) && $_FILES['productImage']['name'] !== '')
+					$uploadImage = $this->doUpload('productImage', PRODUCT_UPLOADS_IMAGE_DIR);
+					$isUploadError = $uploadImage['err'];
+	
+					if ($updateId > 0)
 					{
-						if ($uploadImage['err'] == 0)
+						if (isset($_FILES) && isset($_FILES['productImage']['name']) && $_FILES['productImage']['name'] !== '')
 						{
-							$insertData['productImage'] = $uploadImage['fileName'];
+							if ($uploadImage['err'] == 0)
+							{
+								$insertData['productImage'] = $uploadImage['fileName'];
+							}
+						}
+						else
+						{
+							$isUploadError = 0;
 						}
 					}
 				}
@@ -110,7 +163,7 @@ class Products extends Backend_Controller
 					{
 						$this->product->update($updateId, $insertData);
 
-						$redirectUrl = base_url() . 'backend/products/create';	
+						$redirectUrl = base_url() . 'backend/products';	
 						$flashMessage = 'Product details has been updated successfully';
 						$flashMessageType = 'success';
 					}
@@ -123,7 +176,7 @@ class Products extends Backend_Controller
 							$flashMessageType = 'success';
 						}
 	
-						$redirectUrl = base_url() . 'backend/products/manage';	
+						$redirectUrl = base_url() . 'backend/products';	
 					}
 
 					$flashData = [
@@ -147,8 +200,8 @@ class Products extends Backend_Controller
 			$postedCategory = $data['category'];
 		}
 
-		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/material-dashboard.js'];
-		$data['viewFile'] = 'backend/products/create';
+		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
+		$data['viewFile'] = 'backend/products/index';
 		$data['categories'] = $this->selectBoxCategories();
 		$data['productTypes'] = $this->productTypes();
 		$data['subCategories'] = $this->selectBoxSubCategories($postedCategory);
@@ -164,7 +217,9 @@ class Products extends Backend_Controller
 		
 		$data['viewFile'] = 'backend/products/manage';
 		$data['footerJs'] = ['assets/js/jquery.datatables.js'];
-
+		$data['flashMessage'] = $this->session->flashdata('flashMessage');
+		$data['flashMessageType'] = $this->session->flashdata('flashMessageType');
+		
 		$this->load->view($this->template, $data);
 	}
 
@@ -172,27 +227,30 @@ class Products extends Backend_Controller
 	{
 		$results = ['recordsTotal' => 0, "recordsFiltered" => 0, "data" => []];
 
-		$query = $this->product->get('id desc');
-		$products = $query->result_array();
-		$counter = 0;
+		$limit = $this->input->post('length') > 0 ? $this->input->post('length') : 10;
+		$offset = $this->input->post('length') > 0 ? $this->input->post('start') : 0;
+		
+		$products = $this->product->getProducts($limit, $offset)->result_array();
+		$totalRecords =  $this->product->getAllProductsCount();
+
+		$counter = $offset;
 		foreach($products as &$product)
 		{
-			$productEditPageUrl = base_url() . 'backend/products/create/' . $product['id'];
+			$productEditPageUrl = base_url() . 'backend/products/index/' . $product['id'];
 			$product['sn'] = ++$counter;
-			$product['createdOn'] = date('Y-m-d H:i:s', $product['createdOn']);
+			// $product['createdOn'] = date('Y-m-d H:i:s', $product['createdOn']);
 			$product['productType'] = $this->getProductTypeName($product['productType']);
 			$product['action'] = sprintf('
 				<span class="text-right">
 					<a href="%s" class="btn btn-simple btn-info btn-icon"><i class="material-icons">edit</i></a>
 				</span>
 			', $productEditPageUrl);
-
 		}
 
 		if (!empty($products))
 		{
-			$results['recordsTotal'] = $query->num_rows();
-			$results['recordsFiltered'] = $query->num_rows();
+			$results['recordsFiltered'] = $totalRecords;
+			$results['recordsTotal'] = $totalRecords;
 			$results['data'] = $products;
 		}
 
