@@ -2,38 +2,138 @@
 
 class Tax extends Backend_Controller
 {
-    public function __construct()
+	public $editPageUrl;
+	public function __construct()
 	{
 		parent::__construct();
 
-		$this->exportUrl = base_url() . 'backend/products/export/';
+		$this->load->model('TaxModel', 'tax');
 
-		$this->load->model('CategoryModel', 'category');
+		$this->exportUrl = base_url() . 'backend/tax/export/';
+		$this->editPageUrl = base_url() . 'backend/tax/index/';
 		$this->load->model('ProductModel', 'product');
-        $this->load->model('SIUnitModel', 'siunit');
+		$this->load->model('TaxModel', 'tax');
 	}
 
-    public function index()
-    {
-        
-        $data['viewFile'] = 'backend/tax/index';
-        $data['flashMessage'] = $this->session->flashdata('flashMessage');
-        $data['flashMessageType'] = $this->session->flashdata('flashMessageType');
-        
-        $this->titleHeader = $this->navTitle = 'Tax';
-        $this->load->view($this->template, $data);
-    }
+	public function index()
+	{
+		$headTitle = 'Create Tax';
+		$updateId = $this->uri->segment(4);
+		$submitBtn = 'Save';
 
-    public function create()
-    {
-        
-        $data['viewFile'] = 'backend/tax/create';
-        $data['flashMessage'] = $this->session->flashdata('flashMessage');
-        $data['flashMessageType'] = $this->session->flashdata('flashMessageType');
-       
-        $this->titleHeader = $this->navTitle = 'Tax';
-        $this->load->view($this->template, $data);
-    }
+		if ($updateId > 0)
+		{
+			$data = $this->tax->getWhere($updateId)->result_array();
+			if (empty($data))
+			{
+				redirect('backend/tax');
+			}
+
+			$data = $data[0];
+			$headTitle = 'Update Tax Detail';
+			$submitBtn = 'Update';
+		}
+		
+		$submit = $this->input->post('submit');
+
+		if ($submit == 'Save' || $submit == 'Update')
+		{
+			$this->form_validation->set_rules('taxName', 'Tax name', 'required');
+			$this->form_validation->set_rules('taxPercentage', 'Tax percentage', 'required');
+			$this->form_validation->set_error_delimiters('<p class="text-danger">', '</p>');
+
+			if ($this->form_validation->run())
+			{
+				$insertData = [
+					'taxName' => $this->input->post('taxName'),
+					'taxPercentage' => $this->input->post('taxPercentage'),
+				];
+
+				if ($updateId > 0)
+				{
+					$this->tax->update($updateId, $insertData);
+
+					$redirectUrl = base_url() . 'backend/tax';	
+					$flashMessage = 'Tax details has been updated successfully';
+					$flashMessageType = 'success';
+				}
+				else if ($updateId == 0)
+				{
+					if ($this->tax->insert($insertData))
+					{
+						$flashMessage = 'Tax has been created successfully';
+						$flashMessageType = 'success';
+					}
+
+					$redirectUrl = base_url() . 'backend/tax';	
+				}
+
+				$flashData = [
+					'flashMessage' => $flashMessage,
+					'flashMessageType' => $flashMessageType,
+				];
+
+				$this->session->set_flashdata($flashData);
+				redirect($redirectUrl);
+			}
+		}
+
+		$data['viewFile'] = 'backend/tax/index';
+		$data['headTitle'] = $headTitle;
+		$data['submitBtn'] = $submitBtn;
+		$data['flashMessage'] = $this->session->flashdata('flashMessage');
+		$data['flashMessageType'] = $this->session->flashdata('flashMessageType');
+		$data['taxData'] = $this->tax->get('id desc')->result_array();
+	   
+		$this->pageTitle = $this->navTitle = 'Tax';
+		$this->load->view($this->template, $data);
+	}
+
+	public function mapProductTaxes()
+	{
+		$data['viewFile'] = 'backend/tax/map-product-taxes';
+		$data['headTitle'] = 'Map Product Tax';
+		$data['submitBtn'] = 'Save';
+		$data['flashMessage'] = $this->session->flashdata('flashMessage');
+		$data['flashMessageType'] = $this->session->flashdata('flashMessageType');
+		$data['dropdownProducts'] = $this->dropdownProducts();
+		$data['dropdownTaxes'] = $this->dropdownTaxes();
+		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
+
+		$this->pageTitle = $this->navTitle = 'Tax';
+		$this->load->view($this->template, $data);
+	}
+
+	public function dropdownTaxes()
+	{
+		$data = [];
+		$taxes = $this->tax->get('id desc')->result_array();
+		if (!empty($taxes))
+		{
+			foreach($taxes as $tax)
+			{
+				$data[$tax['id']] = $tax['taxName'];
+			}
+		}
+
+		return $data;
+	}
+
+	public function dropdownProducts()
+	{
+		$data = [];
+		$products = $this->product->get('id desc')->result_array();
+		if (!empty($products))
+		{
+			$data[''] = 'Choose Product';
+			foreach($products as $product)
+			{
+				$data[$product['id']] = $product['productName'];
+			}
+		}
+
+		return $data;
+	}
 }
 
 ?>

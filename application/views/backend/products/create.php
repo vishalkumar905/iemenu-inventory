@@ -39,22 +39,33 @@
 										'data-style' => 'select-with-transition select-box-horizontal',
 										'data-live-search' => 'true'
 									];
+									
+									if ($updateId > 0)
+									{
+										$extra['disabled'] = true;
+									}
 
 									$selectedCategory = !empty(set_value('category')) ? set_value('category') : (isset($category) ? $category : '');
 									echo form_dropdown('category', $categories, $selectedCategory, $extra);
 								?>
 							</div>
 							<?php if (!empty($subCategories)){ ?>
-							<div class="col-md-4">
+							<div class="col-md-4"  id="subCategoryBox">
 								<?php
 									$extra = [
-										'id' => 'subCategories',
+										'id' => 'subCategory',
 										'class' => 'selectpicker',
 										'data-style' => 'select-with-transition select-box-horizontal', 
 										'data-live-search' => 'true'
 									];
 
 									$selectedSubCategory = !empty(set_value('subCategory')) ? set_value('subCategory') : (isset($subCategory) ? $subCategory : '');
+									if ($updateId > 0)
+									{
+										$extra['disabled'] = true;
+										echo form_hidden('subCategory', $selectedSubCategory);
+									}
+
 									echo form_dropdown('subCategory', $subCategories, $selectedSubCategory, $extra);
 								?>
 							</div>
@@ -66,12 +77,14 @@
 							</div>
 							<?php } ?>
 
+							<?php if($updateId == 0) { ?>
 							<div class="col-md-4">
 								<div class="form-group label-floating">
 									<label class="control-label"></label>
 									<input type="text" name="subCategoryName" class="form-control" placeholder="Category name" value="<?=!empty(set_value('subCategoryName')) ? set_value('subCategoryName') : ''?>">
 								</div>
 							</div>
+							<?php } ?>
 							<div class="col-md-12"><?=form_error('category');?></div>
 						</div>
 
@@ -89,6 +102,11 @@
 										'class' => 'selectpicker',
 										'data-style' => 'select-with-transition select-box-horizontal', 
 									];
+									
+									if ($updateId > 0)
+									{
+										$extra['disabled'] = true;
+									}
 
 									$selectedBaseUnit = !empty(set_value('baseUnit')) ? set_value('baseUnit') : (isset($baseUnit) ? $baseUnit : '');
 									echo form_dropdown('baseUnit', $baseUnits, $selectedBaseUnit, $extra);
@@ -96,23 +114,23 @@
 								?>
 							</div>
 							<?php if (!empty($siUnits)){ ?>
-							<div class="col-md-4">
+							<div class="col-md-8"  id="siUnitBox">
 								<?php
 									$extra = [
 										'id' => 'siUnit',
 										'class' => 'selectpicker',
 										'data-style' => 'select-with-transition select-box-horizontal', 
-										'data-live-search' => 'true'
+										'data-live-search' => 'true',
 									];
 
-									$selectedSiUnit = !empty(set_value('siUnit')) ? set_value('siUnit') : (isset($siUnit) ? $siUnit : '');
-									echo form_dropdown('siUnit', $siUnits, $selectedSiUnit, $extra);
+									$selectedSiUnit = !empty(set_value('siUnit')) ? set_value('siUnit') : (isset($siUnit) ? $siUnit : '--');
+									echo form_multiselect('siUnit[]', $siUnits, $selectedSiUnit, $extra);
 									echo form_error('siUnit');
 								?>
 							</div>
 							<?php } else { ?>
-							<div class="col-md-4" id="siUnitBox" style="display: none;">
-								<select class="selectpicker" id="siUnit" name="siUnit" data-style="select-with-transition select-box-horizontal" data-live-search = 'true'>
+							<div class="col-md-8" id="siUnitBox" style="display: none;">
+								<select class="selectpicker" multiple id="siUnit" name="siUnit[]" data-style="select-with-transition select-box-horizontal" data-live-search = 'true'>
 									
 								</select>
 							</div>
@@ -132,6 +150,13 @@
 							];
 
 							$selectedProudctType = !empty(set_value('productType')) ? set_value('productType') : (isset($productType) ? $productType : '');
+							
+							if ($updateId > 0)
+							{
+								$extra['disabled'] = true;
+								echo form_hidden('productType', $selectedProudctType);
+							}
+
 							echo form_dropdown('productType', $productTypes, $selectedProudctType, $extra);
 							echo form_error('productType');
 						?>
@@ -139,11 +164,11 @@
 				</div>
 
 				<div class="row">
-					<label class="col-md-2 label-on-left">HSN Code*</label>
+					<label class="col-md-2 label-on-left">HSN Code</label>
 					<div class="col-sm-10">
 						<div class="form-group label-floating">
 							<label class="control-label"></label>
-							<input type="text" name="hsnCode" class="form-control" required="true" value="<?=!empty(set_value('hsnCode')) ? set_value('hsnCode') :  (isset($hsnCode) ? $hsnCode : '')?>">
+							<input type="text" name="hsnCode" class="form-control" value="<?=!empty(set_value('hsnCode')) ? set_value('hsnCode') :  (isset($hsnCode) ? $hsnCode : '')?>">
 							<?=form_error('hsnCode');?>
 						</div>
 					</div>
@@ -189,6 +214,7 @@
 					<label class="col-sm-2 label-on-left"></label>
 					<div class="col-sm-10">
 						<button type="submit" name="submit" value="<?=$submitBtn?>"  class="btn btn-rose btn-fill"><?=$submitBtn?><div class="ripple-container"></div></button>
+						<button type="submit" name="submit" value="Cancel"  class="btn btn-primary btn-fill">Cancel<div class="ripple-container"></div></button>
 						<a href="#importExcelForm"><b>Upload Excel Sheet</b></a>
 					</div>
 				</div>

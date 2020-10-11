@@ -8,6 +8,9 @@ IEWebsiteAdmin.ProductCreatePage = (function() {
 			return 0;
 		};
 
+		// $("select option:selected").attr('disabled',"disabled");
+		// $("#siUnit").selectpicker("refresh");
+
 		$("#categories").change(function() {
 			let categoryId = $(this).val();
 			if (categoryId > 0)
@@ -31,7 +34,6 @@ IEWebsiteAdmin.ProductCreatePage = (function() {
 						{
 							$("#subCategoryBox").hide();	
 						}
-
 						$("#subCategory").selectpicker("refresh");
 					}
 				});
@@ -48,7 +50,7 @@ IEWebsiteAdmin.ProductCreatePage = (function() {
 						$("#siUnit").html('');
 						if (!_.isEmpty(resp.response))
 						{
-							$("#siUnit").html('').append($("<option>").attr('value', '').text('Choose Unit'));
+							// $("#siUnit").html('').append($("<option>").attr('value', '').text('Choose Unit'));
 							_.each(resp.response, function(row)
 							{
 								$("#siUnit").append($("<option>").attr('value', row.id).text(row.unitName));

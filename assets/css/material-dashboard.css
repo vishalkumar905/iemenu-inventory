@@ -8062,7 +8062,7 @@ select.form-control[multiple], .form-group.is-focused select.form-control[multip
 .table > thead > tr > td,
 .table > tbody > tr > td,
 .table > tfoot > tr > td {
-  padding: 12px 8px;
+  padding: 0px 8px !important;
   vertical-align: middle;
 }
 .table .th-description {

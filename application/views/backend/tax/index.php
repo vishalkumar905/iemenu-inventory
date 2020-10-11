@@ -1,5 +1,4 @@
-<div class="row" id="productPageContainer">
-    <?php $this->load->view('backend/products/create');?>
-    <?php $this->load->view('backend/products/manage');?>
-    <?php $this->load->view('backend/products/import');?>
+<div class="row" id="taxPageContainer">
+    <?php $this->load->view('backend/tax/create');?>
+    <?php $this->load->view('backend/tax/manage');?>
 </div>

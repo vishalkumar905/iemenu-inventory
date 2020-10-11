@@ -1,10 +1,11 @@
 <?php
 
-class SIUnitModel extends CI_Model
+class TaxModel extends CI_Model
 {
-	private $tableName = 'ie_si_units';
+	private $tableName = 'ie_taxes';
 	private $primaryKey = 'id';
-
+    private $columnSearch = array('taxName', 'taxPercentage'); //set column field database for datatable searchable 
+	
 	public function __construct()
 	{
 		parent::__construct();
@@ -37,9 +38,8 @@ class SIUnitModel extends CI_Model
 		return $query;
 	}
 	
-	public function getWhereCustom($columns = '*', $condition)
+	public function getWhereCustom($condition)
 	{
-		$this->db->select($columns);
 		$this->db->where($condition);
 		$query = $this->db->get($this->tableName);
 		return $query;
@@ -93,6 +93,14 @@ class SIUnitModel extends CI_Model
 		$num_rows = $query->num_rows();
 		return $num_rows;
 	}
+
+	public function getCountWithCustom($condition)
+	{
+		$this->db->where($condition);
+		$query=$this->db->get($this->tableName);
+		$num_rows = $query->num_rows();
+		return $num_rows;
+	}
 	
 	public function getMax()
 	{
@@ -110,67 +118,63 @@ class SIUnitModel extends CI_Model
 		return $query;
 	}
 
-	public function selectBoxBaseUnits(): array
+	public function getTaxes($limit, $offset)
 	{
-		$baseUnits = $this->getWhereCustom('*', ['parentId IS NULL' => NULL])->result_array();
-		$results = [];
-				
-		if (!empty($baseUnits))
-		{
-			$results[''] = 'Choose Base Unit';
-
-			foreach ($baseUnits as $baseUnit)
-			{
-				$results[$baseUnit['id']] = $baseUnit['unitName'];
-			}			
-		}
-
-		return $results;
+		$this->getDatatableQuery();
+		$this->db->limit($limit, $offset);
+		$query=$this->db->get();
+		return $query;
 	}
 
-	public function selectBoxSiUnits($baseUnitId): array
+	public function getAllTaxesCount()
 	{
-		$siUnits = $this->getWhereCustom('*', ['parentId' => $baseUnitId, 'parentId IS NOT NULL' => NULL])->result_array();
-		$results = [];
-
-		if (!empty($siUnits))
-		{
-			// $results[''] = 'Choose Unit';
-
-			foreach ($siUnits as $siUnit)
-			{
-				$results[$siUnit['id']] = $siUnit['unitName'];
-			}			
-		}
-
-		return $results;
+		$this->getDatatableQuery();
+		$query=$this->db->get();
+		return $query->num_rows();
 	}
 
-	public function getParentIdFromBaseUnitId($baseUnitId): int
-	{
-		$baseUnit = $this->getWhereCustom('*', ['id' => $baseUnitId])->result_array();
-		if (!empty($baseUnit) && intval($baseUnit[0]['parentId']) > 0)
-		{
-			return $baseUnit[0]['parentId'];
-		}
+	public function getDatatableQuery()
+    {
+		$searchText = $this->input->post('search');
+		$orderBy = $this->input->post('order');
+        $this->db->from($this->tableName);
 		
-		return 0;
-	}
+		$i = 0;
 
-	public function getBaseUnitIdFromUnitName($unitName)
-	{
-		if ($unitName)
+		if (!empty($searchText['value']))
 		{
-			$condition['LCASE(unitName)'] = strtolower($unitName);
-			$condition['parentId IS NULL'] = NULL;
-			$result = $this->getWhereCustom('*', $condition)->result_array();
-			if (!empty($result))
+			foreach ($this->columnSearch as $item) // loop column 
 			{
-				return $result[0]['id'];
-			}
+				if($i === 0)
+				{
+					$this->db->group_start();
+					$this->db->like($item, $searchText['value']);
+				}
+				else
+				{
+					$this->db->or_like($item, $searchText['value']);
+				}
+	
+				if(count($this->columnSearch) - 1 == $i)
+				{
+					$this->db->group_end(); //close bracket
+				}
+
+				$i++;
+			}	
 		}
 
-		return 0;
+		$this->db->order_by('id', 'desc');
+		// Not Need
+        // if(!empty($orderBy))
+        // {
+        //     $this->db->order_by($this->column_order[$_POST['order']['0']['column']], $_POST['order']['0']['dir']);
+		// }
+        // else if(isset($this->order))
+        // {
+        //     $order = $this->order;
+        //     $this->db->order_by(key($order), $order[key($order)]);
+        // }
 	}
 }
 

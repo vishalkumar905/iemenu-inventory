@@ -4,6 +4,7 @@ class Products extends Backend_Controller
 {
 	public $productImageUpload = false;
 	public $exportUrl;
+	public $disableUpdateField;
 
 	public function __construct()
 	{
@@ -14,6 +15,8 @@ class Products extends Backend_Controller
 		$this->load->model('CategoryModel', 'category');
 		$this->load->model('ProductModel', 'product');
 		$this->load->model('SIUnitModel', 'siunit');
+
+		$this->disableUpdateField = ['productType', 'baseUnit']; 
 	}
 
 	public function index()
@@ -39,10 +42,23 @@ class Products extends Backend_Controller
 			$data['headTitle']  = 'Update Product Information';
 			$data['productImage']  = base_url() . PRODUCT_IMAGE_UPLOAD_PATH . '/' . $data['productImage'];
 			$data['category'] = $data['categoryId'];
-			$data['baseUnit'] = $data['baseUnitId'];
+
+			$unserialized = unserialize($data['productSiUnits']);
+			if (!empty($unserialized) && is_array($unserialized) && count($unserialized) > 1)
+			{
+				$baseUnitId = $this->siunit->getParentIdFromBaseUnitId($unserialized[0]);
+				$data['siUnit'] = $unserialized;
+				if ($baseUnitId > 0)
+				{
+					$data['baseUnit'] = $baseUnitId;
+				}
+			}
+			else
+			{
+				$data['baseUnit'] = $unserialized[0];
+			}
 
 			$parentCategoryId = $this->getParentCategoryId($data['categoryId']);
-			$baseUnitId = $this->siunit->getParentIdFromBaseUnitId($data['baseUnitId']);
 
 			if ($parentCategoryId > 0)
 			{
@@ -50,23 +66,22 @@ class Products extends Backend_Controller
 				$data['category'] = $parentCategoryId;
 			}
 
-			if ($baseUnitId > 0)
-			{
-				$data['siUnit'] = $data['baseUnitId'];
-				$data['baseUnit'] = $baseUnitId;
-			}
-
 			unset($baseUnitId);
 		}
 
 		$submit = $this->input->post('submit');
+
+		if ($submit == 'Cancel')
+		{
+			redirect(base_url().'backend/products');
+		}
 
 		if ($submit == 'Save' || $submit == 'Update')
 		{
 			$this->form_validation->set_rules('productName', 'Product name', 'required');
 			$this->form_validation->set_rules('productCode', 'Product code', 'required');
 			$this->form_validation->set_rules('productType', 'Product type', 'required');
-			$this->form_validation->set_rules('hsnCode', 'HSN code', 'required');
+			// $this->form_validation->set_rules('hsnCode', 'HSN code', 'required');
 			$this->form_validation->set_rules('subCategoryName', 'Sub Category Name', 'trim');
 			$this->form_validation->set_rules('category', 'Category', 'trim|callback_category');
 			$this->form_validation->set_rules('baseUnit', 'Base Unit', 'trim|callback_baseUnit');
@@ -78,7 +93,7 @@ class Products extends Backend_Controller
 				$subCategoryName = $this->input->post('subCategoryName');
 				$subCategory = $this->input->post('subCategory');
 
-				if ($subCategoryName != '')
+				if ($updateId == 0 && $subCategoryName != '')
 				{
 					$categoryData['categoryName'] = $subCategoryName;
 					$categoryData['categoryUrlTitle'] = url_title($subCategoryName, '-', true);
@@ -95,10 +110,10 @@ class Products extends Backend_Controller
 					$categoryId = $subCategory;
 				}
 
+				$siUnit = $this->input->post('siUnit[]');
 				$baseUnit = $this->input->post('baseUnit');
-				$siUnit = $this->input->post('siUnit');
 
-				$baseUnit = !empty($siUnit) ? $siUnit : $baseUnit;
+				$baseUnit = !empty($siUnit) ? $siUnit : [$baseUnit];
 
 				$insertData = [
 					'productName' => $this->input->post('productName'),
@@ -106,7 +121,7 @@ class Products extends Backend_Controller
 					'productType' => $this->input->post('productType'),
 					'hsnCode' => $this->input->post('hsnCode'),
 					'shelfLife' => $this->input->post('shelfLife'),
-					'baseUnitId' => $baseUnit,
+					'productSiUnits' => serialize($baseUnit),
 					'categoryId' => $categoryId,
 				];
 
@@ -139,13 +154,18 @@ class Products extends Backend_Controller
 				{
 					if ($updateId > 0)
 					{
+						foreach($this->disableUpdateField as $field)
+						{
+							unset($insertData[$field]);
+						}
+
 						$this->product->update($updateId, $insertData);
 
 						$redirectUrl = base_url() . 'backend/products';	
 						$flashMessage = 'Product details has been updated successfully';
 						$flashMessageType = 'success';
 					}
-					else if ($updateId == 0 && $uploadImage['err'] == 0)
+					else if ($updateId == 0 && $isUploadError == 0)
 					{
 						$data['productImage'] = $uploadImage['fileName'];
 						if ($this->product->insert($insertData))
@@ -173,20 +193,22 @@ class Products extends Backend_Controller
 		}
 
 		$postedCategory = $this->input->post('category');
-		$postedSiUnit = $this->input->post('siUnit');
+		$postedBaseUnit = $this->input->post('baseUnit');
+
 		if ($updateId > 0 && empty($postedCategory))
 		{
 			$postedCategory = $data['category'];
-			$postedSiUnit = $data['baseUnit'];
+			$postedBaseUnit = $data['baseUnit'];
 		}
 
 		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
 		$data['viewFile'] = 'backend/products/index';
+		$data['updateId'] = $updateId;
 		$data['categories'] = $this->selectBoxCategories();
 		$data['productTypes'] = $this->productTypes();
 		$data['subCategories'] = $this->selectBoxSubCategories($postedCategory);
 		$data['baseUnits'] = $this->siunit->selectBoxBaseUnits();
-		$data['siUnits'] = $this->siunit->selectBoxSiUnits($postedSiUnit);
+		$data['siUnits'] = $this->siunit->selectBoxSiUnits($postedBaseUnit);
 		$data['flashMessage'] = $this->session->flashdata('flashMessage');
 		$data['flashMessageType'] = $this->session->flashdata('flashMessageType');
 
