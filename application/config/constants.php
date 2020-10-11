@@ -84,7 +84,12 @@ defined('EXIT_DATABASE')       OR define('EXIT_DATABASE', 8); // database error
 defined('EXIT__AUTO_MIN')      OR define('EXIT__AUTO_MIN', 9); // lowest automatically-assigned error code
 defined('EXIT__AUTO_MAX')      OR define('EXIT__AUTO_MAX', 125); // highest automatically-assigned error code
 
-define('PRODUCT_UPLOADS_IMAGE_DIR', 'uploads/products');
 define('PRODUCT_TYPE_SEMIPROCESSED', 1);
 define('PRODUCT_TYPE_RAWMATERIAL', 2);
+
+
+define('PRODUCT_IMAGE_UPLOAD_PATH', 'uploads/products');
 define('PRODUCT_THUMBNAIL_PATH', 'assets/img/image_placeholder.jpg');
+define('SAMPLE_DATA_TEMPLATE_PATH', 'uploads/templates');
+define('PRODUCT_SAMPLE_FORMAT_PATH', SAMPLE_DATA_TEMPLATE_PATH . '/proudct-sample.xlsx');
+define('IMPORT_FILE_UPLOAD_PATH', 'uploads/import');

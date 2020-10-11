@@ -108,6 +108,21 @@ class CategoryModel extends CI_Model
 		$query = $this->db->query($mysqlQuery);
 		return $query;
 	}
+
+	public function getIdFromCategoryName($categoryName)
+	{
+		if ($categoryName)
+		{
+			$condition['LCASE(categoryName)'] = strtolower($categoryName);
+			$result = $this->getWhereCustom('*', $condition)->result_array();
+			if (!empty($result))
+			{
+				return $result[0]['id'];
+			}
+		}
+
+		return 0;
+	}
 }
 
 ?>

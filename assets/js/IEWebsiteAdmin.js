@@ -13,17 +13,54 @@ IEWebsiteAdmin.ProductCreatePage = (function() {
 			if (categoryId > 0)
 			{
 				IEWebsite.Utils.AjaxGet(`${FETCH_SUB_CATEGORIES}/${categoryId}`, null , function(resp) {
-					if (resp.status && !_.isEmpty(resp.response))
+					if (resp.status)
 					{
-						$("#subCategory").html('').append($("<option>").attr('value', '').text('Choose Subcategory'));
-
-						_.each(resp.response, function(row)
+						$("#subCategory").html('');
+						if (!_.isEmpty(resp.response))
 						{
-							$("#subCategory").append($("<option>").attr('value', row.id).text(row.categoryName));
-						});
+							$("#subCategory").html('').append($("<option>").attr('value', '').text('Choose Subcategory'));
 
-						$("#subCategoryBox").show();
+							_.each(resp.response, function(row)
+							{
+								$("#subCategory").append($("<option>").attr('value', row.id).text(row.categoryName));
+							});
+
+							$("#subCategoryBox").show();	
+						}
+						else
+						{
+							$("#subCategoryBox").hide();	
+						}
+
 						$("#subCategory").selectpicker("refresh");
+					}
+				});
+			}
+		});
+
+		$("#baseUnit").change(function() {
+			let baseUnitId = $(this).val();
+			if (baseUnitId > 0)
+			{
+				IEWebsite.Utils.AjaxGet(`${FETCH_SUB_SI_UNITS}/${baseUnitId}`, null , function(resp) {
+					if (resp.status)
+					{
+						$("#siUnit").html('');
+						if (!_.isEmpty(resp.response))
+						{
+							$("#siUnit").html('').append($("<option>").attr('value', '').text('Choose Unit'));
+							_.each(resp.response, function(row)
+							{
+								$("#siUnit").append($("<option>").attr('value', row.id).text(row.unitName));
+							});
+	
+							$("#siUnitBox").show();
+						}
+						else
+						{
+							$("#siUnitBox").hide();
+						}
+						$("#siUnit").selectpicker("refresh");
 					}
 				});
 			}
@@ -33,13 +70,50 @@ IEWebsiteAdmin.ProductCreatePage = (function() {
 			let file = $('#excelFile');
 			let errorMessage = "";
 
-			if (!_.isEmpty(file[0].files.length) === 0)
+			if (_.isEmpty(file[0].files) || file[0].files.length === 0)
 			{
-				errorMessage = "Please select a file";	
+				errorMessage = "Please select a file to upload";	
 			}
-			elseif()
+			
+
+			if (!_.isEmpty(errorMessage))
 			{
+				$("#excelFileErrorMsg").text(errorMessage);
+				return false;
+			}
+			else
+			{
+				IEWebsite.Utils.ShowLoadingScreen();
+
+				let url = BASE_URL + 'backend/products/import'; 
+				let formData = new FormData();
+				formData.append('file', file[0].files[0]);
 				
+				$("#importExcelForm .text-danger").text('');	
+				IEWebsite.Utils.AjaxFileUpload(url, formData, function(resp) {
+					IEWebsite.Utils.HideLoadingScreen();
+
+					if (resp.status)
+					{
+						file.val('');
+						IEWebsite.Utils.Swal('Success', 'Your data has been successully imported..', 'success');
+						window.setTimeout(function(){
+							window.location.reload();
+						}, 10000);
+					}
+					else
+					{
+						let responseErrorMsg = resp.message;
+						if (responseErrorMsg.search('</p>') != -1)
+						{
+							$(responseErrorMsg).insertAfter("#excelFileErrorMsg");
+						}
+						else
+						{
+							$("#excelFileErrorMsg").text(responseErrorMsg);
+						}
+					}
+				});
 			}
 		});
 
@@ -47,7 +121,6 @@ IEWebsiteAdmin.ProductCreatePage = (function() {
 			let exportType = String($(this).val()).toLowerCase();
 			if (!_.isEmpty(EXPORT_URL) && exportType == 'csv' || exportType == 'excel')
 			{
-				console.log('asdfasdf', exportType, EXPORT_URL);
 				window.location.href = EXPORT_URL + exportType;
 			}
 		});
@@ -83,14 +156,6 @@ IEWebsiteAdmin.ProductCreatePage = (function() {
 				search: "_INPUT_",
 				searchPlaceholder: "Search records",
 			},
-			buttons: [
-				{
-					text: 'My button',
-					action: function ( e, dt, node, config ) {
-						alert( 'Button activated' );
-					}
-				}
-			]
 		});
 		
 		setFormValidation('#createProductForm');

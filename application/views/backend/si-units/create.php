@@ -28,7 +28,7 @@
 					</div>
 				</div>
 				<div class="row">
-					<label class="col-md-2 label-on-left">Category*</label>
+					<label class="col-md-2 label-on-left">Category</label>
 					<div class="col-sm-10">
 						<div class="row">
 							<div class="col-md-4">
@@ -37,11 +37,12 @@
 										'id' => 'categories',
 										'class' => 'selectpicker',
 										'data-style' => 'select-with-transition select-box-horizontal',
-										'data-live-search' => 'true'
+										// 'data-live-search' => 'true'
 									];
 
 									$selectedCategory = !empty(set_value('category')) ? set_value('category') : (isset($category) ? $category : '');
 									echo form_dropdown('category', $categories, $selectedCategory, $extra);
+									echo form_error('category');
 								?>
 							</div>
 							<?php if (!empty($subCategories)){ ?>
@@ -51,16 +52,16 @@
 										'id' => 'subCategories',
 										'class' => 'selectpicker',
 										'data-style' => 'select-with-transition select-box-horizontal', 
-										'data-live-search' => 'true'
 									];
 
 									$selectedSubCategory = !empty(set_value('subCategory')) ? set_value('subCategory') : (isset($subCategory) ? $subCategory : '');
 									echo form_dropdown('subCategory', $subCategories, $selectedSubCategory, $extra);
+									echo form_error('subCategory');
 								?>
 							</div>
 							<?php } else { ?>
 							<div class="col-md-4" id="subCategoryBox" style="display: none;">
-								<select class="selectpicker" id="subCategory" data-live-search = 'true' name="subCategory" data-style="select-with-transition select-box-horizontal">
+								<select class="selectpicker" id="subCategory" name="subCategory" data-style="select-with-transition select-box-horizontal">
 									
 								</select>
 							</div>
@@ -70,55 +71,9 @@
 								<div class="form-group label-floating">
 									<label class="control-label"></label>
 									<input type="text" name="subCategoryName" class="form-control" placeholder="Category name" value="<?=!empty(set_value('subCategoryName')) ? set_value('subCategoryName') : ''?>">
+									<?=form_error('subCategoryName');?>
 								</div>
 							</div>
-							<div class="col-md-12"><?=form_error('category');?></div>
-						</div>
-
-					</div>
-				</div>
-				<div class="row">
-
-					<label class="col-md-2 label-on-left">Unit*</label>
-					<div class="col-sm-10">
-						<div class="row">
-							<div class="col-md-4">
-								<?php
-									$extra = [
-										'id' => 'baseUnit',
-										'class' => 'selectpicker',
-										'data-style' => 'select-with-transition select-box-horizontal', 
-									];
-
-									$selectedBaseUnit = !empty(set_value('baseUnit')) ? set_value('baseUnit') : (isset($baseUnit) ? $baseUnit : '');
-									echo form_dropdown('baseUnit', $baseUnits, $selectedBaseUnit, $extra);
-									echo form_error('baseUnit');
-								?>
-							</div>
-							<?php if (!empty($siUnits)){ ?>
-							<div class="col-md-4">
-								<?php
-									$extra = [
-										'id' => 'siUnit',
-										'class' => 'selectpicker',
-										'data-style' => 'select-with-transition select-box-horizontal', 
-										'data-live-search' => 'true'
-									];
-
-									$selectedSiUnit = !empty(set_value('siUnit')) ? set_value('siUnit') : (isset($siUnit) ? $siUnit : '');
-									echo form_dropdown('siUnit', $siUnits, $selectedSiUnit, $extra);
-									echo form_error('siUnit');
-								?>
-							</div>
-							<?php } else { ?>
-							<div class="col-md-4" id="siUnitBox" style="display: none;">
-								<select class="selectpicker" id="siUnit" name="siUnit" data-style="select-with-transition select-box-horizontal" data-live-search = 'true'>
-									
-								</select>
-							</div>
-							<?php } ?>
-							<div class="col-md-12"><?=form_error('siUnit');?></div>
-
 						</div>
 					</div>
 				</div>

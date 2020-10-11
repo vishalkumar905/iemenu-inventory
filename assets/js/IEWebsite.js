@@ -74,6 +74,27 @@ IEWebsite.Utils = (function() {
 		});
 	};
 
+	var ajaxFileUpload = function (url, data, responseHandler, error) {
+
+		if(!error)
+		{
+			error = function (xhr, ajaxOptions, thrownError){};
+		}
+
+		$.ajax({
+			url: url,
+			data: data,
+			type: 'POST',
+			contentType: false, 
+            processData: false,
+			success: responseHandler,
+			error: error,
+			beforeSend: function (xhr) {
+				
+			}
+		});
+	};
+
 	var getURLParam  = function (strParamName) {
 		var strReturn = "";
 		var strHref = window.location.href;
@@ -131,6 +152,27 @@ IEWebsite.Utils = (function() {
 		return !_.isEmpty(stringArr) && Array.isArray(stringArr) ? stringArr.join(formatter) : '';
 	}
 
+	var showLoadingScreen = function()
+	{
+		$("#loadingContainer").show();
+	};
+
+	var hideLoadingScreen = function()
+	{
+		$("#loadingContainer").hide();
+	};
+
+	var sweetAlert = function(title, text, type) 
+	{
+		swal({
+			title: title,
+			text: text,
+			buttonsStyling: false,
+			confirmButtonClass: "btn btn-success",
+			type: type
+		});
+	}
+
 	return {
 		AjaxGet: ajaxGet,
 		AjaxPost: ajaxPost,
@@ -138,6 +180,7 @@ IEWebsite.Utils = (function() {
 		AjaxDelete: ajaxDelete,
 		SychronousAjaxPost: sychronousAjaxPost,
 		SychronousAjaxGet: sychronousAjaxGet,
+		AjaxFileUpload: ajaxFileUpload,
 		GetURLParam : getURLParam,
 		ValidateEmail : validateEmail,
 		UcFirst : ucFirst,
@@ -145,5 +188,8 @@ IEWebsite.Utils = (function() {
 		CreateLink: createLink,
 		FormatString: formatString,
 		GetFileExtension: getFileExtension,
+		ShowLoadingScreen: showLoadingScreen,
+		HideLoadingScreen: hideLoadingScreen,
+		Swal: sweetAlert
 	};
 })();

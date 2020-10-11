@@ -40,10 +40,10 @@
 		<div class="collapse" id="tax">
 			<ul class="nav">
 				<li>
-					<a href="<?=base_url()?>tax/create">Create Tax</a>
+					<a href="<?=base_url()?>backend/tax/create">Create Tax</a>
 				</li>
 				<li>
-					<a href="<?=base_url()?>tax/manage">Manage Taxes</a>
+					<a href="<?=base_url()?>backend/tax/manage">Manage Taxes</a>
 				</li>
 			</ul>
 		</div>

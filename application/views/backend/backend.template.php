@@ -78,7 +78,11 @@
             </div>
         </div>
     </div>
+    <div id="loadingContainer" class="loading displaynone">
+        <div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+    </div>
 </body>
+
 
 <script>
     var BASE_URL = '<?=base_url()?>';
@@ -92,6 +96,7 @@
 <script src="<?=base_url()?>assets/js/material.min.js" type="text/javascript"></script>
 <script src="<?=base_url()?>assets/js/perfect-scrollbar.jquery.min.js" type="text/javascript"></script>
 <script src="<?=base_url()?>assets/js/jquery.validate.min.js" type="text/javascript"></script>
+<script src="<?=base_url()?>assets/js/sweetalert2.js" type="text/javascript"></script>
 <?php
 if (isset($footerJs) && !empty($footerJs))
 {

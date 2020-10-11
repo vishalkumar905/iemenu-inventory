@@ -3,6 +3,8 @@
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
+use PhpOffice\PhpSpreadsheet\Reader\Csv as csvReader;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as xlsxReader;
 
 class PhpExcel
 {
@@ -114,5 +116,45 @@ class PhpExcel
 		$writer->save('php://output');
 
 		// redirect($data['redirectUrl']);
- 	}
+	}
+	 
+	public function import($filepath)
+	{
+		if (empty($filepath))
+		{
+			return false;
+		}
+
+		try
+		{
+			$fileInfo = pathinfo($filepath);
+			$fileExtension = strtolower($fileInfo['extension']);
+			$reader = '';
+
+			switch($fileExtension)
+			{
+				case 'csv':
+					$reader = new csvReader();
+					break;
+				case 'xlsx':
+					$reader = new xlsxReader();
+					break;
+				default:
+					break;
+			}
+
+			if ($reader == '')
+			{
+				throw new Exception('Invalid file');
+			}
+
+			$reader->setReadDataOnly(true);
+
+			return $reader->load($filepath)->getActiveSheet()->toArray();
+		}
+		catch(Exception $e)
+		{
+			return false;
+		}
+	}
 }

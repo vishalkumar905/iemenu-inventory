@@ -16,46 +16,6 @@ class Products extends Backend_Controller
 		$this->load->model('SIUnitModel', 'siunit');
 	}
 
-	public function export($extension)
-	{
-		if (empty($this->referrerUrl))
-		{
-			show_404();
-		}
-
-		$this->load->library('PhpExcel');
-
-		$counter = 0;
-		$columns = [];
-		$results = $this->product->get('id desc')->result_array();
-
-		foreach ($results as $productIndex => &$result)
-		{
-			if ($productIndex == 0)
-			{
-				$columns = [
-					['title' => 'SN', 'name' => 'sn'],
-					['title' => 'Product Code', 'name' => 'productCode'],
-					['title' => 'Product Name', 'name' => 'productName'],
-					['title' => 'Product Type', 'name' => 'productType'],
-					['title' => 'Shelf Life', 'name' => 'shelfLife'],
-					['title' => 'Date', 'name' => 'createdOn']
-				];
-			}
-
-			$result['sn'] = ++$counter;
-			$result['createdOn'] = date('Y-m-d H:i:s', $result['createdOn']);
-			$result['productType'] = $this->getProductTypeName($result['productType']);
-		}
-
-		$data['extension'] = $extension;
-		$data['columns'] = $columns;
-		$data['results'] = $results;
-		$data['redirectUrl'] = base_url() . 'backend/products';
-
-		$this->phpexcel->export($data);
-	}
-
 	public function index()
 	{
 		$updateId = $this->uri->segment(4);
@@ -77,16 +37,26 @@ class Products extends Backend_Controller
 
 			$data['submitBtn'] = 'Update';
 			$data['headTitle']  = 'Update Product Information';
-			$data['productImage']  = base_url() . PRODUCT_UPLOADS_IMAGE_DIR . '/' . $data['productImage'];
+			$data['productImage']  = base_url() . PRODUCT_IMAGE_UPLOAD_PATH . '/' . $data['productImage'];
 			$data['category'] = $data['categoryId'];
+			$data['baseUnit'] = $data['baseUnitId'];
 
 			$parentCategoryId = $this->getParentCategoryId($data['categoryId']);
-			
+			$baseUnitId = $this->siunit->getParentIdFromBaseUnitId($data['baseUnitId']);
+
 			if ($parentCategoryId > 0)
 			{
 				$data['subCategory'] = $data['categoryId'];
 				$data['category'] = $parentCategoryId;
 			}
+
+			if ($baseUnitId > 0)
+			{
+				$data['siUnit'] = $data['baseUnitId'];
+				$data['baseUnit'] = $baseUnitId;
+			}
+
+			unset($baseUnitId);
 		}
 
 		$submit = $this->input->post('submit');
@@ -98,6 +68,8 @@ class Products extends Backend_Controller
 			$this->form_validation->set_rules('productType', 'Product type', 'required');
 			$this->form_validation->set_rules('hsnCode', 'HSN code', 'required');
 			$this->form_validation->set_rules('subCategoryName', 'Sub Category Name', 'trim');
+			$this->form_validation->set_rules('category', 'Category', 'trim|callback_category');
+			$this->form_validation->set_rules('baseUnit', 'Base Unit', 'trim|callback_baseUnit');
 			$this->form_validation->set_error_delimiters('<p class="text-danger">', '</p>');
 
 			if ($this->form_validation->run())
@@ -123,12 +95,18 @@ class Products extends Backend_Controller
 					$categoryId = $subCategory;
 				}
 
+				$baseUnit = $this->input->post('baseUnit');
+				$siUnit = $this->input->post('siUnit');
+
+				$baseUnit = !empty($siUnit) ? $siUnit : $baseUnit;
+
 				$insertData = [
 					'productName' => $this->input->post('productName'),
 					'productCode' => $this->input->post('productCode'),
 					'productType' => $this->input->post('productType'),
 					'hsnCode' => $this->input->post('hsnCode'),
 					'shelfLife' => $this->input->post('shelfLife'),
+					'baseUnitId' => $baseUnit,
 					'categoryId' => $categoryId,
 				];
 
@@ -138,7 +116,7 @@ class Products extends Backend_Controller
 
 				if ($this->productImageUpload)
 				{
-					$uploadImage = $this->doUpload('productImage', PRODUCT_UPLOADS_IMAGE_DIR);
+					$uploadImage = $this->doUpload('productImage', PRODUCT_IMAGE_UPLOAD_PATH);
 					$isUploadError = $uploadImage['err'];
 	
 					if ($updateId > 0)
@@ -195,9 +173,11 @@ class Products extends Backend_Controller
 		}
 
 		$postedCategory = $this->input->post('category');
+		$postedSiUnit = $this->input->post('siUnit');
 		if ($updateId > 0 && empty($postedCategory))
 		{
 			$postedCategory = $data['category'];
+			$postedSiUnit = $data['baseUnit'];
 		}
 
 		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
@@ -205,10 +185,42 @@ class Products extends Backend_Controller
 		$data['categories'] = $this->selectBoxCategories();
 		$data['productTypes'] = $this->productTypes();
 		$data['subCategories'] = $this->selectBoxSubCategories($postedCategory);
+		$data['baseUnits'] = $this->siunit->selectBoxBaseUnits();
+		$data['siUnits'] = $this->siunit->selectBoxSiUnits($postedSiUnit);
 		$data['flashMessage'] = $this->session->flashdata('flashMessage');
 		$data['flashMessageType'] = $this->session->flashdata('flashMessageType');
 
 		$this->load->view($this->template, $data);
+	}
+
+	public function category()
+	{
+		$category = $this->input->post('category');
+		$subCategory = $this->input->post('subCategory');
+		$subCategoryName = $this->input->post('subCategoryName');
+
+		if (empty($category) && empty($subCategory) && empty($subCategoryName))
+		{
+			$this->form_validation->set_message('category', 'Please select a category.');
+            return false;
+		}
+
+		return true;
+	}
+
+	public function baseUnit()
+	{
+		$baseUnit = $this->input->post('baseUnit');
+		$siUnit = $this->input->post('siUnit');
+		$siUnitName = $this->input->post('siUnitName');
+
+		if (empty($baseUnit) && empty($siUnit) && empty($siUnitName))
+		{
+			$this->form_validation->set_message('baseUnit', 'Please select a Base Unit.');
+            return false;
+		}
+
+		return true;
 	}
 
 	public function manage()
@@ -255,6 +267,231 @@ class Products extends Backend_Controller
 		}
 
 		responseJson(true, null, $results, false);
+	}
+
+	public function export($extension)
+	{
+		if (empty($this->referrerUrl))
+		{
+			show_404();
+		}
+
+		$this->load->library('PhpExcel');
+
+		$counter = 0;
+		$columns = [];
+		$results = $this->product->get('id desc')->result_array();
+
+		foreach ($results as $productIndex => &$result)
+		{
+			if ($productIndex == 0)
+			{
+				$columns = [
+					['title' => 'SN', 'name' => 'sn'],
+					['title' => 'Product Code', 'name' => 'productCode'],
+					['title' => 'Product Name', 'name' => 'productName'],
+					['title' => 'Product Type', 'name' => 'productType'],
+					['title' => 'Shelf Life', 'name' => 'shelfLife'],
+					['title' => 'Date', 'name' => 'createdOn']
+				];
+			}
+
+			$result['sn'] = ++$counter;
+			$result['createdOn'] = date('Y-m-d H:i:s', $result['createdOn']);
+			$result['productType'] = $this->getProductTypeName($result['productType']);
+		}
+
+		$data['extension'] = $extension;
+		$data['columns'] = $columns;
+		$data['results'] = $results;
+		$data['redirectUrl'] = base_url() . 'backend/products';
+
+		$this->phpexcel->export($data);
+	}
+
+	public function downloadSample()
+	{
+		$this->load->helper('download');
+		force_download(sprintf('%s%s', FCPATH, PRODUCT_SAMPLE_FORMAT_PATH), NULL);
+	}
+
+	public function import()
+	{
+		if (!$this->input->is_ajax_request()) {
+			exit('No direct script access allowed');
+		}
+
+		$response = [];
+		$status = true;
+		$message = null;
+		$allowedTypes = 'csv|xlsx';
+
+		$uploadFile = $this->doUpload('file', IMPORT_FILE_UPLOAD_PATH, $allowedTypes);
+
+		if ($uploadFile['err'] == 0)
+		{
+			$filePath = sprintf('%s%s/%s', FCPATH, IMPORT_FILE_UPLOAD_PATH, $uploadFile['fileName']);
+			
+			$this->load->library('PhpExcel');
+			
+			$results = $this->phpexcel->import($filePath);
+			$productTypes = $this->productTypes();
+
+			if (!empty($results) && count($results) > 2)
+			{
+				$columns =  ['SN', 'Product Code', 'Product Name', 'Product Type', 'HSN Code', 'Category', 'Shelf Life'];
+				$isColumnMissing = false;
+
+				foreach ($columns as $index => $columnName)
+				{
+					if (array_search($columnName, $results[0]) === false)
+					{
+						$isColumnMissing = true;
+					}
+				}
+
+				$productCodeIndex = array_search('Product Code', $results[0]);
+				$productNameIndex = array_search('Product Name', $results[0]);
+				$productTypeIndex = array_search('Product Type', $results[0]);
+				$hsnCodeIndex   = array_search('HSN Code', $results[0]);
+				$shelfLifeIndex = array_search('Shelf Life', $results[0]);
+				$categoryIndex  = array_search('Category', $results[0]);
+
+				if ($isColumnMissing === false)
+				{
+					foreach($results as $resultIndex => $result)
+					{
+						if ($resultIndex < 1)
+						{
+							continue;
+						}
+
+						$productCode = trim($result[$productCodeIndex]);
+						$productName = trim($result[$productNameIndex]);
+						$productType = trim($result[$productTypeIndex]);
+						$shelfLife = intval($result[$shelfLifeIndex]);
+						$hsnCode = trim($result[$hsnCodeIndex]);
+						$category = trim($result[$categoryIndex]);
+
+						$categoryId = $this->category->getIdFromCategoryName($category);
+						$productTypeId = array_search($productType, $productTypes);
+
+						if (!empty($productCode) && !empty($productName) && !empty($productType))
+						{
+							$insertData = [
+								'productName' => $productName,
+								'productCode' => $productCode,
+								'productType' => $productTypeId,
+								'hsnCode' 	  => $hsnCode,
+								'shelfLife'   => $shelfLife,
+								'categoryId'  => $categoryId,
+								'baseUnitId'  => null,
+								'productImage' => null,
+							];
+
+							$this->product->insert($insertData);
+						}
+					}
+					
+					$response = $results;
+				}
+				else
+				{
+					$status = false;
+					$message = 'Format is not valid... Plese upload again !';
+				}
+			}
+		}
+		else
+		{
+			$status = false;
+			$message = $uploadFile['errorMessage'];
+		}
+
+		responseJson($status, $message, $response);
+	}
+
+	public function siUnitsImport()
+	{
+		if (!$this->input->is_ajax_request()) {
+			exit('No direct script access allowed');
+		}
+
+		$response = [];
+		$status = true;
+		$message = null;
+		$allowedTypes = 'csv|xlsx';
+
+		$uploadFile = $this->doUpload('file', IMPORT_FILE_UPLOAD_PATH, $allowedTypes);
+
+		if ($uploadFile['err'] == 0)
+		{
+			$filePath = sprintf('%s%s/%s', FCPATH, IMPORT_FILE_UPLOAD_PATH, $uploadFile['fileName']);
+			
+			$this->load->library('PhpExcel');
+			
+			$results = $this->phpexcel->import($filePath);
+
+			if (!empty($results) && count($results) > 2)
+			{
+				$columns =  ['Unit Name', 'Base Unit', 'Conversion Factor'];
+				$isColumnMissing = false;
+
+				foreach ($columns as $index => $columnName)
+				{
+					if (array_search($columnName, $results[0]) === false)
+					{
+						$isColumnMissing = true;
+					}
+				}
+
+				$unitNameIndex = array_search('Unit Name', $results[0]);
+				$baseUnitIndex = array_search('Base Unit', $results[0]);
+				$conversionFactorIndex = array_search('Conversion Factor', $results[0]);
+
+				if ($isColumnMissing === false)
+				{
+					foreach($results as $resultIndex => $result)
+					{
+						if ($resultIndex < 1)
+						{
+							continue;
+						}
+
+						$unitName = trim($result[$unitNameIndex]);
+						$baseUnit = trim($result[$baseUnitIndex]);
+						$conversionFactor = trim($result[$conversionFactorIndex]);
+
+						$baseUnitId = $this->siunit->getBaseUnitIdFromUnitName($baseUnit);
+						
+						if (!empty($unitName) && !empty($baseUnit) && !empty($conversionFactor) && $baseUnitId > 0)
+						{
+							$insertData = [
+								'unitName' => $unitName,
+								'parentId' => $baseUnitId,
+								'conversion' => $conversionFactor,
+							];
+
+							$this->siunit->insert($insertData);
+						}
+					}
+
+					$response = $results;
+				}
+				else
+				{
+					$status = false;
+					$message = 'Format is not valid... Plese upload again !';
+				}
+			}
+		}
+		else
+		{
+			$status = false;
+			$message = $uploadFile['errorMessage'];
+		}
+
+		responseJson($status, $message, $response);
 	}
 
 	private function selectBoxCategories(): array

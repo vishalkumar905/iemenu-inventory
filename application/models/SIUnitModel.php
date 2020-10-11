@@ -37,8 +37,9 @@ class SIUnitModel extends CI_Model
 		return $query;
 	}
 	
-	public function getWhereCustom($condition)
+	public function getWhereCustom($columns = '*', $condition)
 	{
+		$this->db->select($columns);
 		$this->db->where($condition);
 		$query = $this->db->get($this->tableName);
 		return $query;
@@ -47,7 +48,6 @@ class SIUnitModel extends CI_Model
 	public function insert($data)
 	{
 		$data['createdOn'] = time();
-		$this->db->insert($this->tableName, $data);
 		if($this->db->insert($this->tableName, $data))
 		{
 			return $this->db->insert_id();
@@ -108,6 +108,69 @@ class SIUnitModel extends CI_Model
 	{
 		$query = $this->db->query($mysqlQuery);
 		return $query;
+	}
+
+	public function selectBoxBaseUnits(): array
+	{
+		$baseUnits = $this->getWhereCustom('*', ['parentId IS NULL' => NULL])->result_array();
+		$results = [];
+				
+		if (!empty($baseUnits))
+		{
+			$results[''] = 'Choose Base Unit';
+
+			foreach ($baseUnits as $baseUnit)
+			{
+				$results[$baseUnit['id']] = $baseUnit['unitName'];
+			}			
+		}
+
+		return $results;
+	}
+
+	public function selectBoxSiUnits($baseUnitId): array
+	{
+		$siUnits = $this->getWhereCustom('*', ['parentId' => $baseUnitId, 'parentId IS NOT NULL' => NULL])->result_array();
+		$results = [];
+
+		if (!empty($siUnits))
+		{
+			$results[''] = 'Choose Unit';
+
+			foreach ($siUnits as $siUnit)
+			{
+				$results[$siUnit['id']] = $siUnit['unitName'];
+			}			
+		}
+
+		return $results;
+	}
+
+	public function getParentIdFromBaseUnitId($baseUnitId): int
+	{
+		$baseUnit = $this->getWhereCustom('*', ['id' => $baseUnitId])->result_array();
+		if (!empty($baseUnit) && intval($baseUnit[0]['parentId']) > 0)
+		{
+			return $baseUnit[0]['parentId'];
+		}
+		
+		return 0;
+	}
+
+	public function getBaseUnitIdFromUnitName($unitName)
+	{
+		if ($unitName)
+		{
+			$condition['LCASE(unitName)'] = strtolower($unitName);
+			$condition['parentId IS NULL'] = NULL;
+			$result = $this->getWhereCustom('*', $condition)->result_array();
+			if (!empty($result))
+			{
+				return $result[0]['id'];
+			}
+		}
+
+		return 0;
 	}
 }
 
