@@ -3,20 +3,75 @@
 		public $pageTitle = 'Admin';
 		public $navTitle = 'Admin';
 		public $template = 'backend/backend.template.php'; 
-		public $loggedInUserData = '';
+		public $isLoggedIn;
+		public $loggedInUserData;
 		public $referrerUrl = '';
 
 		function __construct() {
 			parent::__construct();
+
+			$this->isLoggedIn = $this->session->userdata('isLoggedIn');
 			
-			// $this->loggedInUserData = $this->session->userdata('loggedInAdminData');
-			
-			// if (empty($this->loggedInUserData)) {
-			// 	redirect(base_url());
-			// }
+			if (empty($this->isLoggedIn)) {
+				redirect(base_url());
+			}
+
+			$this->loggedInUserData = $this->session->userdata('loggedInUserData');
 
 			$this->load->library('user_agent');
 			$this->referrerUrl = $this->agent->referrer();
+		}
+
+		public function isUserAdmin()
+		{
+			if (!empty($loggedInUserData))
+			{
+				if ($loggedInUserData['type'] == ADMIN)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		public function isUserSuperAdmin()
+		{
+			if (!empty($loggedInUserData))
+			{
+				if ($loggedInUserData['type'] == SUPER_ADMIN)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		public function isUser()
+		{
+			if (!empty($loggedInUserData))
+			{
+				if ($loggedInUserData['type'] == USER)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		public function isUserVendor()
+		{
+			if (!empty($loggedInUserData))
+			{
+				if ($loggedInUserData['type'] == USER_VENDOR)
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		public function doUpload($image, $uploadPath, $allowedTypes = null, $thumbnailData = null) 

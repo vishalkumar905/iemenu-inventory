@@ -96,3 +96,13 @@ define('IMPORT_FILE_UPLOAD_PATH', 'uploads/import');
 define('IE_PRODUCTS', 'ie_products');
 define('IE_PRODUCTS_TAXES', 'ie_products_taxes');
 define('IE_TAXES', 'ie_taxes');
+
+define('ACTIVE', 1);
+define('DISABLE', -1);
+define('DELETED', 0);
+define('INACTIVE', -2);
+
+define ("USER", 1);
+define ("USER_VENDOR", 2);
+define ("ADMIN", 3);
+define ("SUPER_ADMIN", 4);
