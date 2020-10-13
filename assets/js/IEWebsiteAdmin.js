@@ -136,11 +136,7 @@ IEWebsiteAdmin.ProductCreatePage = (function() {
 			responsive: true,
 			ajax: {
 				url: FETCH_PRODUCTS,
-				type: "POST",
-
-				// data: function ( data) {
-				// 	delete data.columns; 
-				// },
+				type: "POST"
 			},
 			columns: [
 				{data: 'sn', width: "5%"},
@@ -170,6 +166,53 @@ IEWebsiteAdmin.ProductCreatePage = (function() {
 			}
 		});
 	}
+	
+	return {
+		Init: init
+	}
+})();
+
+IEWebsiteAdmin.MapTaxToProduct = (function() {
+	var init = function()
+	{
+		if ($("#mappedProducts").length <= 0)
+		{
+			return 0;
+		};
+
+		$('#mappedProducts').DataTable({
+			// "bPaginate": false,
+			// "searching": false,   // Search Box will Be Disabled
+			"processing": true,
+			"serverSide": true,
+			"ordering": false,
+			responsive: true,
+			ajax: {
+				url: FETCH_MAPED_TAX_PRODUCTS,
+				type: "POST",
+
+				// data: function ( data) {
+				// 	delete data.columns; 
+				// },
+			},
+			columns: [
+				{data: 'sn', width: "5%"},
+				{data: 'productName'},
+				{data: 'tax'},
+				{data: 'action', width: "5%"},
+			],
+			// "pagingType": "full_numbers",
+			"lengthMenu": [
+				[10, 20, 50],
+				[10, 20, 50]
+			],
+			language: {
+				search: "_INPUT_",
+				searchPlaceholder: "Search records",
+			},
+		});
+	
+	};
 	
 	return {
 		Init: init
@@ -243,4 +286,5 @@ $(document).ready(function(){
 	IEWebsiteAdmin.CommonJs.Init();
 	IEWebsiteAdmin.ProductCreatePage.Init();
 	IEWebsiteAdmin.ProductManagePage.Init();
+	IEWebsiteAdmin.MapTaxToProduct.Init();
 });
