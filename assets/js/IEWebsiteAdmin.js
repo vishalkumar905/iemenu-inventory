@@ -180,6 +180,8 @@ IEWebsiteAdmin.MapTaxToProduct = (function() {
 			return 0;
 		};
 
+		$("#products").selectpicker('refresh');
+
 		$('#mappedProducts').DataTable({
 			// "bPaginate": false,
 			// "searching": false,   // Search Box will Be Disabled

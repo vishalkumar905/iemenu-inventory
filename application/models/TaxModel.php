@@ -171,7 +171,7 @@ class TaxModel extends CI_Model
 			}	
 		}
 
-		$this->db->order_by('pt.id', 'desc');
+		$this->db->order_by('id', 'desc');
 		// Not Need
         // if(!empty($orderBy))
         // {
@@ -182,41 +182,6 @@ class TaxModel extends CI_Model
         //     $order = $this->order;
         //     $this->db->order_by(key($order), $order[key($order)]);
         // }
-	}
-
-	public function getMapedTaxProducts($limit, $offset)
-	{
-		$this->getDatatableQuery();
-		$this->getMapedTaxProductsQuery();
-
-		$this->db->limit($limit, $offset);
-
-		$query = $this->db->get();
-		return $query;
-	}
-
-	private function getMapedTaxProductsQuery()
-	{
-		$columns = [
-			'pt.productId', 
-			'p.productName', 
-			"GROUP_CONCAT(CONCAT(t.taxName, '@', t.taxPercentage, '%') SEPARATOR ', ') as tax"
-		];
-
-		$this->db->select($columns);
-		$this->db->join('ie_products p', 'p.id = pt.productId', 'LEFT');
-		$this->db->join('ie_taxes t', 't.id = pt.taxId', 'LEFT');
-		$this->db->from('ie_products_taxes pt');
-		$this->db->where(['pt.productId IS NOT NULL' => NULL]);
-		$this->db->group_by('pt.productId');
-	}
-
-	public function getAllProductsCount()
-	{
-		$this->getDatatableQuery();
-		$this->getMapedTaxProductsQuery();
-		$query = $this->db->get();
-		return $query->num_rows();
 	}
 }
 
