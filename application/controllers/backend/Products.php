@@ -273,6 +273,8 @@ class Products extends Backend_Controller
 			$productEditPageUrl = base_url() . 'backend/products/index/' . $product['id'];
 			$product['sn'] = ++$counter;
 			// $product['createdOn'] = date('Y-m-d H:i:s', $product['createdOn']);
+			$product['productName'] = $product['productName'];
+			$product['productCode'] = $product['productCode'];
 			$product['productType'] = $this->getProductTypeName($product['productType']);
 			$product['action'] = sprintf('
 				<span class="text-right">

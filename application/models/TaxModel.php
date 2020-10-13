@@ -4,7 +4,6 @@ class TaxModel extends CI_Model
 {
 	private $tableName = 'ie_taxes';
 	private $primaryKey = 'id';
-    private $columnSearch = array('taxName', 'taxPercentage'); //set column field database for datatable searchable 
 	
 	public function __construct()
 	{
@@ -38,9 +37,16 @@ class TaxModel extends CI_Model
 		return $query;
 	}
 	
-	public function getWhereCustom($condition)
+	public function getWhereCustom($columns = '*', $condition, $orderBy = null)
 	{
+		$this->db->select($columns);
 		$this->db->where($condition);
+		
+		if (!empty($orderBy['field']) && !empty($orderBy['type']))
+		{
+			$this->db->order_by($orderBy['field'], $orderBy['type']);
+		}
+
 		$query = $this->db->get($this->tableName);
 		return $query;
 	}
@@ -137,25 +143,26 @@ class TaxModel extends CI_Model
     {
 		$searchText = $this->input->post('search');
 		$orderBy = $this->input->post('order');
-        $this->db->from($this->tableName);
+		
+		$columnSearch = array('tax' => 't.taxName', 'productName' => 'p.productName'); 
 		
 		$i = 0;
 
 		if (!empty($searchText['value']))
 		{
-			foreach ($this->columnSearch as $item) // loop column 
+			foreach ($columnSearch as $itemKey => $itemValue) // loop column 
 			{
 				if($i === 0)
 				{
 					$this->db->group_start();
-					$this->db->like($item, $searchText['value']);
+					$this->db->like($itemValue, $searchText['value']);
 				}
 				else
 				{
-					$this->db->or_like($item, $searchText['value']);
+					$this->db->or_like($itemValue, $searchText['value']);
 				}
 	
-				if(count($this->columnSearch) - 1 == $i)
+				if(count($columnSearch) - 1 == $i)
 				{
 					$this->db->group_end(); //close bracket
 				}
@@ -164,7 +171,7 @@ class TaxModel extends CI_Model
 			}	
 		}
 
-		$this->db->order_by('id', 'desc');
+		$this->db->order_by('pt.id', 'desc');
 		// Not Need
         // if(!empty($orderBy))
         // {
@@ -175,6 +182,41 @@ class TaxModel extends CI_Model
         //     $order = $this->order;
         //     $this->db->order_by(key($order), $order[key($order)]);
         // }
+	}
+
+	public function getMapedTaxProducts($limit, $offset)
+	{
+		$this->getDatatableQuery();
+		$this->getMapedTaxProductsQuery();
+
+		$this->db->limit($limit, $offset);
+
+		$query = $this->db->get();
+		return $query;
+	}
+
+	private function getMapedTaxProductsQuery()
+	{
+		$columns = [
+			'pt.productId', 
+			'p.productName', 
+			"GROUP_CONCAT(CONCAT(t.taxName, '@', t.taxPercentage, '%') SEPARATOR ', ') as tax"
+		];
+
+		$this->db->select($columns);
+		$this->db->join('ie_products p', 'p.id = pt.productId', 'LEFT');
+		$this->db->join('ie_taxes t', 't.id = pt.taxId', 'LEFT');
+		$this->db->from('ie_products_taxes pt');
+		$this->db->where(['pt.productId IS NOT NULL' => NULL]);
+		$this->db->group_by('pt.productId');
+	}
+
+	public function getAllProductsCount()
+	{
+		$this->getDatatableQuery();
+		$this->getMapedTaxProductsQuery();
+		$query = $this->db->get();
+		return $query->num_rows();
 	}
 }
 

@@ -37,10 +37,16 @@ class CategoryModel extends CI_Model
 		return $query;
 	}
 	
-	public function getWhereCustom($columns = '*', $condition)
+	public function getWhereCustom($columns = '*', $condition, $orderBy = null)
 	{
 		$this->db->select($columns);
 		$this->db->where($condition);
+		
+		if (!empty($orderBy['field']) && !empty($orderBy['type']))
+		{
+			$this->db->order_by($orderBy['field'], $orderBy['type']);
+		}
+
 		$query = $this->db->get($this->tableName);
 		return $query;
 	}

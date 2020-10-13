@@ -43,7 +43,7 @@
 					<a href="<?=base_url()?>backend/tax">Create Tax</a>
 				</li>
 				<li>
-					<a href="<?=base_url()?>backend/tax/map-product-taxes">Map Product Taxes</a>
+					<a href="<?=base_url()?>backend/tax/mapProductTaxes">Map Product Taxes</a>
 				</li>
 			</ul>
 		</div>

@@ -87,9 +87,12 @@ defined('EXIT__AUTO_MAX')      OR define('EXIT__AUTO_MAX', 125); // highest auto
 define('PRODUCT_TYPE_SEMIPROCESSED', 1);
 define('PRODUCT_TYPE_RAWMATERIAL', 2);
 
-
 define('PRODUCT_IMAGE_UPLOAD_PATH', 'uploads/products');
 define('PRODUCT_THUMBNAIL_PATH', 'assets/img/image_placeholder.jpg');
 define('SAMPLE_DATA_TEMPLATE_PATH', 'uploads/templates');
 define('PRODUCT_SAMPLE_FORMAT_PATH', SAMPLE_DATA_TEMPLATE_PATH . '/proudct-sample.xlsx');
 define('IMPORT_FILE_UPLOAD_PATH', 'uploads/import');
+
+define('IE_PRODUCTS', 'ie_products');
+define('IE_PRODUCTS_TAXES', 'ie_products_taxes');
+define('IE_TAXES', 'ie_taxes');
