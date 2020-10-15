@@ -59,7 +59,7 @@
 					<a href="<?=base_url()?>backend/vendors">Manage Vendors</a>
 				</li>
 				<li>
-					<a href="<?=base_url()?>backend/vendorproducts">Map Vendor Products</a>
+					<a href="<?=base_url()?>backend/vendorproducts">Vendor Products</a>
 				</li>
 			</ul>
 		</div>

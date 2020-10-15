@@ -95,7 +95,23 @@ $db['default'] = array(
 	'save_queries' => TRUE
 );
 
-if (ENVIRONMENT !== 'production')
+if (ENVIRONMENT == 'testing')
+{
+	$db['default']['hostname'] = 'localhost';
+	$db['default']['username'] = 'u606579078_inventory';
+	$db['default']['password'] = '2yFP@mvtxA|';
+	$db['default']['database'] = 'u606579078_inventory';
+}
+
+if (ENVIRONMENT == 'production')
+{
+	$db['default']['hostname'] = 'localhost';
+	$db['default']['username'] = 'u606579078_inventory';
+	$db['default']['password'] = '2yFP@mvtxA|';
+	$db['default']['database'] = 'u606579078_inventory';
+}
+
+if (ENVIRONMENT == 'development')
 {
 	$db['default']['hostname'] = 'localhost';
 	$db['default']['username'] = 'root';
