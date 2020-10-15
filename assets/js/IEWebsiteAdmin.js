@@ -156,16 +156,8 @@ IEWebsiteAdmin.ProductCreatePage = (function() {
 			},
 		});
 		
-		setFormValidation('#createProductForm');
+		IEWebsite.Utils.JqueryFormValidation('#createProductForm');
 	};
-
-	var setFormValidation = function(id) {
-		$(id).validate({
-			errorPlacement: function(error, element) {
-				$(element).parent('div').addClass('has-error');
-			}
-		});
-	}
 	
 	return {
 		Init: init
@@ -235,6 +227,222 @@ IEWebsiteAdmin.ProductManagePage = (function() {
 	}
 })();
 
+IEWebsiteAdmin.VendorPage = (function() {
+	var init = function()
+	{
+		if ($("#vendorPageContainer").length <= 0)
+		{
+			return 0;
+		};
+
+		$('#vendorsData').DataTable({
+			// "bPaginate": false,
+			// "searching": false,   // Search Box will Be Disabled
+			"processing": true,
+			"serverSide": true,
+			"ordering": false,
+			responsive: true,
+			ajax: {
+				url: FETCH_VENDORS,
+				type: "POST"
+			},
+			columns: [
+				{data: 'sn', width: "5%"},
+				{data: 'vendorCode'},
+				{data: 'vendorName'},
+				{data: 'vendorEmail'},
+				{data: 'vendorContact'},
+				{data: 'gstNumber'},
+				{data: 'action', width: "5%"},
+			],
+			// "pagingType": "full_numbers",
+			"lengthMenu": [
+				[10, 20, 50],
+				[10, 20, 50]
+			],
+			language: {
+				search: "_INPUT_",
+				searchPlaceholder: "Search records",
+			},
+		});
+
+		$('.dataTables_filter input[type="search"]').css(
+			{'width':'350px','display':'inline-block'}
+		);
+		
+
+		IEWebsite.Utils.JqueryFormValidation('#createVendorForm');
+	};
+	
+	return {
+		Init: init
+	}
+})();
+
+IEWebsiteAdmin.VendorProductsPage = (function() {
+	var init = function()
+	{
+		if ($("#vendorProductsPageContainer").length <= 0)
+		{
+			return 0;
+		};
+
+		$('#vendorProductsData').DataTable({
+			// "bPaginate": false,
+			// "searching": false,   // Search Box will Be Disabled
+			"processing": true,
+			"serverSide": true,
+			"ordering": false,
+			responsive: true,
+			ajax: {
+				url: FETCH_ASSIGNED_VENDOR_PRODUCTS,
+				type: "POST"
+			},
+			columns: [
+				{data: 'sn', width: "5%"},
+				{data: 'vendorCode'},
+				{data: 'vendorName'},
+				{data: 'productName'},
+				{data: 'action', width: "5%"},
+			],
+			// "pagingType": "full_numbers",
+			"lengthMenu": [
+				[10, 20, 50],
+				[10, 20, 50]
+			],
+			language: {
+				search: "_INPUT_",
+				searchPlaceholder: "Search records",
+			},
+		});
+
+		$(document).on('click', '.deleteAssignedVendorProduct', function() 
+		{
+			let vendorProductId = $(this).attr('data-vendorproductid');
+			
+			if (vendorProductId > 0)
+			{
+				swal({
+					title: 'Are you sure?',
+					text: 'You will not be able to recover this..!',
+					type: 'warning',
+					showCancelButton: true,
+					confirmButtonText: 'Yes, delete it!',
+					cancelButtonText: 'No, keep it',
+					confirmButtonClass: "btn btn-success",
+					cancelButtonClass: "btn btn-danger",
+					buttonsStyling: false
+				}).then(function() {
+					IEWebsite.Utils.AjaxPost(REMOVE_ASSIGNED_VENDOR_PRODUCT, {vendorProductId}, function(resp) {
+						if (resp.status)
+						{
+							$('#vendorProductsData').DataTable().ajax.reload();
+
+							swal({
+								title: 'Deleted!',
+								text: 'Assigned product removed.',
+								type: 'success',
+								confirmButtonClass: "btn btn-success",
+								buttonsStyling: false
+							});
+						}
+					});
+				}, 
+				function(dismiss)
+				{
+					// dismiss can be 'overlay', 'cancel', 'close', 'esc', 'timer'
+					if (dismiss === 'cancel') 
+					{
+						swal({
+							title: 'Cancelled',
+							text: 'Nothing performed :)',
+							type: 'error',
+							confirmButtonClass: "btn btn-info",
+							buttonsStyling: false
+						});
+					  }
+				});
+			}
+		});
+
+		$("#category").change(function() {
+			let categoryId = $(this).val();
+			if (categoryId > 0)
+			{
+				fetchVendorProducts();
+
+				IEWebsite.Utils.AjaxGet(`${FETCH_SUB_CATEGORIES}/${categoryId}`, null , function(resp) {
+					if (resp.status)
+					{
+						$("#subCategory").html('');
+						if (!_.isEmpty(resp.response))
+						{
+							$("#subCategory").html('').append($("<option>").attr('value', '').text('Choose Subcategory'));
+
+							_.each(resp.response, function(row)
+							{
+								$("#subCategory").append($("<option>").attr('value', row.id).text(row.categoryName));
+							});
+
+							$("#subCategoryBox").show();	
+						}
+						else
+						{
+							$("#subCategoryBox").hide();	
+						}
+						$("#subCategory").selectpicker("refresh");
+					}
+				});
+			}
+		});
+
+		$('#subCategory').change(function() {
+			let subCategoryId = $(this).val();
+			if (subCategoryId > 0)
+			{
+				fetchVendorProducts();
+			}
+		});
+	};
+	
+	var fetchVendorProducts = function()
+	{
+		let vendorId = parseInt($('#vendor').val());
+		let categoryId = parseInt($('#category').val());
+		let subCategoryId = parseInt($('#subCategory').val());
+
+		if (subCategoryId > 0)
+		{
+			categoryId = subCategoryId;
+		}
+
+		let url = FETCH_VENDOR_PRODUCTS + '/' + vendorId + '/' + categoryId; 
+
+		IEWebsite.Utils.AjaxGet(url, null, function(resp) {
+			if (resp.status)
+			{
+				$("#product").html('');
+
+				if (!_.isEmpty(resp.response))
+				{
+					$("#product").html('').append($("<option>").attr('value', '').text('Choose Product'));
+
+					_.each(resp.response, function(row)
+					{
+						$("#product").append($("<option>").attr('value', row.productId).text(row.productName));
+					});
+				}
+
+				$("#product").selectpicker("refresh");
+			}
+		})
+	};
+	
+	return {
+		Init: init
+	}
+})();
+
 IEWebsiteAdmin.CommonJs = (function() {
 	var init = function()
 	{
@@ -289,4 +497,6 @@ $(document).ready(function(){
 	IEWebsiteAdmin.ProductCreatePage.Init();
 	IEWebsiteAdmin.ProductManagePage.Init();
 	IEWebsiteAdmin.MapTaxToProduct.Init();
+	IEWebsiteAdmin.VendorPage.Init();
+	IEWebsiteAdmin.VendorProductsPage.Init();
 });

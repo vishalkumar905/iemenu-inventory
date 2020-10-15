@@ -48,4 +48,20 @@
 			</ul>
 		</div>
 	</li>
+	<li>
+		<a data-toggle="collapse" href="#vendorSideBar">
+			<i class="material-icons">style</i>
+			<p>Vendors<b class="caret"></b></p>
+		</a>
+		<div class="collapse" id="vendorSideBar">
+			<ul class="nav">
+				<li>
+					<a href="<?=base_url()?>backend/vendors">Manage Vendors</a>
+				</li>
+				<li>
+					<a href="<?=base_url()?>backend/vendorproducts">Map Vendor Products</a>
+				</li>
+			</ul>
+		</div>
+	</li>
 </ul>

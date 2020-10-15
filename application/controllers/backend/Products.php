@@ -204,9 +204,9 @@ class Products extends Backend_Controller
 		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
 		$data['viewFile'] = 'backend/products/index';
 		$data['updateId'] = $updateId;
-		$data['categories'] = $this->selectBoxCategories();
+		$data['categories'] = $this->category->getDropdownCategories();
 		$data['productTypes'] = $this->productTypes();
-		$data['subCategories'] = $this->selectBoxSubCategories($postedCategory);
+		$data['subCategories'] = $this->category->getDropdownSubCategories($postedCategory);
 		$data['baseUnits'] = $this->siunit->selectBoxBaseUnits();
 		$data['siUnits'] = $this->siunit->selectBoxSiUnits($postedBaseUnit);
 		$data['flashMessage'] = $this->session->flashdata('flashMessage');
@@ -516,42 +516,6 @@ class Products extends Backend_Controller
 		}
 
 		responseJson($status, $message, $response);
-	}
-
-	private function selectBoxCategories(): array
-	{
-		$categories = $this->category->getWhereCustom('*', ['parentId IS NULL' => NULL])->result_array();
-		$result = [];
-		
-		if (!empty($categories))
-		{
-			$result[''] = 'Choose category';
-
-			foreach ($categories as $category)
-			{
-				$result[$category['id']] = $category['categoryName'];
-			}			
-		}
-
-		return $result;
-	}
-
-	private function selectBoxSubCategories($categoryId): array
-	{
-		$categoryId = intval($categoryId) > 0 ? $categoryId : 0;
-		$subCategories = $this->category->getWhereCustom('*', ['parentId' => $categoryId])->result_array();
-		$result = [];
-
-		if (!empty($subCategories))
-		{
-			$result[''] = 'Choose sub category';
-			foreach ($subCategories as $subCategory)
-			{
-				$result[$subCategory['id']] = $subCategory['categoryName'];
-			}
-		}
-
-		return $result;
 	}
 
 	private function getParentCategoryId($categoryId)

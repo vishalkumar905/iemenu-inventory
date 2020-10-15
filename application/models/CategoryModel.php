@@ -129,6 +129,42 @@ class CategoryModel extends CI_Model
 
 		return 0;
 	}
+
+	public function getDropdownCategories(): array
+	{
+		$categories = $this->getWhereCustom('*', ['parentId IS NULL' => NULL])->result_array();
+		$result = [];
+		
+		if (!empty($categories))
+		{
+			$result[''] = 'Choose category';
+
+			foreach ($categories as $category)
+			{
+				$result[$category['id']] = $category['categoryName'];
+			}			
+		}
+
+		return $result;
+	}
+
+	public function getDropdownSubCategories($categoryId): array
+	{
+		$categoryId = intval($categoryId) > 0 ? $categoryId : 0;
+		$subCategories = $this->getWhereCustom('*', ['parentId' => $categoryId])->result_array();
+		$result = [];
+
+		if (!empty($subCategories))
+		{
+			$result[''] = 'Choose sub category';
+			foreach ($subCategories as $subCategory)
+			{
+				$result[$subCategory['id']] = $subCategory['categoryName'];
+			}
+		}
+
+		return $result;
+	}
 }
 
 ?>
