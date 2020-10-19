@@ -86,9 +86,16 @@ class Vendorproducts extends Backend_Controller
 
 		$limit = $this->input->post('length') > 0 ? $this->input->post('length') : 10;
 		$offset = $this->input->post('length') > 0 ? $this->input->post('start') : 0;
-		
-		$vendorProducts = $this->vendorproduct->getVendorProducts($limit, $offset)->result_array();
-		$totalRecords =  $this->vendorproduct->getAllVendorProductsCount();
+		$vendorId = intval($this->input->post('vendorId')) > 0 ? intval($this->input->post('vendorId')) : 0;
+		$condition = [];
+
+		if ($vendorId > 0)
+		{
+			$condition['vp.vendorId'] = $vendorId;
+		}
+
+		$vendorProducts = $this->vendorproduct->getVendorProducts($condition, $limit, $offset)->result_array();
+		$totalRecords =  $this->vendorproduct->getAllVendorProductsCount($condition);
 
 		$counter = $offset;
 		foreach($vendorProducts as &$vendor)

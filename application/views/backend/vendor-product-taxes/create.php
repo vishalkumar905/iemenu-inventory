@@ -13,6 +13,7 @@
 							'id' => 'vendor',
 							'class' => 'selectpicker',
 							'data-style' => 'select-with-transition select-box-horizontal', 
+							'data-live-search' => 'true'
 						];
 
 						$selectedVendor = !empty(set_value('vendor')) ? set_value('vendor') : '';

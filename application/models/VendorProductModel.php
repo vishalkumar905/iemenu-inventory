@@ -187,29 +187,33 @@ class VendorProductModel extends CI_Model
         // }
 	}
 
-	public function getVendorProducts($limit, $offset)
+	public function getVendorProducts($condition = null, $limit, $offset)
 	{
 		$this->getDatatableQuery();
 		$columns = ['vp.id as vendorProductId', 'p.productName', 'v.vendorName', 'v.vendorCode', 'vp.createdOn'];
 		$this->db->select($columns);
-		$this->getVendorProductsQuery();
+		$this->getVendorProductsQuery($condition);
 		$this->db->limit($limit, $offset);
 		$query = $this->db->get();
 		return $query;
 	}
 
-	private function getVendorProductsQuery()
+	private function getVendorProductsQuery($condition = null)
 	{
 		$this->db->from('ie_vendor_products vp');
 		$this->db->join('ie_vendors v', 'vp.vendorId = v.id', 'LEFT');
 		$this->db->join('ie_products p', 'p.id = vp.productId', 'LEFT');
+		if (!empty($condition))
+		{
+			$this->db->where($condition);
+		}
 	}
 
 
-	public function getAllVendorProductsCount(): int
+	public function getAllVendorProductsCount($condition = null): int
 	{
 		$this->getDatatableQuery();
-		$this->getVendorProductsQuery();
+		$this->getVendorProductsQuery($condition);
 		$query = $this->db->get();
 		return $query->num_rows();	
 	}
