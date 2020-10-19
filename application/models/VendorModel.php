@@ -202,9 +202,9 @@ class VendorModel extends CI_Model
 		return $query->num_rows();	
 	}
 
-	public function getDropdownVendors()
+	public function getDropdownVendors($condition = [])
 	{
-		$vendors = $this->getWhereCustom(['id', 'vendorName', 'vendorCode'], [])->result_array();
+		$vendors = $this->getWhereCustom(['id', 'vendorName', 'vendorCode'], $condition)->result_array();
 		$results = [];
 		if (!empty($vendors))
 		{

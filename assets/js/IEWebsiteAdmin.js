@@ -443,6 +443,124 @@ IEWebsiteAdmin.VendorProductsPage = (function() {
 	}
 })();
 
+IEWebsiteAdmin.VendorProductTaxPage = (function() {
+	var staticColumnCount = 2;
+
+	var init = function()
+	{
+		if ($("#vendorProductTaxPageContainer").length <= 0)
+		{
+			return 0;
+		};
+
+		$("#searchBar").on("keyup", _.debounce(loadVendorProducts, 500));
+
+
+		$("#vendor").change(function() {
+			$("#manageVendorProductTaxContainer").show();
+			loadVendorProducts();
+		});
+
+		$("#saveVendorProductTax").click(function() {
+			IEWebsite.Utils.ShowLoadingScreen();
+			
+			let vedorId = $("#vendor").val();
+			let productTaxData = $('#vendorProductTaxForm').serializeArray().reduce(function(obj, item) {
+				obj[item.name] = item.value;
+				return obj;
+			}, {});
+			
+			IEWebsite.Utils.AjaxPost(`${SAVE_VENDOR_PRODUCT_TAX_MAPPING}/${vedorId}`, productTaxData, function(resp) {
+				IEWebsite.Utils.HideLoadingScreen();
+				if (resp.status)
+				{
+					IEWebsite.Utils.Swal('Success', 'Vendor product tax mapping completed..', 'success');
+				}	
+			});
+
+		});
+	};
+
+	var loadVendorProducts = function() {
+		let searchText = $.trim($("#searchBar").val());
+		let vendorId = $("#vendor").val();
+
+		$("#vendorProductTableHeading, #vendorProductTableBody").html('');
+
+		if (vendorId > 0)
+		{
+			let data = {
+				search: searchText
+			};
+
+			IEWebsite.Utils.ShowLoadingScreen();
+
+			IEWebsite.Utils.AjaxGet(`${FETCH_VENDOR_PRODUCT_WITH_TAXES}/${vendorId}`, data , function(resp) {
+				IEWebsite.Utils.HideLoadingScreen();
+	
+				if (resp.status)
+				{
+					if (!_.isEmpty(resp.response.tableHeadColumns))
+					{
+						$("#vendorProductTableHeading, #vendorProductTableBody").html('');
+						$("#vendorProductWithTaxesData").show();
+						
+						let tableHeadColumns = '<tr>';
+						_.each(resp.response.tableHeadColumns, function(row) {
+							tableHeadColumns += '<th>'+ row +'</th>'
+						});
+						tableHeadColumns += '</tr>';
+	
+						$("#vendorProductTableHeading").html(tableHeadColumns);
+						
+						showTableData(resp.response.data);
+
+						if (_.isEmpty(resp.response.data))
+						{
+							$("#vendorProductTableBody").append('<tr><td align="center" colspan="'+ resp.response.tableHeadColumns.length +'">No Record Found.</td></tr>');
+						}
+					}
+				}
+			});
+		}
+
+	}
+
+	var showTableData = function(data) {
+		if (!_.isEmpty(data))
+		{
+			_.each(data, function(row) {
+				let rowCount = Object.keys(row).length - staticColumnCount;
+				let tableRow = '<tr>';
+
+				tableRow += '<td>'+ row.sn +'</td>';
+				tableRow += '<td>'+ row.productName +'</td>';
+				
+				for(i = 0; i < rowCount; i++)
+				{
+					tableRow += '<td>'+ row[i] +'</td>';
+				}
+
+				tableRow += '</tr>';
+
+				$("#vendorProductTableBody").append(tableRow);
+			});
+
+			$('[id^=taxHead-]').click(function() {
+				let taxId = parseInt($(this).attr('taxid'));
+				if (taxId > 0)
+				{
+					$('[id^=taxRow-'+ taxId + '-Product-]').prop('checked', this.checked);
+				}
+			});
+		}
+	};
+	
+	return {
+		Init: init
+	}
+})();
+
 IEWebsiteAdmin.CommonJs = (function() {
 	var init = function()
 	{
@@ -499,4 +617,5 @@ $(document).ready(function(){
 	IEWebsiteAdmin.MapTaxToProduct.Init();
 	IEWebsiteAdmin.VendorPage.Init();
 	IEWebsiteAdmin.VendorProductsPage.Init();
+	IEWebsiteAdmin.VendorProductTaxPage.Init();
 });

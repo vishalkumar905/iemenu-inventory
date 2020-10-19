@@ -61,6 +61,9 @@
 				<li>
 					<a href="<?=base_url()?>backend/vendorproducts">Vendor Products</a>
 				</li>
+				<li>
+					<a href="<?=base_url()?>backend/vendorproducttaxes">Vendor Product Taxes</a>
+				</li>
 			</ul>
 		</div>
 	</li>

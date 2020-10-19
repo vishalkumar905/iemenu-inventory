@@ -1,9 +1,10 @@
 <?php
 
-class TaxModel extends CI_Model
+class VendorProductTaxModel extends CI_Model
 {
-	private $tableName = 'ie_taxes';
+	private $tableName = 'ie_vendor_product_taxes';
 	private $primaryKey = 'id';
+    private $columnSearch = array('vendorCode', 'vendorName', 'vendorEmail'); //set column field database for datatable searchable 
 	
 	public function __construct()
 	{
@@ -44,7 +45,7 @@ class TaxModel extends CI_Model
 		{
 			$this->db->where($condition);
 		}
-				
+		
 		if (!empty($orderBy['field']) && !empty($orderBy['type']))
 		{
 			$this->db->order_by($orderBy['field'], $orderBy['type']);
@@ -127,18 +128,18 @@ class TaxModel extends CI_Model
 		return $query;
 	}
 
-	public function getTaxes($limit, $offset)
+	public function getProducts($limit, $offset)
 	{
 		$this->getDatatableQuery();
 		$this->db->limit($limit, $offset);
-		$query=$this->db->get();
+		$query = $this->db->get();
 		return $query;
 	}
 
-	public function getAllTaxesCount()
+	public function getAllProductsCount()
 	{
 		$this->getDatatableQuery();
-		$query=$this->db->get();
+		$query = $this->db->get();
 		return $query->num_rows();
 	}
 
@@ -147,25 +148,24 @@ class TaxModel extends CI_Model
 		$searchText = $this->input->post('search');
 		$orderBy = $this->input->post('order');
 		
-		$columnSearch = array('tax' => 't.taxName', 'productName' => 'p.productName'); 
-		
+		$this->columnSearch = ['p.productName' => 'productName', 'v.vendorName' => 'vendorName', 'v.vendorCode' => 'vendorCode'];
 		$i = 0;
 
 		if (!empty($searchText['value']))
 		{
-			foreach ($columnSearch as $itemKey => $itemValue) // loop column 
+			foreach ($this->columnSearch as $itemKey => $itemValue) // loop column 
 			{
 				if($i === 0)
 				{
 					$this->db->group_start();
-					$this->db->like($itemValue, $searchText['value']);
+					$this->db->like($itemKey, $searchText['value']);
 				}
 				else
 				{
-					$this->db->or_like($itemValue, $searchText['value']);
+					$this->db->or_like($itemKey, $searchText['value']);
 				}
 	
-				if(count($columnSearch) - 1 == $i)
+				if(count($this->columnSearch) - 1 == $i)
 				{
 					$this->db->group_end(); //close bracket
 				}
@@ -174,7 +174,7 @@ class TaxModel extends CI_Model
 			}	
 		}
 
-		$this->db->order_by('id', 'desc');
+		$this->db->order_by('vp.id', 'desc');
 		// Not Need
         // if(!empty($orderBy))
         // {
@@ -185,6 +185,48 @@ class TaxModel extends CI_Model
         //     $order = $this->order;
         //     $this->db->order_by(key($order), $order[key($order)]);
         // }
+	}
+
+	public function getVendorProducts($limit, $offset)
+	{
+		$this->getDatatableQuery();
+		$columns = ['vp.id as vendorProductId', 'p.productName', 'v.vendorName', 'v.vendorCode', 'vp.createdOn'];
+		$this->db->select($columns);
+		$this->getVendorProductsQuery();
+		$this->db->limit($limit, $offset);
+		$query = $this->db->get();
+		return $query;
+	}
+
+	private function getVendorProductsQuery()
+	{
+		$this->db->from('ie_vendor_products vp');
+		$this->db->join('ie_vendors v', 'vp.vendorId = v.id', 'LEFT');
+		$this->db->join('ie_products p', 'p.id = vp.productId', 'LEFT');
+	}
+
+
+	public function getAllVendorProductsCount(): int
+	{
+		$this->getDatatableQuery();
+		$this->getVendorProductsQuery();
+		$query = $this->db->get();
+		return $query->num_rows();	
+	}
+
+	public function getVendorProductForMapping($vendorId, $column = '*', $condition = null)
+	{
+		$this->db->select($column);
+		$this->db->from('ie_products p');
+		$this->db->join('ie_vendor_products vp', sprintf('vp.productId = p.id AND vp.vendorId = %s', $vendorId), 'LEFT');
+	
+		if (!empty($condition))
+		{
+			$this->db->where($condition);
+		}
+
+		$results = $this->db->get();
+		return $results;
 	}
 }
 

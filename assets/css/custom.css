@@ -126,3 +126,17 @@
 .displaynone {
 	display: none;
 }
+
+.custom-table thead tr th, .custom-table tbody tr td {
+    padding: 10px 8px !important;
+    border: 1px solid #ddd !important;
+}
+
+.custom-checkbox label {
+    color: inherit;
+    vertical-align: middle;
+}
+
+.custom-checkbox label > input[type='checkbox'] {
+    margin: 4px 6px;
+}

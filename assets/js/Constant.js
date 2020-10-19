@@ -6,3 +6,5 @@ const FETCH_VENDORS = BASE_URL + 'backend/vendors/fetchVendors';
 const FETCH_VENDOR_PRODUCTS = BASE_URL + 'backend/vendorproducts/fetchVendorProductsForMapping';
 const FETCH_ASSIGNED_VENDOR_PRODUCTS = BASE_URL + 'backend/vendorproducts/fetchVendorAssignedProducts';
 const REMOVE_ASSIGNED_VENDOR_PRODUCT = BASE_URL + 'backend/vendorproducts/removeVendorAssignedProduct';
+const FETCH_VENDOR_PRODUCT_WITH_TAXES = BASE_URL + 'backend/Vendorproducttaxes/fetchVendorAssignedProductWithTaxes';
+const SAVE_VENDOR_PRODUCT_TAX_MAPPING = BASE_URL + 'backend/Vendorproducttaxes/saveVendorProductTaxMapping';

@@ -106,6 +106,7 @@
 									if ($updateId > 0)
 									{
 										$extra['disabled'] = true;
+										echo form_hidden('baseUnit', $baseUnit);
 									}
 
 									$selectedBaseUnit = !empty(set_value('baseUnit')) ? set_value('baseUnit') : (isset($baseUnit) ? $baseUnit : '');
@@ -122,6 +123,13 @@
 										'data-style' => 'select-with-transition select-box-horizontal', 
 										'data-live-search' => 'true',
 									];
+
+									if ($updateId > 0)
+									{
+										$extra['disabled'] = true;
+										echo form_hidden('siUnit', $siUnit);
+									}
+
 
 									$selectedSiUnit = !empty(set_value('siUnit')) ? set_value('siUnit') : (isset($siUnit) ? $siUnit : '--');
 									echo form_multiselect('siUnit[]', $siUnits, $selectedSiUnit, $extra);
