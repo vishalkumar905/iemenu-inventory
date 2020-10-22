@@ -140,3 +140,7 @@
 .custom-checkbox label > input[type='checkbox'] {
     margin: 4px 6px;
 }
+
+.cursor-pointer {
+    cursor: pointer;
+}
