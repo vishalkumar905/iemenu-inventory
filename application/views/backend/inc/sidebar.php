@@ -67,4 +67,23 @@
 			</ul>
 		</div>
 	</li>
+	<li>
+		<a data-toggle="collapse" href="#openingInventorySideBar">
+			<i class="material-icons">assessment</i>
+			<p>Transaction<b class="caret"></b></p>
+		</a>
+		<div class="collapse" id="openingInventorySideBar">
+			<ul class="nav">
+				<li>
+					<a href="<?=base_url()?>backend/openinginventory">Opening Inventory</a>
+				</li>
+				<!-- <li>
+					<a href="<?=base_url()?>backend/vendorproducts">Vendor Products</a>
+				</li>
+				<li>
+					<a href="<?=base_url()?>backend/vendorproducttaxes">Vendor Product Taxes</a>
+				</li> -->
+			</ul>
+		</div>
+	</li>
 </ul>

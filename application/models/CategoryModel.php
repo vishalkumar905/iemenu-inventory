@@ -165,6 +165,23 @@ class CategoryModel extends CI_Model
 
 		return $result;
 	}
+
+	public function getAllDropdownSubCategories(): array
+	{
+		$subCategories = $this->getWhereCustom('*', ['parentId > 0'  => NULL])->result_array();
+		$result = [];
+
+		if (!empty($subCategories))
+		{
+			$result[''] = 'Choose category';
+			foreach ($subCategories as $subCategory)
+			{
+				$result[$subCategory['id']] = $subCategory['categoryName'];
+			}
+		}
+
+		return $result;
+	}
 }
 
 ?>

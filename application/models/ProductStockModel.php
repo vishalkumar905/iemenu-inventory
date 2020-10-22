@@ -1,10 +1,10 @@
 <?php
 
-class ProductModel extends CI_Model
+class ProductStockModel extends CI_Model
 {
-	private $tableName = 'ie_products';
+	private $tableName = 'ie_product_stocks';
 	private $primaryKey = 'id';
-    private $columnSearch = array('productCode', 'productName'); //set column field database for datatable searchable 
+    private $columnSearch = array(''); //set column field database for datatable searchable 
 	
 	public function __construct()
 	{
@@ -38,90 +38,17 @@ class ProductModel extends CI_Model
 		return $query;
 	}
 	
-	public function getWhereCustom($columns = '*', $condition = null, $orderBy = null, $whereIn = null, $like = null, $limit = null, $offset = null)
+	public function getWhereCustom($columns = '*', $condition, $orderBy = null)
 	{
 		$this->db->select($columns);
-		
 		if (!empty($condition))
 		{
 			$this->db->where($condition);
 		}
 		
-		if (!empty($whereIn['field']) && !empty($whereIn['values']))
-		{
-			$this->db->where_in($whereIn['field'], $whereIn['values']);
-		}
-		
-		if (!empty($like['fields']) && !empty($like['search']) && !empty($like['side']) && is_array($like['fields']))
-		{
-			foreach ($like['fields'] as $key => $field)
-			{
-				if ($key == 0) 
-				{
-					$this->db->group_start();
-					$this->db->like($field, $like['search'], $like['side']);
-				}
-				else
-				{
-					$this->db->or_like($field, $like['search'], $like['side']);
-				}
-
-				
-				if (($key + 1) == count($like['fields']))
-				{
-					$this->db->group_end();
-				}
-			}
-		}
-
 		if (!empty($orderBy['field']) && !empty($orderBy['type']))
 		{
 			$this->db->order_by($orderBy['field'], $orderBy['type']);
-		}
-
-		if ($limit > 0 && $offset >= 0)
-		{
-			$this->db->limit($limit, $offset);
-		}
-
-		$query = $this->db->get($this->tableName);
-		return $query;
-	}
-
-	public function getWhereCustomCount($condition = null, $whereIn = null, $like = null)
-	{
-		$this->db->select(['count(id) as totalCount']);
-		
-		if (!empty($condition))
-		{
-			$this->db->where($condition);
-		}
-		
-		if (!empty($whereIn['field']) && !empty($whereIn['values']))
-		{
-			$this->db->where_in($whereIn['field'], $whereIn['values']);
-		}
-		
-		if (!empty($like['fields']) && !empty($like['search']) && !empty($like['side']) && is_array($like['fields']))
-		{
-			foreach ($like['fields'] as $key => $field)
-			{
-				if ($key == 0) 
-				{
-					$this->db->group_start();
-					$this->db->like($field, $like['search'], $like['side']);
-				}
-				else
-				{
-					$this->db->or_like($field, $like['search'], $like['side']);
-				}
-
-				
-				if (($key + 1) == count($like['fields']))
-				{
-					$this->db->group_end();
-				}
-			}
 		}
 
 		$query = $this->db->get($this->tableName);
@@ -205,14 +132,14 @@ class ProductModel extends CI_Model
 	{
 		$this->getDatatableQuery();
 		$this->db->limit($limit, $offset);
-		$query=$this->db->get();
+		$query = $this->db->get();
 		return $query;
 	}
 
 	public function getAllProductsCount()
 	{
 		$this->getDatatableQuery();
-		$query=$this->db->get();
+		$query = $this->db->get();
 		return $query->num_rows();
 	}
 
@@ -220,22 +147,22 @@ class ProductModel extends CI_Model
     {
 		$searchText = $this->input->post('search');
 		$orderBy = $this->input->post('order');
-        $this->db->from($this->tableName);
 		
+		$this->columnSearch = ['p.productName' => 'productName', 'v.vendorName' => 'vendorName', 'v.vendorCode' => 'vendorCode'];
 		$i = 0;
 
 		if (!empty($searchText['value']))
 		{
-			foreach ($this->columnSearch as $item) // loop column 
+			foreach ($this->columnSearch as $itemKey => $itemValue) // loop column 
 			{
 				if($i === 0)
 				{
 					$this->db->group_start();
-					$this->db->like($item, $searchText['value']);
+					$this->db->like($itemKey, $searchText['value']);
 				}
 				else
 				{
-					$this->db->or_like($item, $searchText['value']);
+					$this->db->or_like($itemKey, $searchText['value']);
 				}
 	
 				if(count($this->columnSearch) - 1 == $i)
@@ -247,7 +174,7 @@ class ProductModel extends CI_Model
 			}	
 		}
 
-		$this->db->order_by('id', 'desc');
+		$this->db->order_by('vp.id', 'desc');
 		// Not Need
         // if(!empty($orderBy))
         // {
@@ -258,6 +185,48 @@ class ProductModel extends CI_Model
         //     $order = $this->order;
         //     $this->db->order_by(key($order), $order[key($order)]);
         // }
+	}
+
+	public function getVendorProducts($limit, $offset)
+	{
+		$this->getDatatableQuery();
+		$columns = ['vp.id as vendorProductId', 'p.productName', 'v.vendorName', 'v.vendorCode', 'vp.createdOn'];
+		$this->db->select($columns);
+		$this->getVendorProductsQuery();
+		$this->db->limit($limit, $offset);
+		$query = $this->db->get();
+		return $query;
+	}
+
+	private function getVendorProductsQuery()
+	{
+		$this->db->from('ie_vendor_products vp');
+		$this->db->join('ie_vendors v', 'vp.vendorId = v.id', 'LEFT');
+		$this->db->join('ie_products p', 'p.id = vp.productId', 'LEFT');
+	}
+
+
+	public function getAllVendorProductsCount(): int
+	{
+		$this->getDatatableQuery();
+		$this->getVendorProductsQuery();
+		$query = $this->db->get();
+		return $query->num_rows();	
+	}
+
+	public function getVendorProductForMapping($vendorId, $column = '*', $condition = null)
+	{
+		$this->db->select($column);
+		$this->db->from('ie_products p');
+		$this->db->join('ie_vendor_products vp', sprintf('vp.productId = p.id AND vp.vendorId = %s', $vendorId), 'LEFT');
+	
+		if (!empty($condition))
+		{
+			$this->db->where($condition);
+		}
+
+		$results = $this->db->get();
+		return $results;
 	}
 }
 

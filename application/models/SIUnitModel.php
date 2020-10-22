@@ -37,10 +37,19 @@ class SIUnitModel extends CI_Model
 		return $query;
 	}
 	
-	public function getWhereCustom($columns = '*', $condition, $orderBy = null)
+	public function getWhereCustom($columns = '*', $condition = null, $orderBy = null, $whereIn = null)
 	{
 		$this->db->select($columns);
-		$this->db->where($condition);
+		
+		if (!empty($condition))
+		{
+			$this->db->where($condition);
+		}
+		
+		if (!empty($whereIn['field']) && !empty($whereIn['values']))
+		{
+			$this->db->where_in($whereIn['field'], $whereIn['values']);
+		}
 		
 		if (!empty($orderBy['field']) && !empty($orderBy['type']))
 		{

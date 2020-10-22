@@ -1,6 +1,6 @@
 <?php
 
-class vendorproducttaxes extends Backend_Controller
+class Vendorproducttaxes extends Backend_Controller
 {
 	public $exportUrl;
 

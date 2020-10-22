@@ -102,7 +102,9 @@ define('DISABLE', -1);
 define('DELETED', 0);
 define('INACTIVE', -2);
 
-define ("USER", 1);
-define ("USER_VENDOR", 2);
-define ("ADMIN", 3);
-define ("SUPER_ADMIN", 4);
+define("USER", 1);
+define("USER_VENDOR", 2);
+define("ADMIN", 3);
+define("SUPER_ADMIN", 4);
+
+define('OPENING_STOCK_SHORT_NAME', 'OS');
