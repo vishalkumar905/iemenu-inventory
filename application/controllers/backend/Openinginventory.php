@@ -35,12 +35,49 @@ class Openinginventory extends Backend_Controller
 		$this->load->view($this->template, $data);
 	}
 
+	public function save()
+	{
+		if (!$this->input->is_ajax_request()) {
+			exit('No direct script access allowed');
+		}
+
+		$post = $this->input->post();
+		
+		if (!empty($post))
+		{
+			$insertData = [];
+			foreach($post as $productId => $row)
+			{
+				if ($row['qty'] > 0 && $row['unitPrice'] > 0)
+				{
+					$insertData[] = [
+						'productId' => $productId,
+						'productSiUnitId' => $row['unit'],
+						'productUnitPrice' => $row['unitPrice'],
+						'productQuantity' => $row['qty'],
+						'productSubtotal' => $row['qty'] * $row['unitPrice'],
+						'comment' => $row['comment'],
+						'openingStockNumber' => $this->getOpeningStockNumber(),
+						'createdOn' => time(),
+					];
+				}
+			}
+
+			if (!empty($insertData))
+			{
+				$this->productstock->insertBatch($insertData);
+			}
+		}
+
+		responseJson(true, null, []);
+	}
+
 	public function getOpeningStockNumber()
 	{
-		$columns = ['MAX(openingStockNumber) as openingStockNumber' => null];
+		$columns = ['MAX(openingStockNumber) as openingStockNumber'];
 		$result = $this->productstock->getWhereCustom($columns, [])->result_array();
 
-		if (!empty($results))
+		if (!empty($result))
 		{
 			return $result[0]['openingStockNumber'] + 1;
 		}
@@ -52,6 +89,10 @@ class Openinginventory extends Backend_Controller
 
 	public function fetchProducts()
 	{
+		if (!$this->input->is_ajax_request()) {
+			exit('No direct script access allowed');
+		}
+
 		$search = trim($this->input->post('search'));
 		$category = $this->input->post('category');
 		$productType = $this->input->post('productType');

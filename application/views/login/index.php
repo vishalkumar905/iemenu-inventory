@@ -55,31 +55,4 @@
         </div>
     </div>
 </body>
-<script>
-    var BASE_URL = '<?=base_url()?>';
-    var BACKEND_BASE_URL = BASE_URL + 'backend';
-    var EXPORT_URL = "<?=isset($this->exportUrl) ? $this->exportUrl : ''?>";
-</script>
-
-<script src="<?=base_url()?>assets/js/jquery-3.1.1.min.js" type="text/javascript"></script>
-<script src="<?=base_url()?>assets/js/jquery-ui.min.js" type="text/javascript"></script>
-<script src="<?=base_url()?>assets/js/bootstrap.min.js" type="text/javascript"></script>
-<script src="<?=base_url()?>assets/js/material.min.js" type="text/javascript"></script>
-<script src="<?=base_url()?>assets/js/perfect-scrollbar.jquery.min.js" type="text/javascript"></script>
-<script src="<?=base_url()?>assets/js/jquery.validate.min.js" type="text/javascript"></script>
-<script src="<?=base_url()?>assets/js/sweetalert2.js" type="text/javascript"></script>
-<?php
-if (isset($footerJs) && !empty($footerJs))
-{
-    foreach($footerJs as $javascript)
-    {
-        echo sprintf("<script src='%s%s'></script>", base_url(), $javascript);
-    }
-}
-?>
-<script src="<?=base_url()?>assets/js/Constant.js" type="text/javascript"></script>
-<script src="<?=base_url()?>assets/js/Lodash.js" type="text/javascript"></script>
-<script src="<?=base_url()?>assets/js/IEWebsite.js" type="text/javascript"></script>
-<script src="<?=base_url()?>assets/js/IEWebsiteAdmin.js" type="text/javascript"></script>
-</html>
 </html>

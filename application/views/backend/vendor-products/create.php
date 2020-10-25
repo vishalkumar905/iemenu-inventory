@@ -65,7 +65,7 @@
 
 				<div class="form-group label-floating">
 					<label class="">Product*</label>
-					<select class="selectpicker" id="product" data-live-search = 'true' name="product" data-style="select-with-transition select-box-horizontal">
+					<select class="selectpicker" id="product" data-live-search = 'true' multiple name="product[]" data-style="select-with-transition select-box-horizontal">
 						<option>Choose Product</option>
 					</select>
 					<?=form_error('product');?>

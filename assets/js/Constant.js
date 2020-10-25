@@ -9,3 +9,4 @@ const REMOVE_ASSIGNED_VENDOR_PRODUCT = BASE_URL + 'backend/vendorproducts/remove
 const FETCH_VENDOR_PRODUCT_WITH_TAXES = BASE_URL + 'backend/Vendorproducttaxes/fetchVendorAssignedProductWithTaxes';
 const SAVE_VENDOR_PRODUCT_TAX_MAPPING = BASE_URL + 'backend/Vendorproducttaxes/saveVendorProductTaxMapping';
 const FETCH_OPENING_INVETORY_PRODUCTS = BASE_URL + 'backend/openinginventory/fetchProducts';
+const SAVE_OPENING_INVETORY_PRODUCTS = BASE_URL + 'backend/openinginventory/save';

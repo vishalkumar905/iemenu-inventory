@@ -107,7 +107,7 @@ if (isset($footerJs) && !empty($footerJs))
 }
 ?>
 <script src="<?=base_url()?>assets/js/Constant.js" type="text/javascript"></script>
-<script src="<?=base_url()?>assets/js/Lodash.js" type="text/javascript"></script>
+<script src="<?=base_url()?>assets/js/lodash.min.js" type="text/javascript"></script>
 <script src="<?=base_url()?>assets/js/IEWebsite.js" type="text/javascript"></script>
 <script src="<?=base_url()?>assets/js/IEWebsiteAdmin.js" type="text/javascript"></script>
 </html>

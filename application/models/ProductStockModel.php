@@ -67,6 +67,18 @@ class ProductStockModel extends CI_Model
 			return false;
 		}
 	}
+
+	public function insertBatch($data)
+	{
+		if($this->db->insert_batch($this->tableName, $data))
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 	
 	public function update($id, $data)
 	{

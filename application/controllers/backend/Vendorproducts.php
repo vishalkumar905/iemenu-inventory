@@ -34,24 +34,32 @@ class Vendorproducts extends Backend_Controller
 		{
 			$this->form_validation->set_rules('category', 'categroy', 'trim|required');
 			$this->form_validation->set_rules('vendor', 'vendor', 'trim|required');
-			$this->form_validation->set_rules('product', 'product', 'trim|required');
+			$this->form_validation->set_rules('product[]', 'product', 'trim|required');
 			$this->form_validation->set_error_delimiters('<p class="text-danger">', '</p>');
 
 			if ($this->form_validation->run())
 			{
+				$products = $this->input->post('product[]');
+
 				$insertData = [
-					'vendorId' => $this->input->post('vendor'),
-					'productId' => $this->input->post('product'),
+					'vendorId' => $this->input->post('vendor')
 				];
 
 				$flashMessage = 'Something went wrong.';
 				$flashMessageType = 'danger';
 				
-				if ($this->vendorproduct->insert($insertData))
+				if (!empty($products))
 				{
+					foreach($products as $productId)
+					{
+						$insertData['productId'] = $productId;
+						$this->vendorproduct->insert($insertData);
+					}
+
 					$flashMessage = 'Product has successfully been assigned to vendor';
 					$flashMessageType = 'success';
 				}
+
 
 				$redirectUrl = base_url() . 'backend/vendorproducts';
 

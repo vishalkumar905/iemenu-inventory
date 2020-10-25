@@ -35,10 +35,11 @@ class Vendorproducttaxes extends Backend_Controller
 
 	public function fetchVendorAssignedProductWithTaxes($vendorId)
 	{
+		$results = ["data" => []];
+
 		if ($vendorId > 0)
 		{
 	
-			$results = ["data" => []];
 			$limit = intval($this->input->get('limit')) ? $this->input->get('limit') : 10;
 			$offset = intval($this->input->get('offset')) ? $this->input->get('offset') : 0;
 			$search = trim($this->input->get('search'));
@@ -52,7 +53,7 @@ class Vendorproducttaxes extends Backend_Controller
 			];
 
 			$vendorTaxAssignedProducts = $this->getVendorTaxAssignedProducts($vendorId);
-	
+
 			foreach ($allTaxes as $tax)
 			{
 				$checkboxInput = sprintf('<div class="custom-checkbox">
@@ -60,8 +61,6 @@ class Vendorproducttaxes extends Backend_Controller
 				</div>', $tax['id'], $tax['id'], $tax['id'], $tax['taxName'], $tax['taxPercentage']);
 				
 				$tabelHeadColumns[] = $checkboxInput;
-	
-				unset($tax);
 			}
 	
 			$results['tableHeadColumns'] = $tabelHeadColumns;
@@ -78,7 +77,8 @@ class Vendorproducttaxes extends Backend_Controller
 	
 				foreach ($allTaxes as $tax)
 				{
-					$hasTax = $this->checkProdductHasAssignedTax($tax['id'], $vendorTaxAssignedProducts) ? 'checked' : '';
+					$hasTax = $this->checkProdductHasAssignedTax($vendorTaxAssignedProducts, $vendorProduct['vendorProductId'],  $tax['id']) ? 'checked' : '';
+
 					$checkboxInput = sprintf('<div class="custom-checkbox">
 						<label><input type="checkbox" %s id="taxRow-%s-Product-%s" name="tax[%s][%s]" value="1"></label>
 					</div>', $hasTax, $tax['id'], $vendorProduct['vendorProductId'], $tax['id'], $vendorProduct['vendorProductId']);
@@ -95,18 +95,26 @@ class Vendorproducttaxes extends Backend_Controller
 
 	public function getVendorTaxAssignedProducts($vendorId)
 	{
-		return $this->vendorproducttax->getWhereCustom('*', ['vendorId'])->result_array();
+		return $this->vendorproducttax->getWhereCustom('*', ['vendorId' => $vendorId])->result_array();
 	}
 
-	private function checkProdductHasAssignedTax($taxId, $data)
+	private function checkProdductHasAssignedTax($products, $productId, $taxId)
 	{
-		if (!empty($data))
+		if (!empty($products))
 		{
-			foreach($data as $row)
+			foreach($products as $product)
 			{
-				if ($row['taxId'] == $taxId)
+				if ($product['productId'] == $productId)
 				{
-					return true;
+					$productTaxes = unserialize($product['tax']);
+					
+					foreach($productTaxes as $appliedTaxId)
+					{
+						if ($appliedTaxId == $taxId)
+						{
+							return true;
+						}
+					}
 				}
 			}
 		}
@@ -136,46 +144,63 @@ class Vendorproducttaxes extends Backend_Controller
 
 	public function saveVendorProductTaxMapping($vendorId)
 	{
+		if (!$this->input->is_ajax_request()) {
+			exit('No direct script access allowed');
+		}
+		
 		$productTaxData = $this->input->post('tax');
 
 		if (!empty($productTaxData))
 		{
 			$insertData = [];
-
+		
 			foreach ($productTaxData as $taxId => $productTax)
 			{
-				$data = [
-					'vendorId' => $vendorId,
-					'taxId' => $taxId,
-				];
-
 				if (!empty($productTax))
 				{
 					foreach($productTax as $productId => $taxValue)
 					{
-						$data['productId'] = $productId;
-
-						$insertData[] = $data;
+						$insertData[$productId]['vendorId'] = $vendorId;
+						
+						if (!isset($insertData[$productId]['tax']))
+						{
+							$insertData[$productId]['tax'][] = $taxId;
+						}
+						else
+						{
+							$productTax = $insertData[$productId]['tax'];
+							if (!in_array($taxId, $productTax))
+							{
+								$insertData[$productId]['tax'][] = $taxId;
+							}
+						}
 					}
 				}
 			}
-
+			
 			if (!empty($insertData))
 			{
-				foreach($insertData as $insert)
+				foreach($insertData as $productId => $row)
 				{
-					$condition = [
-						'vendorId' => $insert['vendorId'],
-						'taxId' => $insert['taxId'],
-						'productId' => $insert['productId'],
+					$insertTaxData = [
+						'vendorId' => $row['vendorId'],
+						'productId' => $productId,
+						'tax' => serialize($row['tax'])
 					];
 
+					$condition = ['vendorId' => $row['vendorId'], 'productId' => $productId];
+
 					$vendorProductTax = $this->vendorproducttax->getWhereCustom(['id'], $condition)->result_array();
+
 					if (empty($vendorProductTax))
 					{
-						$this->vendorproducttax->insert($condition);
+						$this->vendorproducttax->insert($insertTaxData);
 					}
-
+					else
+					{
+						$updateData  = ['tax' => $insertTaxData['tax']];
+						$this->vendorproducttax->updateWithCustom($updateData, $condition);
+					}
 				}
 			}
 		}

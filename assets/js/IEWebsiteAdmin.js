@@ -568,8 +568,14 @@ IEWebsiteAdmin.VendorProductTaxPage = (function() {
 				let taxId = parseInt($(this).attr('taxid'));
 				if (taxId > 0)
 				{
+					$('[id^=taxRow-'+ taxId + '-Product-]').removeAttr("checked");
 					$('[id^=taxRow-'+ taxId + '-Product-]').prop('checked', this.checked);
 				}
+			});
+
+			$('[id^=taxRow-]').click(function() {
+				$(this).removeAttr("checked");
+
 			});
 		}
 	};
@@ -606,20 +612,17 @@ IEWebsiteAdmin.OpeningStockPage = (function() {
 				return false;
 			}
 
-			let vedorId = $("#vendor").val();
-			let productTaxData = $('#vendorProductTaxForm').serializeArray().reduce(function(obj, item) {
-				obj[item.name] = item.value;
-				return obj;
-			}, {});
-
-			if (!_.isEmpty(productTaxData))
+			if (!_.isEmpty(openingStocksData))
 			{
 				IEWebsite.Utils.ShowLoadingScreen();
-				IEWebsite.Utils.AjaxPost(`${SAVE_VENDOR_PRODUCT_TAX_MAPPING}/${vedorId}`, productTaxData, function(resp) {
+				IEWebsite.Utils.AjaxPost(SAVE_OPENING_INVETORY_PRODUCTS, openingStocksData, function(resp) {
 					IEWebsite.Utils.HideLoadingScreen();
 					if (resp.status)
 					{
-						IEWebsite.Utils.Swal('Success', 'Vendor product tax mapping completed..', 'success');
+						IEWebsite.Utils.Swal('Success', 'Opening Inventory Created Successfully..', 'success');
+						window.setTimeout(function() {
+							window.location.reload();
+						}, 5000);
 					}
 				});
 			}
@@ -747,6 +750,7 @@ IEWebsiteAdmin.OpeningStockPage = (function() {
 
 			$("input[name^='product[qty]']").change(calulateSubtotal);
 			$("input[name^='product[unitPrice]']").keyup(calulateSubtotal);
+			$("input[name^='product[comment]']").keyup(calulateSubtotal);
 		}
 	};
 	
@@ -756,7 +760,7 @@ IEWebsiteAdmin.OpeningStockPage = (function() {
 		let qty = Number($("input[name='product[qty]["+ productId +"]']").val());
 		let unitPrice = Number($("input[name='product[unitPrice]["+ productId +"]']").val());
 		let unit = Number($("select[name='product[unit]["+ productId +"]']").val());
-		let comment = Number($("input[name='product[comment]["+ productId +"]']").val());
+		let comment = $("input[name='product[comment]["+ productId +"]']").val();
 
 		openingStocksData[productId] = {
 			qty,
@@ -764,8 +768,6 @@ IEWebsiteAdmin.OpeningStockPage = (function() {
 			unit,
 			comment
 		};
-
-		console.log({openingStocksData});
 
 		if (productId > 0)
 		{
