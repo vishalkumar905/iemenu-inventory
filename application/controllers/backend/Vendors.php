@@ -36,8 +36,8 @@ class Vendors extends Backend_Controller
 
 			$data = $data[0];
 
-			$data['contractDateFrom'] = Date('d/m/Y', strtotime($data['contractDateFrom']));
-			$data['contractDateTo'] = Date('d/m/Y', strtotime($data['contractDateTo']));
+			$data['contractDateFrom'] = Date('Y-m-d', $data['contractDateFrom']);
+			$data['contractDateTo'] = Date('Y-m-d', $data['contractDateTo']);
 
 			$data['submitBtn'] = 'Update';
 			$data['headTitle']  = 'Update Vendor Information';
@@ -53,7 +53,7 @@ class Vendors extends Backend_Controller
 		if ($submit == 'Save' || $submit == 'Update')
 		{
 			$this->form_validation->set_rules('vendorName', 'vendor name', 'trim|required');
-			$this->form_validation->set_rules('vendorCode', 'vendor code', 'trim|required');
+			$this->form_validation->set_rules('vendorCode', 'vendor code', 'trim|required|callback_vendorcode_unique');
 			$this->form_validation->set_rules('vendorContact', 'vendor contact', 'trim|required');
 			$this->form_validation->set_rules('vendorEmail', 'vendor email', 'trim|required');
 			$this->form_validation->set_rules('gstNumber', 'gst', 'trim|required');
@@ -123,6 +123,28 @@ class Vendors extends Backend_Controller
 		$data['flashMessageType'] = $this->session->flashdata('flashMessageType');
 
 		$this->load->view($this->template, $data);
+	}
+
+	public function vendorcode_unique()
+	{
+		$updateId = intval($this->uri->segment(4));
+		$vendorCode = $this->input->post('vendorCode');
+
+		$condition =  ['vendorCode' => $vendorCode];
+		if ($updateId > 0)
+		{
+			$condition['id != ' . $updateId ] = null;
+		}
+
+		$vendorCode = $this->vendor->getWhereCustom('vendorCode', $condition)->result_array();
+
+		if (!empty($vendorCode))
+		{
+			$this->form_validation->set_message('vendorcode_unique', 'The Product code is already exists');
+            return false;
+		}
+
+		return true;
 	}
 
 	public function validate_contract()

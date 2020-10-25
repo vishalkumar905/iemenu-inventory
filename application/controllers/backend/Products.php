@@ -78,9 +78,9 @@ class Products extends Backend_Controller
 
 		if ($submit == 'Save' || $submit == 'Update')
 		{
-			$this->form_validation->set_rules('productName', 'Product name', 'required');
-			$this->form_validation->set_rules('productCode', 'Product code', 'required');
-			$this->form_validation->set_rules('productType', 'Product type', 'required');
+			$this->form_validation->set_rules('productName', 'Product name', 'trim|required');
+			$this->form_validation->set_rules('productCode', 'Product code', 'trim|required|callback_productcode_unique');
+			$this->form_validation->set_rules('productType', 'Product type', 'trim|required');
 			// $this->form_validation->set_rules('hsnCode', 'HSN code', 'required');
 			$this->form_validation->set_rules('subCategoryName', 'Sub Category Name', 'trim');
 			$this->form_validation->set_rules('category', 'Category', 'trim|callback_category');
@@ -224,6 +224,28 @@ class Products extends Backend_Controller
 		if (empty($category) && empty($subCategory) && empty($subCategoryName))
 		{
 			$this->form_validation->set_message('category', 'Please select a category.');
+            return false;
+		}
+
+		return true;
+	}
+
+	public function productcode_unique()
+	{
+		$updateId = intval($this->uri->segment(4));
+		$productCode = $this->input->post('productCode');
+
+		$condition =  ['productCode' => $productCode];
+		if ($updateId > 0)
+		{
+			$condition['id != ' . $updateId ] = null;
+		}
+
+		$productCode = $this->product->getWhereCustom('productCode', $condition)->result_array();
+
+		if (!empty($productCode))
+		{
+			$this->form_validation->set_message('productcode_unique', 'The Product code is already exists');
             return false;
 		}
 
