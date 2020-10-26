@@ -17,6 +17,8 @@ class Tax extends Backend_Controller
 		$headTitle = 'Create Tax';
 		$submitBtn = 'Save';
 
+		$this->editPageUrl = base_url() . 'backend/tax/index/';
+
 		if ($updateId > 0)
 		{
 			$data = $this->tax->getWhere($updateId)->result_array();
