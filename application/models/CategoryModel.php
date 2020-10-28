@@ -166,9 +166,15 @@ class CategoryModel extends CI_Model
 		return $result;
 	}
 
-	public function getAllDropdownSubCategories(): array
+	public function getAllDropdownSubCategories($tableCondition = []): array
 	{
-		$subCategories = $this->getWhereCustom('*', ['parentId > 0'  => NULL])->result_array();
+		$condition = ['parentId > 0'  => NULL];
+		if (!empty($tableCondition))
+		{
+			$condition = array_merge($condition, $tableCondition);
+		}
+
+		$subCategories = $this->getWhereCustom('*', $condition)->result_array();
 		$result = [];
 
 		if (!empty($subCategories))

@@ -28,7 +28,7 @@ class Openinginventory extends Backend_Controller
 		$data['viewFile'] = 'backend/opening-inventory/index';
 		$data['openingStockNumber'] = $this->getOpeningStockNumber();
 		$data['productTypes'] = $this->productTypes();
-		$data['dropdownSubCategories'] = $this->category->getAllDropdownSubCategories();
+		$data['dropdownSubCategories'] = $this->category->getAllDropdownSubCategories(['userId' => $this->loggedInUserId]);
 		$data['flashMessage'] = $this->session->flashdata('flashMessage');
 		$data['flashMessageType'] = $this->session->flashdata('flashMessageType');
 
@@ -109,6 +109,14 @@ class Openinginventory extends Backend_Controller
 			$condition['productType'] = $productType;
 			$whereIn = [];
 			$like = [];
+
+			if (!empty($category) && is_array($category))
+			{
+				foreach($category as &$catId)
+				{
+					$catId = intval($catId);
+				}
+			}
 
 			if (is_array($category) && !in_array(0, $category))
 			{
