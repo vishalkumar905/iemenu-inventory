@@ -90,6 +90,7 @@
     var EXPORT_URL = "<?=isset($this->exportUrl) ? $this->exportUrl : ''?>";
 </script>
 
+<?php if(!isset($_GET['noscript'])) { ?>
 <script src="<?=base_url()?>assets/js/jquery-3.1.1.min.js" type="text/javascript"></script>
 <script src="<?=base_url()?>assets/js/jquery-ui.min.js" type="text/javascript"></script>
 <script src="<?=base_url()?>assets/js/bootstrap.min.js" type="text/javascript"></script>
@@ -98,6 +99,8 @@
 <script src="<?=base_url()?>assets/js/jquery.validate.min.js" type="text/javascript"></script>
 <script src="<?=base_url()?>assets/js/sweetalert2.js" type="text/javascript"></script>
 <?php
+}
+
 if (isset($footerJs) && !empty($footerJs))
 {
     foreach($footerJs as $javascript)

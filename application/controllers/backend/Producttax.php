@@ -61,6 +61,7 @@ class Producttax extends Backend_Controller
 
 				$insertData = [
 					'productId' => $this->input->post('product'),
+					'userId' => $this->loggedInUserId,
 				];
 
 				if ($updateId > 0)
@@ -129,7 +130,7 @@ class Producttax extends Backend_Controller
 
 				if (!empty($deleteTaxes))
 				{
-					$deleteQuery = sprintf('DELETE FROM ie_products_taxes WHERE productId = %s AND taxId IN (%s)', $productId, implode(',', $deleteTaxes));
+					$deleteQuery = sprintf('DELETE FROM ie_products_taxes WHERE userId = %s AND productId = %s AND taxId IN (%s)', $this->loggedInUserId, $productId, implode(',', $deleteTaxes));
 					$this->db->query($deleteQuery);
 				}
 
@@ -138,10 +139,14 @@ class Producttax extends Backend_Controller
 					foreach($updatedTaxes as $updatedTaxId)
 					{
 						$insertData = [
-							'productId' => $productId
+							'productId' => $productId,
+							'userId' => $this->loggedInUserId,
 						];
 
-						$isTaxExists = $this->producttax->getWhereCustom('id', ['productId' => $productId, 'taxId' => $updatedTaxId])->num_rows();
+						$isTaxExists = $this->producttax->getWhereCustom('id', [
+							'productId' => $productId, 'taxId' => $updatedTaxId, 'userId' => $this->loggedInUserId,
+						])->num_rows();
+
 						if ($isTaxExists == 0)
 						{
 							$insertData['taxId'] = $updatedTaxId;
@@ -151,7 +156,6 @@ class Producttax extends Backend_Controller
 				}
 			}
 		}
-
 	}
 
 	public function getMapedTaxProducts()
@@ -161,11 +165,10 @@ class Producttax extends Backend_Controller
 		$limit = $this->input->post('length') > 0 ? $this->input->post('length') : 10;
 		$offset = $this->input->post('length') > 0 ? $this->input->post('start') : 0;
 		
+		$condition = ['p.userId' => $this->loggedInUserId];
 		$counter = $offset;
-		$products = $this->producttax->getMapedTaxProducts($limit, $offset)->result_array();
-
-		// echo $this->db->last_query();
-		$totalRecords =  $this->producttax->getAllProductsCount();
+		$products = $this->producttax->getMapedTaxProducts($condition, $limit, $offset)->result_array();
+		$totalRecords =  $this->producttax->getAllProductsCount($condition);
 
 		foreach($products as &$product)
 		{
@@ -193,7 +196,7 @@ class Producttax extends Backend_Controller
 	public function dropdownTaxes()
 	{
 		$data = [];
-		$taxes = $this->tax->get('id desc')->result_array();
+		$taxes = $this->tax->getWhereCustom('*', ['userId' => $this->loggedInUserId])->result_array();
 		if (!empty($taxes))
 		{
 			foreach($taxes as $tax)
@@ -211,11 +214,11 @@ class Producttax extends Backend_Controller
 
 		if ($updateId > 0)
 		{
-			$products = $this->product->getWhereCustom(['id as productId', 'productName'], ['id' => $updateId])->result_array();
+			$products = $this->product->getWhereCustom(['id as productId', 'productName'], ['id' => $updateId , 'userId' => $this->loggedInUserId])->result_array();
 		}
 		else
 		{
-			$customQuery = "SELECT p.productName, p.id as productId FROM ie_products p LEFT JOIN ie_products_taxes pt ON pt.productId = p.id WHERE pt.id IS NULL";
+			$customQuery = "SELECT p.productName, p.id as productId FROM ie_products p LEFT JOIN ie_products_taxes pt ON pt.productId = p.id WHERE pt.id IS NULL AND p.userId = " . $this->loggedInUserId;
 			$products = $this->product->customQuery($customQuery)->result_array();
 		}
 		

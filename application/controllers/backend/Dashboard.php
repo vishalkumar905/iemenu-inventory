@@ -1,13 +1,10 @@
 <?php
 
-class Dashboard extends CI_Controller
+class Dashboard extends Backend_Controller
 {
-    private $template;
-    
     public function __construct()
     {
         parent::__construct();
-        $this->template = 'backend/backend.template.php';
     }
 
     public function index()

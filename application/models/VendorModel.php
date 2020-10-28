@@ -171,7 +171,7 @@ class VendorModel extends CI_Model
 				}
 
 				$i++;
-			}	
+			}
 		}
 
 		$this->db->order_by('id', 'desc');
@@ -187,17 +187,19 @@ class VendorModel extends CI_Model
         // }
 	}
 
-	public function getVendors($limit, $offset)
+	public function getVendors($condition, $limit, $offset)
 	{
 		$this->getDatatableQuery();
+		$this->db->where($condition);
 		$this->db->limit($limit, $offset);
 		$query = $this->db->get();
 		return $query;
 	}
 
-	public function getAllVendorsCount(): int
+	public function getAllVendorsCount($condition): int
 	{
 		$this->getDatatableQuery();
+		$this->db->where($condition);
 		$query = $this->db->get();
 		return $query->num_rows();	
 	}

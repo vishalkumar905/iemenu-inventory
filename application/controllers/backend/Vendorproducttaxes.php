@@ -210,7 +210,12 @@ class Vendorproducttaxes extends Backend_Controller
 
 	public function fetchVendorsWhichEnabledUseTax()
 	{
-		return $this->vendor->getDropdownVendors(['useTax' => 1]);
+		$condition = [
+			'useTax' => 1, 
+			'userId' => $this->loggedInUserId
+		];
+		
+		return $this->vendor->getDropdownVendors($condition);
 	}
 }
 

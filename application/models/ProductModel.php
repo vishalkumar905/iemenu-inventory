@@ -201,17 +201,19 @@ class ProductModel extends CI_Model
 		return $query;
 	}
 
-	public function getProducts($limit, $offset)
+	public function getProducts($condition, $limit, $offset)
 	{
 		$this->getDatatableQuery();
 		$this->db->limit($limit, $offset);
+		$this->db->where($condition);
 		$query=$this->db->get();
 		return $query;
 	}
 
-	public function getAllProductsCount()
+	public function getAllProductsCount($condition)
 	{
 		$this->getDatatableQuery();
+		$this->db->where($condition);
 		$query=$this->db->get();
 		return $query->num_rows();
 	}

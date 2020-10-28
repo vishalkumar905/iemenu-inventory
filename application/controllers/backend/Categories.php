@@ -1,13 +1,10 @@
 <?php
 
-class Categories extends CI_Controller
+class Categories extends Backend_Controller
 {
-	private $template;
-	
 	public function __construct()
 	{
 		parent::__construct();
-		$this->template = 'backend/backend.template.php';
 		$this->load->model('CategoryModel', 'category');
 	}
 
@@ -48,6 +45,8 @@ class Categories extends CI_Controller
 		{
 			$condition = ['parentId' => $parentId];
 		}
+
+		$condition['userId'] = $this->loggedInUserId;
 
 		$categories = $this->category->getWhereCustom($columns, $condition);
 

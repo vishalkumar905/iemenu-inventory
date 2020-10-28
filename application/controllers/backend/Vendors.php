@@ -77,6 +77,7 @@ class Vendors extends Backend_Controller
 					'contractDateFrom' => strtotime($this->input->post('contractDateFrom')),
 					'contractDateTo' => strtotime($this->input->post('contractDateTo')),
 					'useTax' => $this->input->post('useTax'),
+					'userId' => $this->loggedInUserId
 				];
 
 				$flashMessage = 'Something went wrong.';
@@ -170,9 +171,9 @@ class Vendors extends Backend_Controller
 
 		$limit = $this->input->post('length') > 0 ? $this->input->post('length') : 10;
 		$offset = $this->input->post('length') > 0 ? $this->input->post('start') : 0;
-		
-		$vendors = $this->vendor->getVendors($limit, $offset)->result_array();
-		$totalRecords =  $this->vendor->getAllVendorsCount();
+		$condition = ['userId' => $this->loggedInUserId];
+		$vendors = $this->vendor->getVendors($condition, $limit, $offset)->result_array();
+		$totalRecords =  $this->vendor->getAllVendorsCount($condition);
 
 		$counter = $offset;
 		foreach($vendors as &$vendor)

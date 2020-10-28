@@ -42,7 +42,8 @@ class Vendorproducts extends Backend_Controller
 				$products = $this->input->post('product[]');
 
 				$insertData = [
-					'vendorId' => $this->input->post('vendor')
+					'vendorId' => $this->input->post('vendor'),
+					'userId' => $this->loggedInUserId
 				];
 
 				$flashMessage = 'Something went wrong.';
@@ -79,7 +80,9 @@ class Vendorproducts extends Backend_Controller
 		$data['updateId'] = $updateId;
 		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
 		$data['viewFile'] = 'backend/vendor-products/index';
-		$data['dropdownVendors'] = $this->vendor->getDropdownVendors();
+		$data['dropdownVendors'] = $this->vendor->getDropdownVendors([
+			'userId' => $this->loggedInUserId
+		]);
 		$data['dropdownCategories'] = $this->category->getDropdownCategories();
 		$data['dropdownSubCategories'] = $this->category->getDropdownSubCategories($category);
 		$data['flashMessage'] = $this->session->flashdata('flashMessage');
@@ -95,7 +98,7 @@ class Vendorproducts extends Backend_Controller
 		$limit = $this->input->post('length') > 0 ? $this->input->post('length') : 10;
 		$offset = $this->input->post('length') > 0 ? $this->input->post('start') : 0;
 		$vendorId = intval($this->input->post('vendorId')) > 0 ? intval($this->input->post('vendorId')) : 0;
-		$condition = [];
+		$condition = ['p.userId' => $this->loggedInUserId];
 
 		if ($vendorId > 0)
 		{
@@ -131,7 +134,7 @@ class Vendorproducts extends Backend_Controller
 	public function fetchVendorProductsForMapping(int $vendorId, int $categoryId)
 	{
 		$column = ['p.id as productId', 'p.productName', 'vp.id as vendorProductId'];
-		$condition = ['vp.productId IS NULL' => NULL, 'p.categoryId' => $categoryId];
+		$condition = ['vp.productId IS NULL' => NULL, 'p.categoryId' => $categoryId, 'p.userId' => $this->loggedInUserId];
 		$vendorProducts = $this->vendorproduct->getVendorProductForMapping($vendorId, $column, $condition)->result_array();
 		responseJson(true, null, $vendorProducts);
 	}

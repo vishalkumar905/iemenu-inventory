@@ -188,11 +188,12 @@ class ProductTaxModel extends CI_Model
         // }
 	}
 
-	public function getMapedTaxProducts($limit, $offset)
+	public function getMapedTaxProducts($condition, $limit, $offset)
 	{
 		$this->getDatatableQuery();
 		$this->getMapedTaxProductsQuery();
 
+		$this->db->where($condition);
 		$this->db->limit($limit, $offset);
 
 		$query = $this->db->get();
@@ -215,10 +216,11 @@ class ProductTaxModel extends CI_Model
 		$this->db->group_by('pt.productId');
 	}
 
-	public function getAllProductsCount()
+	public function getAllProductsCount($condition)
 	{
 		$this->getDatatableQuery();
 		$this->getMapedTaxProductsQuery();
+		$this->db->where($condition);
 		$query = $this->db->get();
 		return $query->num_rows();
 	}

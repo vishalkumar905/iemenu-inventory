@@ -45,6 +45,7 @@ class Tax extends Backend_Controller
 				$insertData = [
 					'taxName' => $this->input->post('taxName'),
 					'taxPercentage' => $this->input->post('taxPercentage'),
+					'userId' => $this->loggedInUserId,
 				];
 
 				if ($updateId > 0)
@@ -81,7 +82,10 @@ class Tax extends Backend_Controller
 		$data['submitBtn'] = $submitBtn;
 		$data['flashMessage'] = $this->session->flashdata('flashMessage');
 		$data['flashMessageType'] = $this->session->flashdata('flashMessageType');
-		$data['taxData'] = $this->tax->get('id desc')->result_array();
+		$data['taxData'] = $this->tax->getWhereCustom('*', ['userId' => $this->loggedInUserId], [
+			'field' => 'id',
+			'type' => 'desc'
+		])->result_array();
 	   
 		$this->pageTitle = $this->navTitle = 'Tax';
 		$this->load->view($this->template, $data);

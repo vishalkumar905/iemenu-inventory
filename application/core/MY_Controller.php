@@ -6,6 +6,7 @@
 		public $isLoggedIn;
 		public $loggedInUserData;
 		public $referrerUrl = '';
+		public $loggedInUserId = '';
 
 		function __construct() {
 			parent::__construct();
@@ -17,6 +18,7 @@
 			}
 
 			$this->loggedInUserData = $this->session->userdata('loggedInUserData');
+			$this->loggedInUserId = $this->session->userdata('loggedInUserData')['userId'];
 
 			$this->load->library('user_agent');
 			$this->referrerUrl = $this->agent->referrer();

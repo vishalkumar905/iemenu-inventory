@@ -412,8 +412,6 @@ IEWebsiteAdmin.VendorProductsPage = (function() {
 		$("#vendor").change(function() {
 			vendorId = $(this).val();
 			$('#vendorProductsData').DataTable().ajax.reload();
-
-			console.log(vendorId);
 		});
 	};
 	
@@ -428,26 +426,29 @@ IEWebsiteAdmin.VendorProductsPage = (function() {
 			categoryId = subCategoryId;
 		}
 
-		let url = FETCH_VENDOR_PRODUCTS + '/' + vendorId + '/' + categoryId; 
-
-		IEWebsite.Utils.AjaxGet(url, null, function(resp) {
-			if (resp.status)
-			{
-				$("#product").html('');
-
-				if (!_.isEmpty(resp.response))
+		if (vendorId > 0)
+		{
+			let url = FETCH_VENDOR_PRODUCTS + '/' + vendorId + '/' + categoryId; 
+	
+			IEWebsite.Utils.AjaxGet(url, null, function(resp) {
+				if (resp.status)
 				{
-					$("#product").html('').append($("<option>").attr('value', '').text('Choose Product'));
-
-					_.each(resp.response, function(row)
+					$("#product").html('');
+	
+					if (!_.isEmpty(resp.response))
 					{
-						$("#product").append($("<option>").attr('value', row.productId).text(row.productName));
-					});
+						$("#product").html('').append($("<option>").attr('value', '').text('Choose Product'));
+	
+						_.each(resp.response, function(row)
+						{
+							$("#product").append($("<option>").attr('value', row.productId).text(row.productName));
+						});
+					}
+	
+					$("#product").selectpicker("refresh");
 				}
-
-				$("#product").selectpicker("refresh");
-			}
-		})
+			});
+		}
 	};
 	
 	return {

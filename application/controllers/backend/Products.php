@@ -97,6 +97,7 @@ class Products extends Backend_Controller
 				{
 					$categoryData['categoryName'] = $subCategoryName;
 					$categoryData['categoryUrlTitle'] = url_title($subCategoryName, '-', true);
+					$categoryData['userId'] = $this->loggedInUserId;
 
 					if ($categoryId != '')
 					{
@@ -123,6 +124,7 @@ class Products extends Backend_Controller
 					'shelfLife' => $this->input->post('shelfLife'),
 					'productSiUnits' => serialize($baseUnit),
 					'categoryId' => $categoryId,
+					'userId' => $this->loggedInUserId,
 				];
 
 				$flashMessage = 'Something went wrong.';
@@ -235,7 +237,7 @@ class Products extends Backend_Controller
 		$updateId = intval($this->uri->segment(4));
 		$productCode = $this->input->post('productCode');
 
-		$condition =  ['productCode' => $productCode];
+		$condition = ['productCode' => $productCode];
 		if ($updateId > 0)
 		{
 			$condition['id != ' . $updateId ] = null;
@@ -286,8 +288,10 @@ class Products extends Backend_Controller
 		$limit = $this->input->post('length') > 0 ? $this->input->post('length') : 10;
 		$offset = $this->input->post('length') > 0 ? $this->input->post('start') : 0;
 		
-		$products = $this->product->getProducts($limit, $offset)->result_array();
-		$totalRecords =  $this->product->getAllProductsCount();
+		$condition = ['userId' => $this->loggedInUserId];
+
+		$products = $this->product->getProducts($condition, $limit, $offset)->result_array();
+		$totalRecords =  $this->product->getAllProductsCount($condition);
 
 		$counter = $offset;
 		foreach($products as &$product)
@@ -433,6 +437,7 @@ class Products extends Backend_Controller
 								'categoryId'  => $categoryId,
 								'baseUnitId'  => null,
 								'productImage' => null,
+								'userId' => $this->loggedInUserId
 							];
 
 							$this->product->insert($insertData);
