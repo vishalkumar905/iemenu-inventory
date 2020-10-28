@@ -1,5 +1,4 @@
 <div class="col-md-4">
-	<?=showAlertMessage($flashMessage, $flashMessageType)?>
 	<div class="card mt-0">
 		<form method="post" id="createVendorForm" class="form-horizontal" enctype="multipart/form-data" action="<?=current_url()?>">
 			<div class="card-header card-header-text">
