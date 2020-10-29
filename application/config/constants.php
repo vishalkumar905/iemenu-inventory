@@ -108,3 +108,12 @@ define("ADMIN", 3);
 define("SUPER_ADMIN", 4);
 
 define('OPENING_STOCK_SHORT_NAME', 'OS');
+
+define('CIPHERING', 'AES-128-CTR');
+define('ENCRYPTION_IV', '1234567891011121');
+define('ENCRYPTION_OPTION', '0');
+define('ENCRYPTION_KEY', 'IeMenuInventory');
+
+define('DECRYPTION_IV', '1234567891011121');
+define('DECRYPTION_KEY', 'IeMenuInventory');
+define('DECRYPTION_OPTION', '0');

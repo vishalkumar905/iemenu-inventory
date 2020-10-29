@@ -59,6 +59,7 @@ class Openinginventory extends Backend_Controller
 						'comment' => $row['comment'],
 						'openingStockNumber' => $this->getOpeningStockNumber(),
 						'createdOn' => time(),
+						'userId' => $this->loggedInUserId
 					];
 				}
 			}
@@ -75,7 +76,7 @@ class Openinginventory extends Backend_Controller
 	public function getOpeningStockNumber()
 	{
 		$columns = ['MAX(openingStockNumber) as openingStockNumber'];
-		$result = $this->productstock->getWhereCustom($columns, [])->result_array();
+		$result = $this->productstock->getWhereCustom($columns, ['userId' => $this->loggedInUserId])->result_array();
 
 		if (!empty($result))
 		{
@@ -107,6 +108,8 @@ class Openinginventory extends Backend_Controller
 			$offset = $page > 0 ? $limit * ($page - 1) : 0;
 
 			$condition['productType'] = $productType;
+			$condition['userId'] = $this->loggedInUserId;
+			
 			$whereIn = [];
 			$like = [];
 

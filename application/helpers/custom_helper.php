@@ -50,4 +50,30 @@ if (!function_exists('p'))
 		die();
 	}
 }
+
+if (!function_exists('decryptToken'))
+{
+	function decryptToken($token)
+	{
+		if (empty($token))
+		{
+			return false;
+		}
+
+		return urldecode(openssl_decrypt($token, CIPHERING, DECRYPTION_KEY, DECRYPTION_OPTION, DECRYPTION_IV)); 
+	}
+}
+
+if (!function_exists('encryptToken'))
+{
+	function encryptToken($token)
+	{
+		if (empty($token))
+		{
+			return false;
+		}
+
+		return openssl_encrypt($token, CIPHERING, ENCRYPTION_KEY, ENCRYPTION_OPTION, ENCRYPTION_IV); 
+	}
+}
 ?>

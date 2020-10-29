@@ -59,6 +59,88 @@ class Home extends CI_Controller
 
 		$this->load->view('login/index', $data);
 	}
+
+	public function generateLoginToken()
+	{
+		if (!$this->input->is_ajax_request())
+		{
+			exit('Direct script not allowed');
+		}
+
+		$isSuccess = false;
+		$data = [];
+
+		$this->form_validation->set_rules('email', 'email', 'required');
+		$this->form_validation->set_rules('userId', 'userId', 'required');
+
+		if ($this->form_validation->run())
+		{
+			$isSuccess = true;
+			$userData = [
+				'email' => $this->input->post('email'),
+				'userId' => $this->input->post('userId'),
+			];
+
+			$token = encryptToken(http_build_query($userData));
+			$data['url'] = sprintf('%shome/autologin?token=%s', base_url(), $token);
+		}
+		else
+		{
+			$data = validation_errors();
+		}
+
+		responseJson($isSuccess, '', $data);
+	}
+
+	public function autologin()
+	{
+		$this->load->library('user_agent');
+		$referrer = $this->agent->referrer();
+
+		if (ENVIRONMENT == 'production' && strpos('iemenu.in', $referrer) == false)
+		{
+			// redirect(base_url());
+		}
+
+		$token = $this->input->get('token');
+		
+		
+		$redirectUrl = base_url();
+		
+		if (!empty($token))
+		{
+			$decryptToken = decryptToken($token);
+			if (!empty($decryptToken))
+			{
+				parse_str($decryptToken, $outputArray);
+				if (!empty($outputArray))
+				{
+					$loggedInData = [
+						'isLoggedIn' => true,
+						'loggedInUserData' => $outputArray
+					];
+					
+					$this->session->set_userdata($loggedInData);
+
+					$redirectUrl = base_url('backend/dashboard');
+				}
+			}
+		}
+
+		redirect($redirectUrl);
+	}
+
+	public function destroySession()
+	{
+		if (!$this->input->is_ajax_request())
+		{
+			exit('Direct script not allowed');
+		}
+
+		$this->session->sess_destroy();
+
+		responseJson(true, '', []);
+	}
 }
 
 ?>
