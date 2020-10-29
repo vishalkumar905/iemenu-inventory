@@ -25,10 +25,17 @@
                         <img src="<?=base_url()?>assets/img/avatar.png" />
                     </div>
                     <div class="info">
-                        <a data-toggle="collapse" href="dashboard.html#collapseExample" class="collapsed">
-                            Tania Andrew
-                            <b class="caret"></b>
+                        <a data-toggle="collapse" href="#" class="collapsed">
+                            <?php
+                                $loggedInUserData = $this->session->userdata('loggedInUserData');
+                                if(isset($loggedInUserData['name']))
+                                {
+                                    echo $loggedInUserData['name'];
+                                }
+                            ?>
+                            <!-- <b class="caret"></b> -->
                         </a>
+                        <?php /*?>
                         <div class="collapse" id="collapseExample">
                             <ul class="nav">
                                 <li>
@@ -42,6 +49,7 @@
                                 </li>
                             </ul>
                         </div>
+                        <?php */?>
                     </div>
                 </div>
                 <?php $this->load->view('backend/inc/sidebar.php'); ?>

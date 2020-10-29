@@ -79,6 +79,7 @@ class Home extends CI_Controller
 			$userData = [
 				'email' => $this->input->post('email'),
 				'userId' => $this->input->post('userId'),
+				'name' => $this->input->post('name'),
 			];
 
 			$token = encryptToken(http_build_query($userData));
