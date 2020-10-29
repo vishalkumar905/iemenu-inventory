@@ -117,3 +117,12 @@ define('ENCRYPTION_KEY', 'IeMenuInventory');
 define('DECRYPTION_IV', '1234567891011121');
 define('DECRYPTION_KEY', 'IeMenuInventory');
 define('DECRYPTION_OPTION', '0');
+
+if (ENVIRONMENT == 'testing')
+{
+    define('IEMENU_URL', 'https://iemenu.in/MDB');
+}
+else
+{
+    define('IEMENU_URL', 'http://localhost/iemenu');
+}

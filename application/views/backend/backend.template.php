@@ -15,24 +15,17 @@
     <link href="<?=base_url()?>assets/css/custom.css" rel="stylesheet" />
     <link href="<?=base_url()?>assets/css/common.css" rel="stylesheet" />
 </head>
-
 <body>
     <div class="wrapper">
         <div class="sidebar" data-active-color="rose" data-background-color="black">
             <div class="sidebar-wrapper">
                 <div class="user">
                     <div class="photo">
-                        <img src="<?=base_url()?>assets/img/avatar.png" />
+                        <img src="<?=$this->loggedInUserImage?>" />
                     </div>
                     <div class="info">
                         <a data-toggle="collapse" href="#" class="collapsed">
-                            <?php
-                                $loggedInUserData = $this->session->userdata('loggedInUserData');
-                                if(isset($loggedInUserData['name']))
-                                {
-                                    echo $loggedInUserData['name'];
-                                }
-                            ?>
+                            <?= $this->loggedInUserName ?>
                             <!-- <b class="caret"></b> -->
                         </a>
                         <?php /*?>

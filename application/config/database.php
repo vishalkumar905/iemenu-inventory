@@ -95,20 +95,52 @@ $db['default'] = array(
 	'save_queries' => TRUE
 );
 
+$db['iemenu'] = array(
+	'dsn'	=> '',
+	'hostname' => 'localhost',
+	'username' => '',
+	'password' => '',
+	'database' => '',
+	'dbdriver' => 'mysqli',
+	'dbprefix' => '',
+	'pconnect' => FALSE,
+	'db_debug' => (ENVIRONMENT !== 'production'),
+	'cache_on' => FALSE,
+	'cachedir' => '',
+	'char_set' => 'utf8',
+	'dbcollat' => 'utf8_general_ci',
+	'swap_pre' => '',
+	'encrypt' => FALSE,
+	'compress' => FALSE,
+	'stricton' => FALSE,
+	'failover' => array(),
+	'save_queries' => TRUE
+);
+
 if (ENVIRONMENT == 'testing')
 {
 	$db['default']['hostname'] = 'localhost';
 	$db['default']['username'] = 'u606579078_inventory';
 	$db['default']['password'] = '2yFP@mvtxA|';
 	$db['default']['database'] = 'u606579078_inventory';
+
+	$db['iemenu']['hostname'] = 'localhost';
+	$db['iemenu']['username'] = 'root';
+	$db['iemenu']['password'] = '123456';
+	$db['iemenu']['database'] = 'inventory';
 }
 
 if (ENVIRONMENT == 'production')
 {
 	$db['default']['hostname'] = 'localhost';
-	$db['default']['username'] = 'u606579078_inventory';
-	$db['default']['password'] = '2yFP@mvtxA|';
-	$db['default']['database'] = 'u606579078_inventory';
+	$db['default']['username'] = 'ie_inventory';
+	$db['default']['password'] = 'rjafgWxtMxck';
+	$db['default']['database'] = 'ie_inventory';
+
+	$db['iemenu']['hostname'] = 'localhost';
+	$db['iemenu']['username'] = 'fligobeam';
+	$db['iemenu']['password'] = 'YJvMS#@dzHF3';
+	$db['iemenu']['database'] = 'res_mngt_sys';
 }
 
 if (ENVIRONMENT == 'development')
@@ -116,5 +148,10 @@ if (ENVIRONMENT == 'development')
 	$db['default']['hostname'] = 'localhost';
 	$db['default']['username'] = 'root';
 	$db['default']['password'] = '123456';
-	$db['default']['database'] = 'ie_inventory';
+	$db['default']['database'] = 'ie_inventory';	
+	
+	$db['iemenu']['hostname'] = 'localhost';
+	$db['iemenu']['username'] = 'root';
+	$db['iemenu']['password'] = '123456';
+	$db['iemenu']['database'] = 'inventory';
 }

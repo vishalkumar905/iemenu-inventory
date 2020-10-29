@@ -105,7 +105,6 @@ class Home extends CI_Controller
 
 		$token = $this->input->get('token');
 		
-		
 		$redirectUrl = base_url();
 		
 		if (!empty($token))
@@ -114,8 +113,22 @@ class Home extends CI_Controller
 			if (!empty($decryptToken))
 			{
 				parse_str($decryptToken, $outputArray);
-				if (!empty($outputArray))
+				if (!empty($outputArray) && !empty($outputArray['userId']))
 				{
+					$this->load->model('IeMenuUserModel', 'iemenuuser');
+
+					$result = $this->iemenuuser->getWhere($outputArray['userId'])->result_array();
+					if (!empty($result))
+					{
+						$outputArray['name'] = $result[0]['name'];
+						$outputArray['image'] = base_url('assets/img/avatar.png');
+
+						if (!empty($result[0]['userimg']))
+						{
+							$outputArray['image'] = sprintf('%s/%s', IEMENU_URL, $result[0]['userimg']);
+						}
+					}
+
 					$loggedInData = [
 						'isLoggedIn' => true,
 						'loggedInUserData' => $outputArray

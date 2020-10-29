@@ -1,12 +1,11 @@
 <?php
 
-class SiUnits extends CI_Controller
+class SiUnits extends Backend_Controller
 {
 	public $currentPageUrl;
 	public function __construct()
 	{
 		parent::__construct();
-		$this->template = 'backend/backend.template.php';
 		$this->load->model('SIUnitModel', 'siunit');
 		$this->currentPageUrl = base_url() . 'backend/siunits';
 	}

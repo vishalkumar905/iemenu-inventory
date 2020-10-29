@@ -7,6 +7,8 @@
 		public $loggedInUserData;
 		public $referrerUrl = '';
 		public $loggedInUserId = '';
+		public $loggedInUserName = '';
+		public $loggedInUserImage = '';
 
 		function __construct() {
 			parent::__construct();
@@ -19,6 +21,20 @@
 
 			$this->loggedInUserData = $this->session->userdata('loggedInUserData');
 			$this->loggedInUserId = $this->session->userdata('loggedInUserData')['userId'];
+
+			if (isset($this->loggedInUserData['name']))
+			{
+				$this->loggedInUserName = $this->loggedInUserData['name'];
+			}
+
+			if (isset($this->loggedInUserData['image']))
+			{
+				$this->loggedInUserImage = $this->loggedInUserData['image'];
+			}
+			else
+			{
+				$this->loggedInUserImage = base_url('assets/img/avatar.png');
+			}
 
 			$this->load->library('user_agent');
 			$this->referrerUrl = $this->agent->referrer();
