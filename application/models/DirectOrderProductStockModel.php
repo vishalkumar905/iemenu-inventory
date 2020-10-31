@@ -1,10 +1,10 @@
 <?php
 
-class VendorModel extends CI_Model
+class DirectOrderProductStockModel extends CI_Model
 {
-	private $tableName = 'ie_vendors';
+	private $tableName = 'ie_direct_order_product_stocks';
 	private $primaryKey = 'id';
-    private $columnSearch = array('vendorCode', 'vendorName', 'vendorEmail'); //set column field database for datatable searchable 
+    private $columnSearch = array(''); //set column field database for datatable searchable 
 	
 	public function __construct()
 	{
@@ -61,6 +61,18 @@ class VendorModel extends CI_Model
 		if($this->db->insert($this->tableName, $data))
 		{
 			return $this->db->insert_id();
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public function insertBatch($data)
+	{
+		if($this->db->insert_batch($this->tableName, $data))
+		{
+			return true;
 		}
 		else
 		{
@@ -147,22 +159,22 @@ class VendorModel extends CI_Model
     {
 		$searchText = $this->input->post('search');
 		$orderBy = $this->input->post('order');
-        $this->db->from($this->tableName);
 		
+		$this->columnSearch = ['p.productName' => 'productName', 'v.vendorName' => 'vendorName', 'v.vendorCode' => 'vendorCode'];
 		$i = 0;
 
 		if (!empty($searchText['value']))
 		{
-			foreach ($this->columnSearch as $item) // loop column 
+			foreach ($this->columnSearch as $itemKey => $itemValue) // loop column 
 			{
 				if($i === 0)
 				{
 					$this->db->group_start();
-					$this->db->like($item, $searchText['value']);
+					$this->db->like($itemKey, $searchText['value']);
 				}
 				else
 				{
-					$this->db->or_like($item, $searchText['value']);
+					$this->db->or_like($itemKey, $searchText['value']);
 				}
 	
 				if(count($this->columnSearch) - 1 == $i)
@@ -171,10 +183,10 @@ class VendorModel extends CI_Model
 				}
 
 				$i++;
-			}
+			}	
 		}
 
-		$this->db->order_by('id', 'desc');
+		$this->db->order_by('vp.id', 'desc');
 		// Not Need
         // if(!empty($orderBy))
         // {
@@ -187,47 +199,61 @@ class VendorModel extends CI_Model
         // }
 	}
 
-	public function getVendors($condition, $limit, $offset)
+	public function getVendorProducts($limit, $offset)
 	{
 		$this->getDatatableQuery();
-		$this->db->where($condition);
+		$columns = ['vp.id as vendorProductId', 'p.productName', 'v.vendorName', 'v.vendorCode', 'vp.createdOn'];
+		$this->db->select($columns);
+		$this->getVendorProductsQuery();
 		$this->db->limit($limit, $offset);
 		$query = $this->db->get();
 		return $query;
 	}
 
-	public function getAllVendorsCount($condition): int
+	private function getVendorProductsQuery()
+	{
+		$this->db->from('ie_vendor_products vp');
+		$this->db->join('ie_vendors v', 'vp.vendorId = v.id', 'LEFT');
+		$this->db->join('ie_products p', 'p.id = vp.productId', 'LEFT');
+	}
+
+
+	public function getAllVendorProductsCount(): int
 	{
 		$this->getDatatableQuery();
-		$this->db->where($condition);
+		$this->getVendorProductsQuery();
 		$query = $this->db->get();
 		return $query->num_rows();	
 	}
 
-	public function getDropdownVendors($condition = [])
+	public function getVendorProductForMapping($vendorId, $column = '*', $condition = null)
 	{
-		$vendors = $this->getWhereCustom(['id', 'vendorName', 'vendorCode'], $condition)->result_array();
-		$results = [];
-		if (!empty($vendors))
+		$this->db->select($column);
+		$this->db->from('ie_products p');
+		$this->db->join('ie_vendor_products vp', sprintf('vp.productId = p.id AND vp.vendorId = %s', $vendorId), 'LEFT');
+	
+		if (!empty($condition))
 		{
-			$results[''] = 'Choose Vendor';
-			foreach($vendors as $vendor)
-			{
-				$results[$vendor['id']] = sprintf('%s <small>(%s)</small>', $vendor['vendorCode'], $vendor['vendorName']);
-			}
+			$this->db->where($condition);
 		}
 
+		$results = $this->db->get();
 		return $results;
 	}
 
-	public function fetchVendorsWhichEnabledUseTax()
+	public function getLastGrnNumber()
 	{
-		$condition = [
-			'useTax' => 1, 
-			'userId' => $this->loggedInUserId
-		];
-		
-		return $this->vendor->getDropdownVendors($condition);
+		$columns = ['MAX(grnNumber) as grnNumber'];
+		$result = $this->productstock->getWhereCustom($columns, ['userId' => $this->loggedInUserId])->result_array();
+
+		if (!empty($result))
+		{
+			return $result[0]['grnNumber'] + 1;
+		}
+		else
+		{
+			return 1;
+		}
 	}
 }
 

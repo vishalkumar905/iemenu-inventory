@@ -108,6 +108,7 @@ define("ADMIN", 3);
 define("SUPER_ADMIN", 4);
 
 define('OPENING_STOCK_SHORT_NAME', 'OS');
+define('GRN_SHOR_NAME', 'GRN');
 
 define('CIPHERING', 'AES-128-CTR');
 define('ENCRYPTION_IV', '1234567891011121');

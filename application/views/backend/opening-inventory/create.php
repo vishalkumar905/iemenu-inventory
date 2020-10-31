@@ -1,7 +1,3 @@
-<?php
-
-use PhpOffice\PhpSpreadsheet\Shared\Date;
-?>
 <div class="col-md-12">
 	<?=showAlertMessage($flashMessage, $flashMessageType)?>
 	<div class="card mt-0">

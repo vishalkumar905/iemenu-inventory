@@ -86,4 +86,23 @@
 			</ul>
 		</div>
 	</li>
+	<li>
+		<a data-toggle="collapse" href="#purchaseOrderSideBar">
+			<i class="material-icons">assessment</i>
+			<p>Purchase Order<b class="caret"></b></p>
+		</a>
+		<div class="collapse" id="purchaseOrderSideBar">
+			<ul class="nav">
+				<li>
+					<a href="<?=base_url()?>backend/directorder">Direct Order</a>
+				</li>
+				<!-- <li>
+					<a href="<?=base_url()?>backend/vendorproducts">Vendor Products</a>
+				</li>
+				<li>
+					<a href="<?=base_url()?>backend/vendorproducttaxes">Vendor Product Taxes</a>
+				</li> -->
+			</ul>
+		</div>
+	</li>
 </ul>

@@ -58,6 +58,55 @@ class Categories extends Backend_Controller
 		responseJson(true, null, $jsonResult);
 	}
 
+	public function fetchVendorAssignedProductCategories(int $vendorId)
+	{
+		$jsonResult = [];
+		$columns = ['vp.vendorId', 'vp.productId', 'p.categoryId'];
+		$condition = ['vp.vendorId' => $vendorId, 'vp.userId' => $this->loggedInUserId];
+		$groupBy = ['p.categoryId']; 
+
+		$this->db->select($columns);
+		$this->db->from('ie_vendor_products vp');
+		$this->db->join('ie_products p', 'p.id = vp.productId', 'INNER');
+		$this->db->where($condition);
+		$this->db->group_by($groupBy);
+		$products = $this->db->get()->result_array();
+
+		if (!empty($products))
+		{
+			$categoryIds = [];
+			foreach($products as $product)
+			{
+				if (!in_array($product['categoryId'], $products))
+				{
+					$categoryIds[] = $product['categoryId'];
+				}
+			}
+
+			if (!empty($categoryIds))
+			{
+				$whereIn = ['field' => 'id', 'values' => $categoryIds];
+				$condition = ['parentId IS NOT NULL' => NULL];
+				$categories = $this->category->getWhereCustom('*', $condition, null, $whereIn)->result_array();
+				
+				if (!empty($categories))
+				{
+					foreach($categories as $category)
+					{
+						$jsonResult[] = [
+							'categoryId' => $category['id'],
+							'categoryName' => $category['categoryName'],
+						];
+					}
+				}
+
+			}
+			
+		}
+
+		responseJson(true, null, $jsonResult);
+	}
+
 	public function _remap($method, $params)
 	{
 		$arg1 = isset($params[0]) ? $params[0] : null;

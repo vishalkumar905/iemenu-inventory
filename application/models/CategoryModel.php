@@ -36,21 +36,57 @@ class CategoryModel extends CI_Model
 		$query=$this->db->get($this->tableName);
 		return $query;
 	}
-	
-	public function getWhereCustom($columns = '*', $condition, $orderBy = null)
+
+	public function getWhereCustom($columns = '*', $condition = null, $orderBy = null, $whereIn = null, $like = null, $limit = null, $offset = null)
 	{
 		$this->db->select($columns);
-		$this->db->where($condition);
+
+		if (!empty($condition))
+		{
+			$this->db->where($condition);
+		}
 		
+		if (!empty($whereIn['field']) && !empty($whereIn['values']))
+		{
+			$this->db->where_in($whereIn['field'], $whereIn['values']);
+		}
+		
+		if (!empty($like['fields']) && !empty($like['search']) && !empty($like['side']) && is_array($like['fields']))
+		{
+			foreach ($like['fields'] as $key => $field)
+			{
+				if ($key == 0) 
+				{
+					$this->db->group_start();
+					$this->db->like($field, $like['search'], $like['side']);
+				}
+				else
+				{
+					$this->db->or_like($field, $like['search'], $like['side']);
+				}
+
+				
+				if (($key + 1) == count($like['fields']))
+				{
+					$this->db->group_end();
+				}
+			}
+		}
+
 		if (!empty($orderBy['field']) && !empty($orderBy['type']))
 		{
 			$this->db->order_by($orderBy['field'], $orderBy['type']);
 		}
 
+		if ($limit > 0 && $offset >= 0)
+		{
+			$this->db->limit($limit, $offset);
+		}
+
 		$query = $this->db->get($this->tableName);
 		return $query;
 	}
-	
+
 	public function insert($data)
 	{
 		$data['createdOn'] = time();

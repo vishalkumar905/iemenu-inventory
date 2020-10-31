@@ -29,7 +29,6 @@ class PhpExcel
 			}
 		}
 
-	
 
 		$spreadsheet = new Spreadsheet();
 		$sheet = $spreadsheet->getActiveSheet();

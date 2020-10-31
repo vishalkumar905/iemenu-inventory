@@ -187,18 +187,18 @@ class VendorProductModel extends CI_Model
         // }
 	}
 
-	public function getVendorProducts($condition = null, $limit, $offset)
+	public function getVendorProducts($condition = null, $limit, $offset, $whereIn = null)
 	{
 		$this->getDatatableQuery();
-		$columns = ['vp.id as vendorProductId', 'p.productName', 'v.vendorName', 'v.vendorCode', 'vp.createdOn'];
+		$columns = ['vp.id as vendorProductId', 'p.id as productId', 'p.productName', 'p.productSiUnits', 'p.productCode', 'v.vendorName', 'v.vendorCode', 'vp.createdOn'];
 		$this->db->select($columns);
-		$this->getVendorProductsQuery($condition);
+		$this->getVendorProductsQuery($condition, $whereIn);
 		$this->db->limit($limit, $offset);
 		$query = $this->db->get();
 		return $query;
 	}
 
-	private function getVendorProductsQuery($condition = null)
+	private function getVendorProductsQuery($condition = null, $whereIn = null)
 	{
 		$this->db->from('ie_vendor_products vp');
 		$this->db->join('ie_vendors v', 'vp.vendorId = v.id', 'LEFT');
@@ -207,13 +207,18 @@ class VendorProductModel extends CI_Model
 		{
 			$this->db->where($condition);
 		}
+
+		if (!empty($whereIn) && isset($whereIn['field']) && isset($whereIn['values']))
+		{
+			$this->db->where_in($whereIn['field'], $whereIn['values']);
+		}
 	}
 
 
-	public function getAllVendorProductsCount($condition = null): int
+	public function getAllVendorProductsCount($condition = null, $whereIn = null): int
 	{
 		$this->getDatatableQuery();
-		$this->getVendorProductsQuery($condition);
+		$this->getVendorProductsQuery($condition, $whereIn);
 		$query = $this->db->get();
 		return $query->num_rows();	
 	}
