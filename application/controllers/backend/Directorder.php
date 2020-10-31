@@ -29,7 +29,7 @@ class Directorder extends Backend_Controller
 
 		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
 		$data['viewFile'] = 'backend/direct-order/index';
-		$data['openingStockNumber'] = $this->getLastOpeningStockNumber();
+		$data['grnNumber'] = $this->directorderproductstock->getLastGrnNumber();
 		$data['productTypes'] = $this->productTypes();
 		$data['dropdownSubCategories'] = [];
 		$data['flashMessage'] = $this->session->flashdata('flashMessage');
@@ -48,12 +48,12 @@ class Directorder extends Backend_Controller
 			exit('No direct script access allowed');
 		}
 
-		$post = $this->input->post();
-		
-		if (!empty($post))
+		$productData = $this->input->post('productData');
+
+		if (!empty($productData))
 		{
 			$insertData = [];
-			foreach($post as $productId => $row)
+			foreach($productData as $productId => $row)
 			{
 				if ($row['qty'] > 0 && $row['unitPrice'] > 0)
 				{
@@ -65,9 +65,12 @@ class Directorder extends Backend_Controller
 						'productSubtotal' => $row['qty'] * $row['unitPrice'],
 						'comment' => $row['comment'],
 						'openingStockNumber' => $this->getLastOpeningStockNumber(),
-						'openingStockNumber' => $this->directorderproductstock->getLastGrnNumber(),
+						'grnNumber' => $this->directorderproductstock->getLastGrnNumber(),
 						'createdOn' => time(),
-						'userId' => $this->loggedInUserId
+						'userId' => $this->loggedInUserId,
+						'vendorId' => $this->input->post('vendorId'),
+						'billNumber' => $this->input->post('billNumber'),
+						'billDate' => strtotime($this->input->post('billDate')),
 					];
 				}
 			}

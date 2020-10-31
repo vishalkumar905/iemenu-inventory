@@ -244,7 +244,7 @@ class DirectOrderProductStockModel extends CI_Model
 	public function getLastGrnNumber()
 	{
 		$columns = ['MAX(grnNumber) as grnNumber'];
-		$result = $this->productstock->getWhereCustom($columns, ['userId' => $this->loggedInUserId])->result_array();
+		$result = $this->getWhereCustom($columns, ['userId' => $this->loggedInUserId])->result_array();
 
 		if (!empty($result))
 		{

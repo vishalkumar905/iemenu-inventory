@@ -790,7 +790,7 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 		totalPages: 0,
 		limit: 10,
 	}
-	var directOrdersData = {};
+	var directOrdersData = {}, searchBoxEnabled = false;
 
 	var init = function()
 	{
@@ -799,10 +799,15 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 			return;
 		};
 
-		console.log('Hello');
-
 		$("#saveDirectOrder").attr("disabled", "true");
-		$("#searchBar").keyup(_.debounce(loadProducts, 500));
+
+		if (searchBoxEnabled)
+		{
+			$("#searchBar").keyup(_.debounce(loadProducts, 500));
+		}
+
+		IEWebsite.Utils.JqueryFormValidation('#createOpeningStockForm');
+
 		$("#vendor").change(loadVendorProductCategories);
 		$("#category").change(loadProducts);
 
@@ -812,10 +817,27 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 				return false;
 			}
 
-			if (!_.isEmpty(directOrdersData))
+			let vendorId = $("#vendor").val();
+			let billDate = $("input[name='billDate']").val();
+			let billNumber = $("input[name='billNumber']").val();
+
+			if (_.isEmpty(billNumber) || _.isEmpty(billNumber))
 			{
+				return;
+			}
+			
+			if (!_.isEmpty(directOrdersData) && !_.isEmpty(vendorId) && !_.isEmpty(billDate) && !_.isEmpty(billNumber))
+			{
+				let postData = {
+					productData: directOrdersData,
+				};
+
+				postData.vendorId =vendorId;
+				postData.billDate = billDate;
+				postData.billNumber = billNumber;
+				
 				IEWebsite.Utils.ShowLoadingScreen();
-				IEWebsite.Utils.AjaxPost(SAVE_DIRECT_ORDER_PRODUCTS, directOrdersData, function(resp) {
+				IEWebsite.Utils.AjaxPost(SAVE_DIRECT_ORDER_PRODUCTS, postData, function(resp) {
 					IEWebsite.Utils.HideLoadingScreen();
 					if (resp.status)
 					{
@@ -847,6 +869,7 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 
 					if (_.isEmpty(resp.response))
 					{
+						$("#manageDirectOrderContainer").hide();
 						alert('Vendor has no product assigned');
 					}
 					else
@@ -855,9 +878,9 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 						{
 							$("#category").append($("<option>").attr('value', row.categoryId).text(row.categoryName));
 						});
-	
-						$("#category").selectpicker("refresh");
 					}
+
+					$("#category").selectpicker("refresh");
 				}
 			});
 		}
@@ -890,16 +913,16 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 
 					pagination.totalPages = resp.response.pagination.totalPages;
 					
-					$("#directOrderStock").attr("disabled", "true");
+					$("#saveDirectOrder").attr("disabled", "true");
 					
 					if (resp.response.pagination.totalPages == resp.response.pagination.current)
 					{
-						$("#directOrderStock").attr("disabled", false);
+						$("#saveDirectOrder").attr("disabled", false);
 					}
 
-					searchBoxEnabled = true;
 					if (!_.isEmpty(resp.response.data))
 					{
+						searchBoxEnabled = true;
 						showTableData(resp.response.data);
 					}
 					else

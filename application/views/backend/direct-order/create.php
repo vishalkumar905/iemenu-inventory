@@ -7,7 +7,7 @@
 			</div>
 			<div class="card-content">
 				<div class="row col-md-12">
-					<span><b>GRN No: </b><?=GRN_SHOR_NAME?>-<?=$openingStockNumber?><span>
+					<span><b>GRN No: </b><?=GRN_SHOR_NAME?>-<?=$grnNumber?><span>
 					<span class="pull-right"><b>Date: </b><?=Date('d-m-Y')?></span>
 				</div>
 
