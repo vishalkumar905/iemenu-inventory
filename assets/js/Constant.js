@@ -10,3 +10,6 @@ const FETCH_VENDOR_PRODUCT_WITH_TAXES = BASE_URL + 'backend/Vendorproducttaxes/f
 const SAVE_VENDOR_PRODUCT_TAX_MAPPING = BASE_URL + 'backend/Vendorproducttaxes/saveVendorProductTaxMapping';
 const FETCH_OPENING_INVETORY_PRODUCTS = BASE_URL + 'backend/openinginventory/fetchProducts';
 const SAVE_OPENING_INVETORY_PRODUCTS = BASE_URL + 'backend/openinginventory/save';
+const FETCH_DIRECT_ORDER_PRODUCTS = BASE_URL + 'backend/directorder/fetchProducts';
+const SAVE_DIRECT_ORDER_PRODUCTS = BASE_URL + 'backend/directorder/save';
+const FETCH_VENDOR_ASSIGNED_PRODUCT_CATEGORIES = BASE_URL + 'backend/categories/fetchVendorAssignedProductCategories';

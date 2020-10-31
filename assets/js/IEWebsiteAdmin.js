@@ -479,7 +479,7 @@ IEWebsiteAdmin.VendorProductTaxPage = (function() {
 		});
 
 		$("#saveVendorProductTax").click(function() {
-			let vedorId = $("#vendor").val();
+			let vendorId = $("#vendor").val();
 			let productTaxData = $('#vendorProductTaxForm').serializeArray().reduce(function(obj, item) {
 				obj[item.name] = item.value;
 				return obj;
@@ -488,7 +488,7 @@ IEWebsiteAdmin.VendorProductTaxPage = (function() {
 			if (!_.isEmpty(productTaxData))
 			{
 				IEWebsite.Utils.ShowLoadingScreen();
-				IEWebsite.Utils.AjaxPost(`${SAVE_VENDOR_PRODUCT_TAX_MAPPING}/${vedorId}`, productTaxData, function(resp) {
+				IEWebsite.Utils.AjaxPost(`${SAVE_VENDOR_PRODUCT_TAX_MAPPING}/${vendorId}`, productTaxData, function(resp) {
 					IEWebsite.Utils.HideLoadingScreen();
 					if (resp.status)
 					{
@@ -784,6 +784,232 @@ IEWebsiteAdmin.OpeningStockPage = (function() {
 	}
 })();
 
+IEWebsiteAdmin.DirectOrderPage = (function() {
+	var pagination = {
+		currentPage: 1,
+		totalPages: 0,
+		limit: 10,
+	}
+	var directOrdersData = {};
+
+	var init = function()
+	{
+		if ($("#directOrderPageContainer").length <= 0)
+		{
+			return;
+		};
+
+		console.log('Hello');
+
+		$("#saveDirectOrder").attr("disabled", "true");
+		$("#searchBar").keyup(_.debounce(loadProducts, 500));
+		$("#vendor").change(loadVendorProductCategories);
+		$("#category").change(loadProducts);
+
+		$("#saveDirectOrder").click(function() {
+			if (pagination.currentPage !== pagination.currentPage)
+			{
+				return false;
+			}
+
+			if (!_.isEmpty(directOrdersData))
+			{
+				IEWebsite.Utils.ShowLoadingScreen();
+				IEWebsite.Utils.AjaxPost(SAVE_DIRECT_ORDER_PRODUCTS, directOrdersData, function(resp) {
+					IEWebsite.Utils.HideLoadingScreen();
+					if (resp.status)
+					{
+						IEWebsite.Utils.Swal('Success', 'Data Saved Successfully..', 'success');
+						window.setTimeout(function() {
+							window.location.reload();
+						}, 5000);
+					}
+				});
+			}
+		});
+	
+		$("#tableDataLimit").change(function() {
+			pagination.limit = Number($(this).val());
+			pagination.currentPage = 1;
+			pagination.totalPages  = 0;
+			loadProducts();
+		});
+	};
+
+	var loadVendorProductCategories = function() {
+		let vendorId = $("#vendor").val();
+		if (vendorId >= 0)
+		{
+			IEWebsite.Utils.AjaxGet(FETCH_VENDOR_ASSIGNED_PRODUCT_CATEGORIES + '/' + vendorId, directOrdersData, function(resp) {
+				if (resp.status)
+				{	
+					$("#category").html('');
+
+					if (_.isEmpty(resp.response))
+					{
+						alert('Vendor has no product assigned');
+					}
+					else
+					{
+						_.each(resp.response, function(row)
+						{
+							$("#category").append($("<option>").attr('value', row.categoryId).text(row.categoryName));
+						});
+	
+						$("#category").selectpicker("refresh");
+					}
+				}
+			});
+		}
+	}
+
+	var loadProducts = function() {
+		let searchText = $.trim($("#searchBar").val());
+		let category = $("#category").val();
+		let vendor = $("#vendor").val();
+
+		$("#directOrderTableBody").html('');
+
+		if (!_.isEmpty(category) > 0)
+		{
+			let data = {
+				search: searchText,
+				category: category,
+				vendorId: vendor,
+				page: pagination.currentPage,
+				limit: Number(pagination.limit)
+			};
+
+			IEWebsite.Utils.ShowLoadingScreen();
+			IEWebsite.Utils.AjaxPost(FETCH_DIRECT_ORDER_PRODUCTS, data , function(resp) {
+				IEWebsite.Utils.HideLoadingScreen();
+	
+				if (resp.status)
+				{
+					$("#manageDirectOrderContainer").show();
+
+					pagination.totalPages = resp.response.pagination.totalPages;
+					
+					$("#directOrderStock").attr("disabled", "true");
+					
+					if (resp.response.pagination.totalPages == resp.response.pagination.current)
+					{
+						$("#directOrderStock").attr("disabled", false);
+					}
+
+					searchBoxEnabled = true;
+					if (!_.isEmpty(resp.response.data))
+					{
+						showTableData(resp.response.data);
+					}
+					else
+					{
+						$("#directOrderTableBody").append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
+					}
+
+					let paginationHtml = IEWebsiteAdmin.CustomPagination.Init(resp.response.pagination);
+					$("#pagination").html(paginationHtml);
+
+					$("[id^=paginate-]").click(function() {
+						let page = Number($(this).attr('page'));
+
+						if (page > 0)
+						{
+							pagination.currentPage = page;
+							loadProducts();
+						}
+					});
+				}
+			});
+		}
+
+	}
+
+	var showTableData = function(data) 
+	{
+		if (!_.isEmpty(data))
+		{
+			_.each(data, function(row) {
+				let qty = '',
+					unitPrice = '',
+					comment = '',
+					subTotal = 0;
+
+				if (directOrdersData[row.productId])
+				{
+					qty = directOrdersData[row.productId].qty,
+					unitPrice = directOrdersData[row.productId].unitPrice,
+					comment = directOrdersData[row.productId].comment,
+					subTotal = qty * unitPrice;
+				}
+
+				subTotal = (Math.round(subTotal * 100) / 100).toFixed(2);
+
+				let qtyInputHtml = '<input type="number" productid="'+ row.productId +'" style="width:60px" min="0" name="product[qty]['+ row.productId +']" value="'+ qty +'"/>';
+				let commentInputHtml = '<input type="text" productid="'+ row.productId +'" name="product[comment]['+ row.productId +']" value="'+ comment +'" />';
+				let subTotalInputHtml = '<span productid="'+ row.productId +'" id="product[subTotal]['+ row.productId +']" name="product[subTotal]['+ row.productId +']">'+ subTotal +'</span>';
+				let unitPriceInputHtml = '<input productid="'+ row.productId +'" type="text" style="width:100px"  name="product[unitPrice]['+ row.productId +']" value="'+ unitPrice +'"/>';
+
+
+				let tableRow = '<tr>';
+					tableRow += '<td><span productid="'+ row.productId +'" id="removeRow-'+ row.productId +'"><i class="material-icons cursor-pointer">clear</i></span></td>';
+					tableRow += '<td>'+ row.productCode +'</td>';
+					tableRow += '<td>'+ row.productName +'</td>';
+					tableRow += '<td>'+ row.selectSiUnit +'</td>';
+					tableRow += '<td>'+ qtyInputHtml +'</td>';
+					tableRow += '<td>'+ unitPriceInputHtml +'</td>';
+					tableRow += '<td>'+ subTotalInputHtml +'</td>';
+					tableRow += '<td>'+ commentInputHtml +'</td>';
+					tableRow += '</tr>';
+					
+				$("#directOrderTableBody").append(tableRow);
+			});
+
+			$("span[id^=removeRow-]").click(function(){
+				$(this).parent().parent().remove();
+				let productId = $(this).attr('productid');
+
+				if (directOrdersData[productId])
+				{
+					delete directOrdersData[productId];
+				}
+			});
+
+			$("input[name^='product[qty]']").change(calulateSubtotal);
+			$("input[name^='product[unitPrice]']").keyup(calulateSubtotal);
+			$("input[name^='product[comment]']").keyup(calulateSubtotal);
+		}
+	};
+	
+	var calulateSubtotal = function() 
+	{
+		let productId = Number($(this).attr('productid'));
+		let qty = Number($("input[name='product[qty]["+ productId +"]']").val());
+		let unitPrice = Number($("input[name='product[unitPrice]["+ productId +"]']").val());
+		let unit = Number($("select[name='product[unit]["+ productId +"]']").val());
+		let comment = $("input[name='product[comment]["+ productId +"]']").val();
+
+		directOrdersData[productId] = {
+			qty,
+			unitPrice,
+			unit,
+			comment
+		};
+
+		if (productId > 0)
+		{
+			let totalPrice = qty * unitPrice;
+				totalPrice = (Math.round(totalPrice * 100) / 100).toFixed(2);
+
+			$("span[id='product[subTotal]["+ productId +"]']").text(totalPrice);
+		}
+	}
+
+	return {
+		Init: init
+	}
+})();
+
 IEWebsiteAdmin.CustomPagination = (function() {
 	
 	var init = function(pagination)
@@ -869,4 +1095,5 @@ $(document).ready(function(){
 	IEWebsiteAdmin.VendorProductsPage.Init();
 	IEWebsiteAdmin.VendorProductTaxPage.Init();
 	IEWebsiteAdmin.OpeningStockPage.Init();
+	IEWebsiteAdmin.DirectOrderPage.Init();
 });
