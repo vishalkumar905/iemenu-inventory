@@ -977,6 +977,7 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 				let tableRow = '<tr>';
 					tableRow += '<td><span productid="'+ row.productId +'" id="removeRow-'+ row.productId +'"><i class="material-icons cursor-pointer">clear</i></span></td>';
 					tableRow += '<td>'+ row.productCode +'</td>';
+					tableRow += '<td>'+ row.hsnCode +'</td>';
 					tableRow += '<td>'+ row.productName +'</td>';
 					tableRow += '<td>'+ row.selectSiUnit +'</td>';
 					tableRow += '<td>'+ qtyInputHtml +'</td>';
