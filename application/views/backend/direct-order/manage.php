@@ -13,7 +13,7 @@
 						</select>
 					</div> 
 					<div class="col-md-6">
-						<input type="text" name="searchBar" id="searchBar" class="form-control" placeholder="Product Name">
+						<input type="text" name="searchBar" id="searchBar" class="form-control typeahead"  placeholder="Product Name">
 					</div>
 				</div>
 			</div>
@@ -25,11 +25,12 @@
 							<tr>
 								<th></th>
 								<th>Product Code</th>
+								<th>HSN Code</th>
 								<th>Product Name</th>
 								<th>Unit</th>
 								<th width="10%">Qty</th>
 								<th>Unit Price</th>
-								<th  width="10%">Sub Total</th>
+								<th width="10%">Sub Total</th>
 								<th>Comment</th>
 							</tr>
 						</thead>

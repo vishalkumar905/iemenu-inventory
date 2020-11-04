@@ -190,7 +190,7 @@ class VendorProductModel extends CI_Model
 	public function getVendorProducts($condition = null, $limit, $offset, $whereIn = null)
 	{
 		$this->getDatatableQuery();
-		$columns = ['vp.id as vendorProductId', 'p.id as productId', 'p.productName', 'p.productSiUnits', 'p.productCode', 'v.vendorName', 'v.vendorCode', 'vp.createdOn'];
+		$columns = ['vp.id as vendorProductId', 'p.id as productId', 'p.productName', 'p.productSiUnits', 'p.hsnCode', 'p.productCode', 'v.vendorName', 'v.vendorCode', 'vp.createdOn'];
 		$this->db->select($columns);
 		$this->getVendorProductsQuery($condition, $whereIn);
 		$this->db->limit($limit, $offset);

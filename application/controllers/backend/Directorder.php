@@ -161,7 +161,8 @@ class Directorder extends Backend_Controller
 				$data = [
 					'productId' => $product['productId'],
 					'productName' => $product['productName'],
-					'productCode' => $product['productCode']
+					'productCode' => $product['productCode'],
+					'hsnCode' => $product['hsnCode'],
 				];
 
 				if (!empty($product['productSiUnits']))
