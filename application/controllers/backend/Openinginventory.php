@@ -11,7 +11,7 @@ class Openinginventory extends Backend_Controller
 
 		$this->exportUrl = base_url() . 'backend/opening-inventory/export/';
 
-		$this->load->model('ProductStockModel', 'productstock');
+		$this->load->model('OpeningStockModel', 'openingstock');
 		$this->load->model('CategoryModel', 'category');
 		$this->load->model('ProductModel', 'product');
 		$this->load->model('SIUnitModel', 'siunit');
@@ -66,7 +66,7 @@ class Openinginventory extends Backend_Controller
 
 			if (!empty($insertData))
 			{
-				$this->productstock->insertBatch($insertData);
+				$this->openingstock->insertBatch($insertData);
 			}
 		}
 
@@ -76,7 +76,7 @@ class Openinginventory extends Backend_Controller
 	public function getOpeningStockNumber()
 	{
 		$columns = ['MAX(openingStockNumber) as openingStockNumber'];
-		$result = $this->productstock->getWhereCustom($columns, ['userId' => $this->loggedInUserId])->result_array();
+		$result = $this->openingstock->getWhereCustom($columns, ['userId' => $this->loggedInUserId])->result_array();
 
 		if (!empty($result))
 		{

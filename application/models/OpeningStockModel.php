@@ -1,8 +1,8 @@
 <?php
 
-class ProductStockModel extends CI_Model
+class OpeningStockModel extends CI_Model
 {
-	private $tableName = 'ie_product_stocks';
+	private $tableName = 'ie_opening_stocks';
 	private $primaryKey = 'id';
     private $columnSearch = array(''); //set column field database for datatable searchable 
 	

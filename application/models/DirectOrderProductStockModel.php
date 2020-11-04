@@ -1,6 +1,6 @@
 <?php
 
-class DirectOrderProductStockModel extends CI_Model
+class DirectOrderOpeningStockModel extends CI_Model
 {
 	private $tableName = 'ie_direct_order_product_stocks';
 	private $primaryKey = 'id';

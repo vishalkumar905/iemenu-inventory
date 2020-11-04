@@ -1,6 +1,6 @@
 <?php
 
-class Directorder extends Backend_Controller
+class Closinginventory extends Backend_Controller
 {
 	public $exportUrl;
 	public $productSiUnitsData;
@@ -9,35 +9,28 @@ class Directorder extends Backend_Controller
 	{
 		parent::__construct();
 
-		$this->exportUrl = base_url() . 'backend/direct-order/export/';
+		$this->exportUrl = base_url() . 'backend/closing-inventory/export/';
 
 		$this->load->model('OpeningStockModel', 'openingstock');
-		$this->load->model('VendorModel', 'vendor');
-		$this->load->model('VendorProductModel', 'vendorproduct');
-		$this->load->model('DirectOrderOpeningStockModel', 'directorderopeningstock');
 		$this->load->model('CategoryModel', 'category');
 		$this->load->model('ProductModel', 'product');
 		$this->load->model('SIUnitModel', 'siunit');
-
-		$this->pageTitle = $this->navTitle = 'Purchase Order';
 	}
 
 	public function index()
-	{		
+	{
+		$this->pageTitle = $this->navTitle = 'Inventory';
+		
 		$data['submitBtn']  = 'Save';
-		$data['headTitle']  = 'Direct Order';
+		$data['headTitle']  = 'Closing Inventory';
 
 		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
-		$data['viewFile'] = 'backend/direct-order/index';
-		$data['grnNumber'] = $this->directorderopeningstock->getLastGrnNumber();
+		$data['viewFile'] = 'backend/closing-inventory/index';
+		$data['closingStockNumber'] = $this->getClosingStockNumber();
 		$data['productTypes'] = $this->productTypes();
-		$data['dropdownSubCategories'] = [];
+		$data['dropdownSubCategories'] = $this->category->getAllDropdownSubCategories(['userId' => $this->loggedInUserId]);
 		$data['flashMessage'] = $this->session->flashdata('flashMessage');
 		$data['flashMessageType'] = $this->session->flashdata('flashMessageType');
-
-		$data['dropdownVendors'] = $this->vendor->getDropdownVendors([
-			'userId' => $this->loggedInUserId
-		]);
 
 		$this->load->view($this->template, $data);
 	}
@@ -48,12 +41,12 @@ class Directorder extends Backend_Controller
 			exit('No direct script access allowed');
 		}
 
-		$productData = $this->input->post('productData');
-
-		if (!empty($productData))
+		$post = $this->input->post();
+		
+		if (!empty($post))
 		{
 			$insertData = [];
-			foreach($productData as $productId => $row)
+			foreach($post as $productId => $row)
 			{
 				if ($row['qty'] > 0 && $row['unitPrice'] > 0)
 				{
@@ -64,34 +57,30 @@ class Directorder extends Backend_Controller
 						'productQuantity' => $row['qty'],
 						'productSubtotal' => $row['qty'] * $row['unitPrice'],
 						'comment' => $row['comment'],
-						'openingStockNumber' => $this->getLastOpeningStockNumber(),
-						'grnNumber' => $this->directorderopeningstock->getLastGrnNumber(),
+						'closingStockNumber' => $this->getClosingStockNumber(),
 						'createdOn' => time(),
-						'userId' => $this->loggedInUserId,
-						'vendorId' => $this->input->post('vendorId'),
-						'billNumber' => $this->input->post('billNumber'),
-						'billDate' => strtotime($this->input->post('billDate')),
+						'userId' => $this->loggedInUserId
 					];
 				}
 			}
 
 			if (!empty($insertData))
 			{
-				$this->directorderopeningstock->insertBatch($insertData);
+				$this->openingstock->insertBatch($insertData);
 			}
 		}
 
 		responseJson(true, null, []);
 	}
 
-	public function getLastOpeningStockNumber()
+	public function getClosingStockNumber()
 	{
-		$columns = ['MAX(openingStockNumber) as openingStockNumber'];
+		$columns = ['MAX(closingStockNumber) as closingStockNumber'];
 		$result = $this->openingstock->getWhereCustom($columns, ['userId' => $this->loggedInUserId])->result_array();
 
 		if (!empty($result))
 		{
-			return $result[0]['openingStockNumber'] + 1;
+			return $result[0]['closingStockNumber'] + 1;
 		}
 		else
 		{
@@ -107,19 +96,19 @@ class Directorder extends Backend_Controller
 
 		$search = trim($this->input->post('search'));
 		$category = $this->input->post('category');
-		$vendorId = $this->input->post('vendorId');
+		$productType = $this->input->post('productType');
 
 		$results = ["data" => [], 'pagination' => []];
 
-		if (!empty($category))
+		if (!empty($category) && !empty($productType))
 		{
 			$limit = intval($this->input->post('limit')) ? $this->input->post('limit') : 10;
 			$page = intval($this->input->post('page')) ? intval($this->input->post('page')) : 0;
 
 			$offset = $page > 0 ? $limit * ($page - 1) : 0;
 
-			$condition['vp.vendorId'] = $vendorId;
-			$condition['vp.userId'] = $this->loggedInUserId;
+			$condition['productType'] = $productType;
+			$condition['userId'] = $this->loggedInUserId;
 			
 			$whereIn = [];
 			$like = [];
@@ -134,7 +123,7 @@ class Directorder extends Backend_Controller
 
 			if (is_array($category) && !in_array(0, $category))
 			{
-				$whereIn = ['field' => 'p.categoryId', 'values' => $category];
+				$whereIn = ['field' => 'categoryId', 'values' => $category];
 			}
 			
 			if(!empty($search))
@@ -144,25 +133,24 @@ class Directorder extends Backend_Controller
 				$like['fields'] = ['productName', 'productCode'];
 			}
 
-			$vendorProducts = $this->vendorproduct->getVendorProducts($condition, $limit, $offset, $whereIn)->result_array();
-			$vendorProductCount = $this->vendorproduct->getAllVendorProductsCount($condition, $whereIn);
+			$products = $this->product->getWhereCustom(['id', 'productName', 'productCode', 'productSiUnits'], $condition, null, $whereIn, $like, $limit, $offset)->result_array();
+			$productCount = $this->product->getWhereCustomCount($condition, $whereIn, $like)->result_array();
 
 			$results['pagination'] = [
-				'total' => intval($vendorProductCount),
+				'total' => intval($productCount[0]['totalCount']),
 				'limit' => $limit,
 				'current' => $page,
-				'totalPages' => ceil($vendorProductCount / $limit)
+				'totalPages' => ceil($productCount[0]['totalCount'] / $limit)
 			];
 
-			$this->getProductsSiUnitsDetails($vendorProducts);
+			$this->getProductsSiUnitsDetails($products);
 
-			foreach($vendorProducts as $product)
+			foreach($products as $product)
 			{
 				$data = [
-					'productId' => $product['productId'],
+					'productId' => $product['id'],
 					'productName' => $product['productName'],
-					'productCode' => $product['productCode'],
-					'hsnCode' => $product['hsnCode'],
+					'productCode' => $product['productCode']
 				];
 
 				if (!empty($product['productSiUnits']))
@@ -184,7 +172,7 @@ class Directorder extends Backend_Controller
 
 					if ($dropdownOptions)
 					{
-						$data['selectSiUnit'] = sprintf('<select name="product[unit][%s]">%s<select>', $product['productId'], $dropdownOptions);
+						$data['selectSiUnit'] = sprintf('<select name="product[unit][%s]">%s<select>', $product['id'], $dropdownOptions);
 					}
 				}
 

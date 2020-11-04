@@ -77,6 +77,9 @@
 				<li>
 					<a href="<?=base_url()?>backend/openinginventory">Opening Inventory</a>
 				</li>
+				<li>
+					<a href="<?=base_url()?>backend/closinginventory">Closing Inventory</a>
+				</li>
 				<!-- <li>
 					<a href="<?=base_url()?>backend/vendorproducts">Vendor Products</a>
 				</li>
