@@ -784,6 +784,204 @@ IEWebsiteAdmin.OpeningStockPage = (function() {
 	}
 })();
 
+IEWebsiteAdmin.ClosingStockPage = (function() {
+	var searchBoxEnabled = false;
+	var pagination = {
+		currentPage: 1,
+		totalPages: 0,
+		limit: 10,
+	}
+	var closingStocksData = {};
+
+	var init = function()
+	{
+		if ($("#closingInventoryPageContainer").length <= 0)
+		{
+			return 0;
+		};
+
+		$("#saveClosingStock").attr("disabled", "true");
+		$("#searchBar").keyup(_.debounce(loadProducts, 500));
+		$("#category").change(loadProducts);
+		$("#productType").change(loadProducts);
+
+		$("#saveClosingStock").click(function() {
+			if (pagination.currentPage !== pagination.currentPage)
+			{
+				return false;
+			}
+
+			if (!_.isEmpty(closingStocksData))
+			{
+				IEWebsite.Utils.ShowLoadingScreen();
+				IEWebsite.Utils.AjaxPost(SAVE_CLOSING_INVETORY_PRODUCTS, closingStocksData, function(resp) {
+					IEWebsite.Utils.HideLoadingScreen();
+					if (resp.status)
+					{
+						IEWebsite.Utils.Swal('Success', 'Closing Inventory Created Successfully..', 'success');
+						window.setTimeout(function() {
+							window.location.reload();
+						}, 2000);
+					}
+				});
+			}
+		});
+	
+		$("#tableDataLimit").change(function() {
+			pagination.limit = Number($(this).val());
+			pagination.currentPage = 1;
+			pagination.totalPages  = 0;
+			loadProducts();
+		});
+	};
+
+	var loadProducts = function() {
+		let searchText = $.trim($("#searchBar").val());
+		let category = $("#category").val();
+		let productType = $("#productType").val();
+
+		$("#closingStockTableBody").html('');
+
+		if (!_.isEmpty(category) > 0)
+		{
+			let data = {
+				search: searchText,
+				category: category,
+				productType: productType,
+				page: pagination.currentPage,
+				limit: Number(pagination.limit)
+			};
+
+			IEWebsite.Utils.ShowLoadingScreen();
+			IEWebsite.Utils.AjaxPost(FETCH_CLOSING_INVETORY_PRODUCTS, data , function(resp) {
+				IEWebsite.Utils.HideLoadingScreen();
+	
+				if (resp.status)
+				{
+					$("#manageClosingStockContainer").show();
+
+					pagination.totalPages = resp.response.pagination.totalPages;
+					
+					$("#saveClosingStock").attr("disabled", "true");
+					
+					if (resp.response.pagination.totalPages == resp.response.pagination.current)
+					{
+						$("#saveClosingStock").attr("disabled", false);
+					}
+
+					searchBoxEnabled = true;
+					if (!_.isEmpty(resp.response.data))
+					{
+						showTableData(resp.response.data);
+					}
+					else
+					{
+						$("#closingStockTableBody").append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
+					}
+
+					let paginationHtml = IEWebsiteAdmin.CustomPagination.Init(resp.response.pagination);
+					$("#pagination").html(paginationHtml);
+
+					$("[id^=paginate-]").click(function() {
+						let page = Number($(this).attr('page'));
+
+						if (page > 0)
+						{
+							pagination.currentPage = page;
+							loadProducts();
+						}
+					});
+				}
+			});
+		}
+
+	}
+
+	var showTableData = function(data) 
+	{
+		if (!_.isEmpty(data))
+		{
+			_.each(data, function(row) {
+				let qty = '',
+					unitPrice = '',
+					comment = '',
+					subTotal = 0;
+
+				if (closingStocksData[row.productId])
+				{
+					qty = closingStocksData[row.productId].qty,
+					unitPrice = closingStocksData[row.productId].unitPrice,
+					comment = closingStocksData[row.productId].comment,
+					subTotal = qty * unitPrice;
+				}
+
+				subTotal = (Math.round(subTotal * 100) / 100).toFixed(2);
+
+				let qtyInputHtml = '<input type="number" productid="'+ row.productId +'" style="width:60px" min="0" name="product[qty]['+ row.productId +']" value="'+ qty +'"/>';
+				let commentInputHtml = '<input type="text" productid="'+ row.productId +'" name="product[comment]['+ row.productId +']" value="'+ comment +'" />';
+				let subTotalInputHtml = '<span productid="'+ row.productId +'" id="product[subTotal]['+ row.productId +']" name="product[subTotal]['+ row.productId +']">'+ subTotal +'</span>';
+				let unitPriceInputHtml = '<input productid="'+ row.productId +'" type="text" style="width:100px"  name="product[unitPrice]['+ row.productId +']" value="'+ unitPrice +'"/>';
+
+
+				let tableRow = '<tr>';
+					tableRow += '<td><span productid="'+ row.productId +'" id="removeRow-'+ row.productId +'"><i class="material-icons cursor-pointer">clear</i></span></td>';
+					tableRow += '<td>'+ row.productCode +'</td>';
+					tableRow += '<td>'+ row.productName +'</td>';
+					tableRow += '<td>'+ row.selectSiUnit +'</td>';
+					tableRow += '<td>'+ qtyInputHtml +'</td>';
+					tableRow += '<td>'+ unitPriceInputHtml +'</td>';
+					tableRow += '<td>'+ subTotalInputHtml +'</td>';
+					tableRow += '<td>'+ commentInputHtml +'</td>';
+					tableRow += '</tr>';
+					
+				$("#closingStockTableBody").append(tableRow);
+			});
+
+			$("span[id^=removeRow-]").click(function(){
+				$(this).parent().parent().remove();
+				let productId = $(this).attr('productid');
+
+				if (closingStocksData[productId])
+				{
+					delete closingStocksData[productId];
+				}
+			});
+
+			$("input[name^='product[qty]']").change(calulateSubtotal);
+			$("input[name^='product[unitPrice]']").keyup(calulateSubtotal);
+			$("input[name^='product[comment]']").keyup(calulateSubtotal);
+		}
+	};
+	
+	var calulateSubtotal = function() 
+	{
+		let productId = Number($(this).attr('productid'));
+		let qty = Number($("input[name='product[qty]["+ productId +"]']").val());
+		let unitPrice = Number($("input[name='product[unitPrice]["+ productId +"]']").val());
+		let unit = Number($("select[name='product[unit]["+ productId +"]']").val());
+		let comment = $("input[name='product[comment]["+ productId +"]']").val();
+
+		closingStocksData[productId] = {
+			qty,
+			unitPrice,
+			unit,
+			comment
+		};
+
+		if (productId > 0)
+		{
+			let totalPrice = qty * unitPrice;
+				totalPrice = (Math.round(totalPrice * 100) / 100).toFixed(2);
+
+			$("span[id='product[subTotal]["+ productId +"]']").text(totalPrice);
+		}
+	}
+
+	return {
+		Init: init
+	}
+})();
+
 IEWebsiteAdmin.DirectOrderPage = (function() {
 	var pagination = {
 		currentPage: 1,
@@ -844,7 +1042,7 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 						IEWebsite.Utils.Swal('Success', 'Data Saved Successfully..', 'success');
 						window.setTimeout(function() {
 							window.location.reload();
-						}, 5000);
+						}, 2000);
 					}
 				});
 			}
@@ -1119,5 +1317,6 @@ $(document).ready(function(){
 	IEWebsiteAdmin.VendorProductsPage.Init();
 	IEWebsiteAdmin.VendorProductTaxPage.Init();
 	IEWebsiteAdmin.OpeningStockPage.Init();
+	IEWebsiteAdmin.ClosingStockPage.Init();
 	IEWebsiteAdmin.DirectOrderPage.Init();
 });

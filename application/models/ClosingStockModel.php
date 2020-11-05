@@ -1,8 +1,8 @@
 <?php
 
-class DirectOrderOpeningStockModel extends CI_Model
+class ClosingStockModel extends CI_Model
 {
-	private $tableName = 'ie_direct_order_product_stocks';
+	private $tableName = 'ie_closing_stocks';
 	private $primaryKey = 'id';
     private $columnSearch = array(''); //set column field database for datatable searchable 
 	
@@ -239,21 +239,6 @@ class DirectOrderOpeningStockModel extends CI_Model
 
 		$results = $this->db->get();
 		return $results;
-	}
-
-	public function getLastGrnNumber()
-	{
-		$columns = ['MAX(grnNumber) as grnNumber'];
-		$result = $this->getWhereCustom($columns, ['userId' => $this->loggedInUserId])->result_array();
-
-		if (!empty($result))
-		{
-			return $result[0]['grnNumber'] + 1;
-		}
-		else
-		{
-			return 1;
-		}
 	}
 }
 

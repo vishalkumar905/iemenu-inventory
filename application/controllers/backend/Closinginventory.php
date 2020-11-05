@@ -11,7 +11,7 @@ class Closinginventory extends Backend_Controller
 
 		$this->exportUrl = base_url() . 'backend/closing-inventory/export/';
 
-		$this->load->model('OpeningStockModel', 'openingstock');
+		$this->load->model('ClosingStockModel', 'closingstock');
 		$this->load->model('CategoryModel', 'category');
 		$this->load->model('ProductModel', 'product');
 		$this->load->model('SIUnitModel', 'siunit');
@@ -66,7 +66,7 @@ class Closinginventory extends Backend_Controller
 
 			if (!empty($insertData))
 			{
-				$this->openingstock->insertBatch($insertData);
+				$this->closingstock->insertBatch($insertData);
 			}
 		}
 
@@ -76,7 +76,7 @@ class Closinginventory extends Backend_Controller
 	public function getClosingStockNumber()
 	{
 		$columns = ['MAX(closingStockNumber) as closingStockNumber'];
-		$result = $this->openingstock->getWhereCustom($columns, ['userId' => $this->loggedInUserId])->result_array();
+		$result = $this->closingstock->getWhereCustom($columns, ['userId' => $this->loggedInUserId])->result_array();
 
 		if (!empty($result))
 		{
