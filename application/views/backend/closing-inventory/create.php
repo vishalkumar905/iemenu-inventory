@@ -34,19 +34,21 @@
 							
 							if (!empty($dropdownSubCategories))
 							{
-								array_splice($dropdownSubCategories, 1, 0, ['All' => 'All Categories']);
-
 								$ddOptions = '';
+								$ddCounter = 0;
 								foreach($dropdownSubCategories as $subCategoryIndex => $subCategoryName)
 								{
-									if ($subCategoryIndex === '')
+									if ($ddCounter == 0)
 									{
 										$ddOptions .= sprintf('<option disabled value>%s</option>', $subCategoryName);
+										$ddOptions .= sprintf('<option value="0">%s</option>', 'All Categories');
 									}
 									else
 									{
 										$ddOptions .= sprintf('<option value="%s">%s</option>', $subCategoryIndex, $subCategoryName);
 									}
+
+									$ddCounter++;
 								}
 
 								if ($ddOptions)
