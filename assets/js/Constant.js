@@ -15,3 +15,5 @@ const SAVE_CLOSING_INVETORY_PRODUCTS = BASE_URL + 'backend/closinginventory/save
 const FETCH_DIRECT_ORDER_PRODUCTS = BASE_URL + 'backend/directorder/fetchProducts';
 const SAVE_DIRECT_ORDER_PRODUCTS = BASE_URL + 'backend/directorder/save';
 const FETCH_VENDOR_ASSIGNED_PRODUCT_CATEGORIES = BASE_URL + 'backend/categories/fetchVendorAssignedProductCategories';
+
+const FETCH_MASTER_REPORT = BASE_URL + 'backend/report/fetchMaster';

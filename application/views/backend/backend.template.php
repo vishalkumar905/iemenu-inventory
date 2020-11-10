@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <title>Admin <?= isset($this->pageTitle) ? $this->pageTitle : '' ?></title>
+    <title><?= isset($this->pageTitle) ? $this->pageTitle : 'Admin' ?></title>
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
     <meta name="viewport" content="width=device-width" />
 
@@ -98,6 +98,7 @@
 <script src="<?=base_url()?>assets/js/material.min.js" type="text/javascript"></script>
 <script src="<?=base_url()?>assets/js/perfect-scrollbar.jquery.min.js" type="text/javascript"></script>
 <script src="<?=base_url()?>assets/js/jquery.validate.min.js" type="text/javascript"></script>
+<script src="<?=base_url()?>assets/js/bootstrap-notify.js" type="text/javascript"></script>
 <script src="<?=base_url()?>assets/js/sweetalert2.js" type="text/javascript"></script>
 <?php
 }

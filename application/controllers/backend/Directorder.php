@@ -91,7 +91,7 @@ class Directorder extends Backend_Controller
 
 		if (!empty($result))
 		{
-			return $result[0]['openingStockNumber'] + 1;
+			return $result[0]['openingStockNumber'];
 		}
 		else
 		{

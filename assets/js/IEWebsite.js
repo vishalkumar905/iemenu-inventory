@@ -218,6 +218,22 @@ IEWebsite.Utils = (function() {
 		});
 	}
 
+	var showNotification = function(message, type = 'success', from = 'top', align = 'center') {
+		// type = ['','info','success','warning','danger','rose','primary'];
+    	$.notify({
+        	icon: "notifications",
+        	message: message
+        },{
+            type: type,
+			// timer: 1000,
+			delay: 100,
+            placement: {
+                from: from,
+                align: align
+            }
+        });
+	}
+
 	return {
 		AjaxGet: ajaxGet,
 		AjaxPost: ajaxPost,
@@ -237,5 +253,6 @@ IEWebsite.Utils = (function() {
 		HideLoadingScreen: hideLoadingScreen,
 		Swal: sweetAlert,
 		JqueryFormValidation: jqueryFormValidation,
+		Notification: showNotification
 	};
 })();

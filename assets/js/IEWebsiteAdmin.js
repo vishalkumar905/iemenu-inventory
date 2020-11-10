@@ -1232,6 +1232,77 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 	}
 })();
 
+IEWebsiteAdmin.MasterReport = (function() {
+	var init = function()
+	{
+		if ($("#reportPageContainer").length == 0)
+		{
+			return;
+		}
+
+		let datetimePickeObj = {
+			format: 'DD/MM/YYYY',
+			icons: {
+				time: "fa fa-clock-o",
+				date: "fa fa-calendar",
+				up: "fa fa-chevron-up",
+				down: "fa fa-chevron-down",
+				previous: 'fa fa-chevron-left',
+				next: 'fa fa-chevron-right',
+				today: 'fa fa-screenshot',
+				clear: 'fa fa-trash',
+				close: 'fa fa-remove',
+				inline: true
+			}
+		}
+
+		$('#startDate').datetimepicker({
+			...datetimePickeObj,
+			maxDate: new Date(),
+			defaultDate: new Date()
+		});
+		
+		$('#endDate').datetimepicker({
+			...datetimePickeObj,
+			maxDate: new Date(),
+			defaultDate: new Date()
+		});
+		
+		$("#search").click(function() {
+			let startDate = $("#startDate").val();
+			let endDate = $("#endDate").val();
+			let category = $("#category").val();
+
+			if (startDate && endDate && category)
+			{
+				let postData = {
+					startDate,
+					endDate,
+					category
+				};
+
+				IEWebsite.Utils.ShowLoadingScreen();
+				IEWebsite.Utils.AjaxPost(FETCH_MASTER_REPORT, postData, function(resp) {
+					IEWebsite.Utils.HideLoadingScreen();
+					console.log('Hide');
+					if (resp.status)
+					{
+						IEWebsite.Utils.Notification(resp.message);
+					}
+					else
+					{
+						
+					}
+				});
+			}
+		});
+	};
+	
+	return {
+		Init: init
+	}
+})();
+
 IEWebsiteAdmin.CustomPagination = (function() {
 	
 	var init = function(pagination)
@@ -1319,4 +1390,5 @@ $(document).ready(function(){
 	IEWebsiteAdmin.OpeningStockPage.Init();
 	IEWebsiteAdmin.ClosingStockPage.Init();
 	IEWebsiteAdmin.DirectOrderPage.Init();
+	IEWebsiteAdmin.MasterReport.Init();
 });

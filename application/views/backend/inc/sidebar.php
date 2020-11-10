@@ -108,4 +108,18 @@
 			</ul>
 		</div>
 	</li>
+
+	<li>
+		<a data-toggle="collapse" href="#reportSideBar">
+			<i class="material-icons">analytics</i>
+			<p>Report<b class="caret"></b></p>
+		</a>
+		<div class="collapse" id="reportSideBar">
+			<ul class="nav">
+				<li>
+					<a href="<?=base_url()?>backend/report">Report</a>
+				</li>
+			</ul>
+		</div>
+	</li>
 </ul>

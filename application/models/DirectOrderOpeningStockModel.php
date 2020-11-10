@@ -2,7 +2,7 @@
 
 class DirectOrderOpeningStockModel extends CI_Model
 {
-	private $tableName = 'ie_direct_order_opening_stocks';
+	private $tableName = 'ie_purchase_stocks';
 	private $primaryKey = 'id';
     private $columnSearch = array(''); //set column field database for datatable searchable 
 	
