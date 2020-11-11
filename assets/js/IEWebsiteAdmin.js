@@ -1284,14 +1284,9 @@ IEWebsiteAdmin.MasterReport = (function() {
 				IEWebsite.Utils.ShowLoadingScreen();
 				IEWebsite.Utils.AjaxPost(FETCH_MASTER_REPORT, postData, function(resp) {
 					IEWebsite.Utils.HideLoadingScreen();
-					console.log('Hide');
 					if (resp.status)
 					{
 						IEWebsite.Utils.Notification(resp.message);
-					}
-					else
-					{
-						
 					}
 				});
 			}

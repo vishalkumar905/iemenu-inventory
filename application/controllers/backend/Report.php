@@ -29,10 +29,36 @@ class Report extends Backend_Controller
 
 	public function fetchMaster()
 	{
+		$startDate = $this->input->post('startDate');
+		$endDate = $this->input->post('endDate');
+
 		$isSuccess = true;
 		$message = 'Hey i am working';
+		$data = [];
 
-		responseJson($isSuccess, $message, []);
+		try
+		{
+			$startDateTimestamp = strtotime(convertJavascriptDateToPhpDate($startDate, '/'));
+			$endDateInTimestamp = strtotime(convertJavascriptDateToPhpDate($endDate, '/'));
+
+
+			
+
+			$data[] = $startDateTimestamp;
+			$data[] = convertJavascriptDateToPhpDate($startDate, '/');
+			$data[] = '<br>';
+			$data[] = $endDateInTimestamp;
+	
+			$isSuccess = true;
+			$message = 'Hey i am working';
+		}
+		catch (Exception $exception)
+		{
+			$isSuccess = false;
+			$message = $exception->getMessage();
+		}
+
+		responseJson($isSuccess, $message, $data);
 	}
 }
 

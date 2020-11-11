@@ -50,7 +50,7 @@
 	</li>
 	<li>
 		<a data-toggle="collapse" href="#vendorSideBar">
-			<i class="material-icons">style</i>
+			<i class="material-icons">people</i>
 			<p>Vendors<b class="caret"></b></p>
 		</a>
 		<div class="collapse" id="vendorSideBar">

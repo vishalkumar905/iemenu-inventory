@@ -59,8 +59,8 @@ if (!function_exists('decryptToken'))
 		{
 			return false;
 		}
-
-		return urldecode(openssl_decrypt($token, CIPHERING, DECRYPTION_KEY, DECRYPTION_OPTION, DECRYPTION_IV)); 
+		
+		return urldecode(base64_decode(openssl_decrypt($token, CIPHERING, DECRYPTION_KEY, DECRYPTION_OPTION, DECRYPTION_IV))); 
 	}
 }
 
@@ -73,7 +73,33 @@ if (!function_exists('encryptToken'))
 			return false;
 		}
 
+		$token = base64_encode(urldecode($token));
+		
 		return openssl_encrypt($token, CIPHERING, ENCRYPTION_KEY, ENCRYPTION_OPTION, ENCRYPTION_IV); 
+	}
+}
+
+if (!function_exists('convertJavascriptDateToPhpDate'))
+{
+	function convertJavascriptDateToPhpDate($date, $seprator = '/', $placement = ['d', 'm', 'y'])
+	{
+		if (!empty($date))
+		{
+			$explodeDate = explode($seprator, $date);
+			
+			$dayIndex = array_search('d', $placement) === false ? -1 : array_search('d', $placement);
+			$monthIndex = array_search('m', $placement) === false ? -1 : array_search('m', $placement);
+			$yearIndex = array_search('y', $placement) === false ? -1 : array_search('y', $placement);
+			
+			if (!empty($explodeDate) && $dayIndex >= 0 && $monthIndex >= 0 && $yearIndex >= 0)
+			{
+				return date(sprintf('%s/%s/%s', $explodeDate[$dayIndex],  $explodeDate[$monthIndex], $explodeDate[$yearIndex]));
+			}
+			else
+			{
+				throw new Exception('Date is invalid');
+			}
+		}
 	}
 }
 ?>
