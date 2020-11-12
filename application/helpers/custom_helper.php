@@ -42,10 +42,16 @@ if (!function_exists('showAlertMessage'))
 
 if (!function_exists('p'))
 {
-	function p($data)
+	function p()
 	{
 		echo "<pre>";
-		print_r($data);
+		$numargs = func_num_args();
+		$arg_list = func_get_args();
+
+		for ($i = 0; $i < $numargs; $i++) {
+			print_r($arg_list[$i]);
+		}
+
 		echo "<pre>";
 		die();
 	}
@@ -93,7 +99,7 @@ if (!function_exists('convertJavascriptDateToPhpDate'))
 			
 			if (!empty($explodeDate) && $dayIndex >= 0 && $monthIndex >= 0 && $yearIndex >= 0)
 			{
-				return date(sprintf('%s/%s/%s', $explodeDate[$dayIndex],  $explodeDate[$monthIndex], $explodeDate[$yearIndex]));
+				return date('Y-m-d', strtotime(sprintf('%s-%s-%s', $explodeDate[$yearIndex], $explodeDate[$monthIndex], $explodeDate[$dayIndex])));
 			}
 			else
 			{

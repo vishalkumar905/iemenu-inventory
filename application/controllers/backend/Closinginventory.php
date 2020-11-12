@@ -12,6 +12,7 @@ class Closinginventory extends Backend_Controller
 		$this->exportUrl = base_url() . 'backend/closing-inventory/export/';
 
 		$this->load->model('ClosingStockModel', 'closingstock');
+		$this->load->model('OpeningStockModel', 'openingstock');
 		$this->load->model('CategoryModel', 'category');
 		$this->load->model('ProductModel', 'product');
 		$this->load->model('SIUnitModel', 'siunit');
@@ -58,6 +59,7 @@ class Closinginventory extends Backend_Controller
 						'productSubtotal' => $row['qty'] * $row['unitPrice'],
 						'comment' => $row['comment'],
 						'closingStockNumber' => $this->getClosingStockNumber(),
+						'openingStockNumber' => $this->openingstock->getCurrentOpeningStockNumber(),
 						'createdOn' => time(),
 						'userId' => $this->loggedInUserId
 					];

@@ -128,3 +128,5 @@ else
 {
     define('IEMENU_URL', 'http://localhost/iemenu');
 }
+
+define('TOTAL_SECONDS_IN_ONE_DAY', 86400);

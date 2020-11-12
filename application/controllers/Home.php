@@ -8,6 +8,36 @@ class Home extends CI_Controller
 		$this->load->model('UserModel', 'user');
 	}
 
+	public function devlogin()
+	{
+		if (isset($_SERVER['SERVER_NAME']) && $_SERVER['SERVER_NAME'] == 'localhost')
+		{
+			$email = 'test@gmail.com';
+
+			$condition = [
+				'email' => $email
+			];
+			
+			$user = $this->user->getWhereCustom('*', $condition)->result_array();
+			if (!empty($user))
+			{
+				$user = $user[0];
+				$loggedInData = [
+					'isLoggedIn' => true,
+					'loggedInUserData' => [
+						'userId' => $user['id'],
+						'email' => $user['email'],
+						'type' => $user['type'],
+					]
+				];
+				
+				$this->session->set_userdata($loggedInData);
+
+				redirect('backend/dashboard');
+			}
+		}
+	}
+
 	public function index()
 	{
 		$submit = $this->input->post('submit');
