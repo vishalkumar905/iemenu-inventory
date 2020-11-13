@@ -1,4 +1,4 @@
-<div class="col-md-12 displaynone" id="manageReportContainer">
+<div class="col-md-12" id="manageReportContainer">
 	<div class="card mt-0">
 		<div class="card-content">
 
@@ -23,31 +23,41 @@
 					<table class="table table-bordered custom-table" cellspacing="0" width="100%" style="width:100%">
 						<thead class="text-primary">
 							<tr>
-								<th></th>
-								<th>Product Code</th>
-								<th>Product Name</th>
+								<th rowspan="2">Product Code</th>
+								<th rowspan="2">Product Name</th>
+								<th colspan="2">Avg Price</th>
+								<th colspan="2">Opening Inventory</th>
+								<th colspan="2">Purchase Inventory</th>
+								<th colspan="2">Wastage Inventory</th>
+								<th colspan="2">Transfer</th>
+								<th colspan="2">Closing Inventory</th>
+								<th colspan="2">Consumption</th>
+							</tr>
+							<tr>
 								<th>Unit</th>
-								<th width="10%">Qty</th>
-								<th>Unit Price</th>
-								<th  width="10%">Sub Total</th>
-								<th>Comment</th>
+								<th>Price</th>
+								<th>Qty</th>
+								<th>Amt</th>
+								<th>Qty</th>
+								<th>Amt</th>
+								<th>Qty</th>
+								<th>Amt</th>
+								<th>Qty</th>
+								<th>Amt</th>
+								<th>Qty</th>
+								<th>Amt</th>
+								<th>Qty</th>
+								<th>Amt</th>
 							</tr>
 						</thead>
-						<tbody id="reportTableBody"></tbody>
+						<tbody id="reportTableBody">
+						</tbody>
 					</table>
 				</div>
 			</form>
 			
 			<div id="pagination">
 					
-			</div>
-
-			<div class="toolbar mb-10">
-				<div class="row">
-					<div class="col-md-12">
-						<button type="button" name="submit" value="Save" id="saveOpeningStock" class="btn btn-rose btn-fill">Submit<div class="ripple-container"></div></button>
-					</div>
-				</div>
 			</div>
 		</div>
 	</div>
