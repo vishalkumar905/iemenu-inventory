@@ -98,6 +98,36 @@ class Report extends Backend_Controller
 		
 		$results = [];
 
+		$closingStocksWithProduct = $this->changeArrayIndexByColumnValue($closingStocks, 'productId');
+		$purchaseStocksWithProduct = $this->changeArrayIndexByColumnValue($purchaseStocks, 'productId');
+
+		$openingStockProductIds = [];
+
+		if (!empty($openingStocks))
+		{
+			foreach($openingStocks as $openingStock)
+			{
+				$openingStockProductIds[] = $openingStock['productId'];
+				$results[] = $this->getItemInventoryStock($openingStock, 'purchase', $purchaseStocksWithProduct, $closingStocksWithProduct, $previousPurchaseStockWithProduct, $previousClosingStockWithProduct);
+			}
+		}
+
+		if (!empty($purchaseStocks))
+		{
+			foreach($purchaseStocks as $purchaseStock)
+			{
+				if (!isset($openingStockProductIds[$purchaseStock['productId']]))
+				{
+					$results[] = $this->getItemInventoryStock($purchaseStock, 'purchase', $purchaseStocksWithProduct, $closingStocksWithProduct, $previousPurchaseStockWithProduct, $previousClosingStockWithProduct);
+				}
+			}
+		}
+
+		return $results;
+	}
+
+	private function getItemInventoryStock($inventoryStock, $stockType, $purchaseStocksWithProduct, $closingStocksWithProduct, $previousPurchaseStockWithProduct, $previousClosingStockWithProduct)
+	{
 		$sampleArray = [
 			'averageUnit' => 0,
 			'averagePrice' => 0,
@@ -114,129 +144,92 @@ class Report extends Backend_Controller
 			'consumptionQty' => 0,
 			'consumptionAmt' => 0,
 		];
-
-		$findProductInClosingStocks = false;
-		$closingStocksWithProduct = $this->changeArrayIndexByColumnValue($closingStocks, 'productId');
-		
-		if (!empty($closingStocksWithProduct))
-		{
-			$findProductInClosingStocks = true;
-		}
-
-		$findProductInPurchaseStocks = false;
-		$purchaseStocksWithProduct = $this->changeArrayIndexByColumnValue($purchaseStocks, 'productId');
-		
-		if (!empty($purchaseStocksWithProduct))
-		{
-			$findProductInPurchaseStocks = true;
-		}
-
-		$openingStockProductIds = [];
-
-		if (!empty($openingStocks))
-		{
-			foreach($openingStocks as $openingStock)
-			{
-				$data = $sampleArray;
-				$openingStockProductId = $openingStock['productId'];
-				$openingStockProductIds[$openingStockProductId] = $openingStockProductId;
-
-				$data['productId'] = $openingStockProductId;
-				$data['productName'] = $openingStock['productName'];
-				$data['productCode'] = $openingStock['productCode'];
-				$data['productQuantity'] = $openingStock['productQuantity'];
-				
-				$data['openingInventoryQty'] = $openingStock['productQuantity'];
-				$data['openingInventoryAmt'] = $openingStock['productUnitPrice'];
-
-				if (isset($previousClosingStockWithProduct[$openingStockProductId]))
-				{
-					$previousClosingStockData = $previousClosingStockWithProduct[$openingStockProductId];
-
-					$data['openingInventoryQty'] = $previousClosingStockData['productQuantity'];
-					$data['openingInventoryAmt'] = $previousClosingStockData['productUnitPrice'];
-				}
-
-				if ($findProductInPurchaseStocks && isset($purchaseStocksWithProduct[$openingStockProductId]))
-				{
-					$purchaseInventoryData = $purchaseStocksWithProduct[$openingStockProductId];
-					
-					$data['purchaseInventoryQty']  = $purchaseInventoryData['productQuantity'];
-					$data['purchaseInventoryAmt']  = $purchaseInventoryData['productUnitPrice'];
-				}
-				
-				if (!empty($this->siBaseUnits) && !is_null($openingStock['siUnitParentId']) && isset($this->siBaseUnits[$openingStock['siUnitParentId']]))
-				{
-					$data['averageUnit'] = $this->siBaseUnits[$openingStock['siUnitParentId']];
-				}
-
-				if ($findProductInClosingStocks && isset($closingStocksWithProduct[$openingStockProductId]))
-				{
-					$closingInventoryData = $closingStocksWithProduct[$openingStockProductId];
-
-					$data['closingInventoryQty'] = $closingInventoryData['productQuantity'];
-					$data['closingInventoryAmt'] = $closingInventoryData['productUnitPrice'];
-				}
-				else
-				{
-					$data['closingInventoryQty']  = intval($data['openingInventoryQty']) + intval($data['purchaseInventoryQty']);
-					$data['closingInventoryAmt']  = intval($data['openingInventoryAmt']) + intval($data['purchaseInventoryAmt']);
-				}
-				
-				
-				$results[] = $data;
-			}
-		}
-
-
-		if (!empty($purchaseStocks))
-		{
-			foreach($purchaseStocks as $purchaseStock)
-			{
-				if (!isset($openingStockProductIds[$purchaseStock['productId']]))
-				{
-					$data = $sampleArray;
-					
-					$purchaseStockProductId = $purchaseStock['productId'];
-					$data['productCode'] = $purchaseStock['productCode'];
-					$data['productName'] = $purchaseStock['productName'];
-					$data['productId'] = $purchaseStock['productId'];
-					$data['productQuantity'] = $purchaseStock['productQuantity'];
-					$data['openingInventoryQty'] = $purchaseStock['productQuantity'];
-					$data['openingInventoryAmt'] = $purchaseStock['productUnitPrice'];
-
-					if ($findProductInPurchaseStocks && isset($purchaseStocksWithProduct[$purchaseStockProductId]))
-					{
-						$purchaseInventoryData = $purchaseStocksWithProduct[$purchaseStockProductId];
-						$data['purchaseInventoryQty']  = $purchaseInventoryData['productQuantity'];
-						$data['purchaseInventoryAmt']  = $purchaseInventoryData['productUnitPrice'];
-					}
-
-					if ($findProductInClosingStocks && isset($closingStocksWithProduct[$purchaseStockProductId]))
-					{
-						$closingInventoryData = $closingStocksWithProduct[$purchaseStockProductId];
-						$data['closingInventoryQty']  = $closingInventoryData['productQuantity'];
-						$data['closingInventoryAmt']  = $closingInventoryData['productUnitPrice'];
-
-						$data['openingInventoryQty'] = $data['closingInventoryQty'];
-						$data['openingInventoryAmt'] = $data['closingInventoryAmt'];
-					}
-					
-					$data['closingInventoryQty']  = intval($data['openingInventoryQty']) + intval($data['purchaseInventoryQty']);
-					$data['closingInventoryAmt']  = intval($data['openingInventoryAmt']) + intval($data['purchaseInventoryAmt']);
-
-					if (!empty($this->siBaseUnits) && !is_null($purchaseStock['siUnitParentId']) && isset($this->siBaseUnits[$purchaseStock['siUnitParentId']]))
-					{
-						$data['averageUnit'] = $this->siBaseUnits[$purchaseStock['siUnitParentId']];
-					}
 	
-					$results[] = $data;
-				}
-			}
+		$data = $sampleArray;
+	
+		$productId = $inventoryStock['productId'];
+		
+		$data['productId'] = $productId;
+		$data['productName'] = $inventoryStock['productName'];
+		$data['productCode'] = $inventoryStock['productCode'];
+		$data['productQuantity'] = $inventoryStock['productQuantity'];
+		
+		$data['openingInventoryQty'] = $inventoryStock['productQuantity'];
+		$data['openingInventoryAmt'] = $inventoryStock['productUnitPrice'];
+	
+		if (!empty($this->siBaseUnits) && !is_null($inventoryStock['siUnitParentId']) && isset($this->siBaseUnits[$inventoryStock['siUnitParentId']]))
+		{
+			$data['averageUnit'] = $this->siBaseUnits[$inventoryStock['siUnitParentId']];
 		}
-
-		return $results;
+	
+		// Check do we have any closing or purchase stock from previous stocks will be opening for today
+		$openingStock = [];
+		if ($stockType == 'opening')
+		{
+			$openingStock = [
+				'openingInventoryQty' => $inventoryStock['productQuantity'],
+				'openingInventoryAmt' => $inventoryStock['productUnitPrice']
+			];
+		}
+	
+		$todayItemOpeningStock = $this->getItemOpeningStock($productId, $openingStock, $previousPurchaseStockWithProduct, $previousClosingStockWithProduct);
+		if (!empty($todayItemOpeningStock))
+		{
+			$data['openingInventoryQty'] = $todayItemOpeningStock['openingInventoryQty'];
+			$data['openingInventoryAmt'] = $todayItemOpeningStock['openingInventoryAmt'];
+		}
+	
+		// Check do we have any purchase stock in the specified date range
+		if (isset($purchaseStocksWithProduct[$productId]))
+		{
+			$purchaseInventoryData = $purchaseStocksWithProduct[$productId];
+	
+			$data['purchaseInventoryQty'] = $purchaseInventoryData['productQuantity'];
+			$data['purchaseInventoryAmt'] = $purchaseInventoryData['productUnitPrice'];
+		}
+		
+		// Check the last closing stock in the specified date range 
+		if (isset($closingStocksWithProduct[$productId]))
+		{
+			$closingInventoryData = $closingStocksWithProduct[$productId];
+	
+			$data['closingInventoryQty'] = $closingInventoryData['productQuantity'];
+			$data['closingInventoryAmt'] = $closingInventoryData['productUnitPrice'];
+		}
+		else
+		{
+			$data['closingInventoryQty'] = floatval($data['openingInventoryQty']) + floatval($data['purchaseInventoryQty']);
+			$data['closingInventoryAmt'] = floatval($data['openingInventoryAmt']) + floatval($data['purchaseInventoryAmt']);
+		}
+	
+		return $data;
 	}
+	
+	private function getItemOpeningStock($productId, $openingStock, $previousPurchaseStockWithProduct, $previousClosingStockWithProduct)
+	{
+		$data = [];
+	
+		// Check do we have any closing stock from previous stocks will be opening for today
+		if (isset($previousClosingStockWithProduct[$productId]))
+		{
+			$previousClosingStockData = $previousClosingStockWithProduct[$productId];
+	
+			$data['openingInventoryQty'] = $previousClosingStockData['productQuantity'];
+			$data['openingInventoryAmt'] = $previousClosingStockData['productUnitPrice'];
+		}
+		else if (isset($previousPurchaseStockWithProduct[$productId]))
+		{
+			// Previous purchase should be the addition of opening + purchase = inventory
+	
+			$previousPurchaseStockData = $previousPurchaseStockWithProduct[$productId];
+	
+			$data['openingInventoryQty'] = (!empty($openingStock['openingInventoryQty']) ? floatval($openingStock['openingInventoryQty']) : 0) + floatval($previousPurchaseStockData['productQuantity']);
+			$data['openingInventoryAmt'] = (!empty($openingStock['openingInventoryAmt']) ? floatval($openingStock['openingInventoryAmt']) : 0) + floatval($previousPurchaseStockData['productUnitPrice']);
+		}
+	
+		return $data;
+	}
+
 
 	private function getClosingStocks($startDate, $endDate, $previousDay = false)
 	{
