@@ -44,6 +44,16 @@ class Report extends Backend_Controller
 	{
 		$startDate = $this->input->post('startDate');
 		$endDate = $this->input->post('endDate');
+		$category = $this->input->post('category');
+
+		$categoryIds = [];
+		if (!empty($category) && is_array($category))
+		{
+			foreach($category as $categoryId)
+			{
+				$categoryIds[] = $categoryId;
+			}
+		}
 
 		$isSuccess = false;
 		$message = 'No reports available';
@@ -64,7 +74,7 @@ class Report extends Backend_Controller
 			{
 				$timestamp['startDateTimestamp'] = $startDateTimestamp;
 				$timestamp['endDateTimestamp'] = $endDateTimestamp;
-				$data = $this->customQuery($timestamp);
+				$data = $this->customQuery($timestamp, $categoryIds);
 
 				if (!empty($data))
 				{
@@ -81,17 +91,17 @@ class Report extends Backend_Controller
 		responseJson($isSuccess, $message, $data);
 	}
 
-	public function customQuery($timestamp)
+	public function customQuery($timestamp, $categoryIds)
 	{
 		$startDate = $timestamp['startDateTimestamp'];
 		$endDate = $timestamp['endDateTimestamp'];
 
-		$openingStocks = $this->getOpeningStocks($startDate, $endDate);
-		$closingStocks = $this->getClosingStocks($startDate, $endDate);
-		$purchaseStocks = $this->getPurchaseStocks($startDate, $endDate);
+		$openingStocks = $this->getOpeningStocks($startDate, $endDate, $categoryIds);
+		$closingStocks = $this->getClosingStocks($startDate, $endDate, $categoryIds);
+		$purchaseStocks = $this->getPurchaseStocks($startDate, $endDate, $categoryIds);
 		
-		$previousClosingStocks = $this->getClosingStocks($startDate, $endDate, true);
-		$previousPurchaseStocks = $this->getPurchaseStocks($startDate, $endDate);
+		$previousClosingStocks = $this->getClosingStocks($startDate, $endDate, $categoryIds, true);
+		$previousPurchaseStocks = $this->getPurchaseStocks($startDate, $endDate, $categoryIds);
 		
 		$previousClosingStockWithProduct = $this->changeArrayIndexByColumnValue($previousClosingStocks, 'productId');
 		$previousPurchaseStockWithProduct = $this->changeArrayIndexByColumnValue($previousPurchaseStocks, 'productId');
@@ -201,6 +211,9 @@ class Report extends Backend_Controller
 			$data['closingInventoryQty'] = floatval($data['openingInventoryQty']) + floatval($data['purchaseInventoryQty']);
 			$data['closingInventoryAmt'] = floatval($data['openingInventoryAmt']) + floatval($data['purchaseInventoryAmt']);
 		}
+
+		$data['consumptionQty'] = $data['openingInventoryQty'] - $data['closingInventoryQty'];
+		$data['consumptionAmt'] = $data['openingInventoryAmt'] - $data['closingInventoryAmt'];
 	
 		return $data;
 	}
@@ -231,7 +244,7 @@ class Report extends Backend_Controller
 	}
 
 
-	private function getClosingStocks($startDate, $endDate, $previousDay = false)
+	private function getClosingStocks($startDate, $endDate, $categoryIds, $previousDay = false)
 	{
 		$closingStockSubQueryCondition = [
 			'openingStockNumber' => $this->openingStockNumber
@@ -275,12 +288,19 @@ class Report extends Backend_Controller
 			'ie_products p', 'p.id = cs1.productId', 'inner'
 		)->join(
 			'ie_si_units su', 'su.id = cs1.productSiUnitId', 'inner'
-		)->where($closingStockCondition)->group_by('productId')->order_by('cs1.productId', 'ASC')->get()->result_array();
+		)->where($closingStockCondition);
+
+		if (!empty($categoryIds))
+		{
+			$closingStocks->where_in('p.categoryId', $categoryIds);
+		}
+
+		$closingStocks = $closingStocks->group_by('productId')->order_by('cs1.productId', 'ASC')->get()->result_array();
 
 		return $closingStocks;
 	}
 
-	private function getOpeningStocks($startDate, $endDate): array
+	private function getOpeningStocks($startDate, $endDate, $categoryIds): array
 	{
 
 		$purchaseStockSubQueryCondition = [
@@ -325,12 +345,20 @@ class Report extends Backend_Controller
 			'ie_products p', 'p.id = os.productId', 'inner'
 		)->join(
 			'ie_si_units su', 'su.id = os.productSiUnitId', 'inner'
-		)->where($openingStockCondition)->group_by('os.productId')->order_by('os.productId', 'ASC')->get()->result_array();
+		)->where($openingStockCondition);
+
+
+		if (!empty($categoryIds))
+		{
+			$openingStocks->where_in('p.categoryId', $categoryIds);
+		}
+
+		$openingStocks = $openingStocks->group_by('os.productId')->order_by('os.productId', 'ASC')->get()->result_array();
 
 		return $openingStocks;
 	}
 
-	private function getPurchaseStocks($startDate, $endDate, $previousDay = false)
+	private function getPurchaseStocks($startDate, $endDate, $categoryIds, $previousDay = false)
 	{
 		$purchaseStockCondition['ps.userId'] = $this->loggedInUserId;
 		$purchaseStockCondition['ps.openingStockNumber'] = $this->openingStockNumber;
@@ -361,7 +389,14 @@ class Report extends Backend_Controller
 			'ie_products p', 'p.id = ps.productId', 'inner'
 		)->join(
 			'ie_si_units su', 'su.id = ps.productSiUnitId', 'inner'
-		)->where($purchaseStockCondition)->group_by('ps.productId')->order_by('ps.productId', 'ASC')->get()->result_array();
+		)->where($purchaseStockCondition);
+
+		if (!empty($categoryIds))
+		{
+			$purchaseStocks->where_in('p.categoryId', $categoryIds);
+		}
+
+		$purchaseStocks = $purchaseStocks->group_by('ps.productId')->order_by('ps.productId', 'ASC')->get()->result_array();
 
 		return $purchaseStocks;
 	}
