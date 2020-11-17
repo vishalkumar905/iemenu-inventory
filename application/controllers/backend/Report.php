@@ -32,7 +32,7 @@ class Report extends Backend_Controller
 	
 	public function index()
 	{
-		$this->navTitle = $this->pageTitle = 'Report';
+		$this->navTitle = $this->pageTitle = 'Master Report';
 		$data['viewFile'] = 'backend/report/index';
 		$data['dropdownSubCategories'] = $this->category->getAllDropdownSubCategories(['userId' => $this->loggedInUserId]);
 		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/moment.min.js', 'assets/js/bootstrap-datetimepicker.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
@@ -217,8 +217,11 @@ class Report extends Backend_Controller
 		$data['currentInventoryQty'] = floatval($data['openingInventoryQty']) + floatval($data['purchaseInventoryQty']);
 		$data['currentInventoryAmt'] = floatval($data['openingInventoryAmt']) + floatval($data['purchaseInventoryAmt']);
 
-		$data['consumptionQty'] = $data['currentInventoryQty'] - $data['closingInventoryQty'];
-		$data['consumptionAmt'] = $data['currentInventoryAmt'] - $data['closingInventoryAmt'];
+		if ($data['closingInventoryQty'] > 0)
+		{
+			$data['consumptionQty'] = $data['currentInventoryQty'] - $data['closingInventoryQty'];
+			$data['consumptionAmt'] = $data['currentInventoryAmt'] - $data['closingInventoryAmt'];
+		}
 	
 		return $data;
 	}

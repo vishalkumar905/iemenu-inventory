@@ -117,7 +117,7 @@
 		<div class="collapse" id="reportSideBar">
 			<ul class="nav">
 				<li>
-					<a href="<?=base_url()?>backend/report">Report</a>
+					<a href="<?=base_url()?>backend/report">Master Report</a>
 				</li>
 			</ul>
 		</div>

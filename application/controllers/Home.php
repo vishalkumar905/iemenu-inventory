@@ -112,7 +112,8 @@ class Home extends CI_Controller
 				'name' => $this->input->post('name'),
 			];
 
-			$token = encryptToken(http_build_query($userData));
+			$token = str_replace(['+', '/'], ['-plus-', '-slash-'], encryptToken(http_build_query($userData)));
+
 			$data['url'] = sprintf('%shome/autologin?token=%s', base_url(), $token);
 		}
 		else
@@ -133,7 +134,7 @@ class Home extends CI_Controller
 			// redirect(base_url());
 		}
 
-		$token = $this->input->get('token');
+		$token = str_replace(['-plus-', '-slash-'], ['+', '/'], $this->input->get('token'));
 		
 		$redirectUrl = base_url();
 		
@@ -143,6 +144,7 @@ class Home extends CI_Controller
 			if (!empty($decryptToken))
 			{
 				parse_str($decryptToken, $outputArray);
+
 				if (!empty($outputArray) && !empty($outputArray['userId']))
 				{
 					$this->load->model('IeMenuUserModel', 'iemenuuser');
