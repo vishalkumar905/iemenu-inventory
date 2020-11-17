@@ -51,13 +51,16 @@ class Report extends Backend_Controller
 		{
 			foreach($category as $categoryId)
 			{
-				$categoryIds[] = $categoryId;
+				if ($categoryId > 0)
+				{
+					$categoryIds[] = $categoryId;
+				}
 			}
 		}
 
 		$isSuccess = false;
 		$message = 'No reports available';
-		$data = [];
+		$response = [];
 
 		try
 		{
@@ -74,9 +77,9 @@ class Report extends Backend_Controller
 			{
 				$timestamp['startDateTimestamp'] = $startDateTimestamp;
 				$timestamp['endDateTimestamp'] = $endDateTimestamp;
-				$data = $this->customQuery($timestamp, $categoryIds);
+				$response = $this->customQuery($timestamp, $categoryIds);
 
-				if (!empty($data))
+				if (!empty($response))
 				{
 					$message = 'Data found';
 					$isSuccess = true;
@@ -88,7 +91,11 @@ class Report extends Backend_Controller
 			$message = $exception->getMessage();
 		}
 
-		responseJson($isSuccess, $message, $data);
+		$response['data'] = $response;
+		$response['startDate'] = $startDate;
+		$response['endDate'] = $endDate;
+
+		responseJson($isSuccess, $message, $response);
 	}
 
 	public function customQuery($timestamp, $categoryIds)
@@ -206,14 +213,12 @@ class Report extends Backend_Controller
 			$data['closingInventoryQty'] = $closingInventoryData['productQuantity'];
 			$data['closingInventoryAmt'] = $closingInventoryData['productUnitPrice'];
 		}
-		else
-		{
-			$data['closingInventoryQty'] = floatval($data['openingInventoryQty']) + floatval($data['purchaseInventoryQty']);
-			$data['closingInventoryAmt'] = floatval($data['openingInventoryAmt']) + floatval($data['purchaseInventoryAmt']);
-		}
 
-		$data['consumptionQty'] = $data['openingInventoryQty'] - $data['closingInventoryQty'];
-		$data['consumptionAmt'] = $data['openingInventoryAmt'] - $data['closingInventoryAmt'];
+		$data['currentInventoryQty'] = floatval($data['openingInventoryQty']) + floatval($data['purchaseInventoryQty']);
+		$data['currentInventoryAmt'] = floatval($data['openingInventoryAmt']) + floatval($data['purchaseInventoryAmt']);
+
+		$data['consumptionQty'] = $data['currentInventoryQty'] - $data['closingInventoryQty'];
+		$data['consumptionAmt'] = $data['currentInventoryAmt'] - $data['closingInventoryAmt'];
 	
 		return $data;
 	}
@@ -279,7 +284,7 @@ class Report extends Backend_Controller
 			'cs1.productUnitPrice',
 			'cs1.productTax',
 			'cs1.comment',
-			'su.id as siUnitParentId',
+			'su.parentId as siUnitParentId',
 			'p.productName',
 			'p.productCode'
 		])->from('ie_closing_stocks cs1')->join(
@@ -338,7 +343,7 @@ class Report extends Backend_Controller
 			'os.productId',
 			'os.productQuantity',
 			'os.productUnitPrice',
-			'su.id as siUnitParentId',
+			'su.parentId as siUnitParentId',
 			'p.productName',
 			'p.productCode',
 		])->from('ie_opening_stocks os')->join(
@@ -381,7 +386,7 @@ class Report extends Backend_Controller
 			'ps.productUnitPrice',
 			'ps.productSiUnitId',
 			'ps.productTax',
-			'su.id as siUnitParentId',
+			'su.parentId as siUnitParentId',
 			'ps.comment',
 			'p.productName',
 			'p.productCode'

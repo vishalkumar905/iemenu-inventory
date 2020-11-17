@@ -1284,6 +1284,8 @@ IEWebsiteAdmin.MasterReport = (function() {
 				IEWebsite.Utils.ShowLoadingScreen();
 				IEWebsite.Utils.AjaxPost(FETCH_MASTER_REPORT, postData, function(resp) {
 					IEWebsite.Utils.HideLoadingScreen();
+					$("#reportTableBody").html('');
+
 					if (resp.status)
 					{	
 						if (!_.isEmpty(resp.response))
@@ -1300,18 +1302,17 @@ IEWebsiteAdmin.MasterReport = (function() {
 		});
 	};
 	
-	var showReportTableData = function(data)
+	var showReportTableData = function(response)
 	{
-		$("#reportTableBody").html('');
-		if (!_.isEmpty(data))
+		if (!_.isEmpty(response.data))
 		{
-			_.each(data, function(row) {
-				reportTableRow(row);
+			_.each(response.data, function(row) {
+				reportTableRow(row, response.startDate, response.endDate);
 			});
 		}
 	}
 
-	var reportTableRow = function(row)
+	var reportTableRow = function(row, startDate, endDate)
 	{
 		if (_.isEmpty(row))
 		{
@@ -1319,6 +1320,7 @@ IEWebsiteAdmin.MasterReport = (function() {
 		}
 
 		let tableRow = '<tr>'+
+			'<td>' + startDate + '</td>' +
 			'<td>' + row.productCode + '</td>' +
 			'<td>' + row.productName + '</td>' +
 			'<td>' + row.averageUnit + '</td>' +
@@ -1331,8 +1333,11 @@ IEWebsiteAdmin.MasterReport = (function() {
 			'<td>' + row.wastageInventoryAmt + '</td>' +
 			'<td>' + row.transferQty + '</td>' +
 			'<td>' + row.transferAmt + '</td>' +
+			'<td>' + row.currentInventoryQty + '</td>' +
+			'<td>' + row.currentInventoryAmt + '</td>' +
 			'<td>' + row.closingInventoryQty + '</td>' +
 			'<td>' + row.closingInventoryAmt + '</td>' +
+			'<td>' + endDate + '</td>' +
 			'<td>' + row.consumptionQty + '</td>' +
 			'<td>' + row.consumptionAmt + '</td>' +
 		'<tr>';

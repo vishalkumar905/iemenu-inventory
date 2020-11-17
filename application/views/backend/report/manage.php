@@ -23,6 +23,7 @@
 					<table class="table table-bordered custom-table" cellspacing="0" width="100%" style="width:100%">
 						<thead class="text-primary">
 							<tr>
+								<th rowspan="2">Date</th>
 								<th rowspan="2">Product Code</th>
 								<th rowspan="2">Product Name</th>
 								<th colspan="2">Avg Price</th>
@@ -30,7 +31,8 @@
 								<th colspan="2">Purchase Inventory</th>
 								<th colspan="2">Wastage Inventory</th>
 								<th colspan="2">Transfer</th>
-								<th colspan="2">Closing Inventory</th>
+								<th colspan="2">Current Inventory</th>
+								<th colspan="3">Closing Inventory</th>
 								<th colspan="2">Consumption</th>
 							</tr>
 							<tr>
@@ -46,6 +48,9 @@
 								<th>Amt</th>
 								<th>Qty</th>
 								<th>Amt</th>
+								<th>Qty</th>
+								<th>Amt</th>
+								<th>Date</th>
 								<th>Qty</th>
 								<th>Amt</th>
 							</tr>
