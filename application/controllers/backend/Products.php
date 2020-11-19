@@ -5,6 +5,7 @@ class Products extends Backend_Controller
 	public $productImageUpload = false;
 	public $exportUrl;
 	public $disableUpdateField;
+	public $baseUnits;
 
 	public function __construct()
 	{
@@ -17,6 +18,11 @@ class Products extends Backend_Controller
 		$this->load->model('SIUnitModel', 'siunit');
 
 		$this->disableUpdateField = ['productType', 'baseUnit']; 
+
+		if (empty($this->baseUnits))
+		{
+			$this->baseUnits = $this->siunit->selectBoxBaseUnits();
+		}
 	}
 
 	public function index()
@@ -44,7 +50,12 @@ class Products extends Backend_Controller
 			$data['category'] = $data['categoryId'];
 
 			$unserialized = unserialize($data['productSiUnits']);
-			if (!empty($unserialized) && is_array($unserialized) && count($unserialized) > 1)
+
+			if (!empty($unserialized) && isset($this->baseUnits[$unserialized[0]]))
+			{
+				$data['baseUnit'] = $unserialized[0];
+			}
+			else 
 			{
 				$baseUnitId = $this->siunit->getParentIdFromBaseUnitId($unserialized[0]);
 				$data['siUnit'] = $unserialized;
@@ -52,10 +63,6 @@ class Products extends Backend_Controller
 				{
 					$data['baseUnit'] = $baseUnitId;
 				}
-			}
-			else
-			{
-				$data['baseUnit'] = $unserialized[0];
 			}
 
 			$parentCategoryId = $this->getParentCategoryId($data['categoryId']);
@@ -65,8 +72,6 @@ class Products extends Backend_Controller
 				$data['subCategory'] = $data['categoryId'];
 				$data['category'] = $parentCategoryId;
 			}
-
-			unset($baseUnitId);
 		}
 
 		$submit = $this->input->post('submit');
@@ -237,7 +242,11 @@ class Products extends Backend_Controller
 		$updateId = intval($this->uri->segment(4));
 		$productCode = $this->input->post('productCode');
 
-		$condition = ['productCode' => $productCode];
+		$condition = [
+			'productCode' => $productCode,
+			'userId' => $this->loggedInUserId
+		];
+
 		if ($updateId > 0)
 		{
 			$condition['id != ' . $updateId ] = null;

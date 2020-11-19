@@ -77,17 +77,13 @@ class Categories extends Backend_Controller
 			$categoryIds = [];
 			foreach($products as $product)
 			{
-				if (!in_array($product['categoryId'], $products))
-				{
-					$categoryIds[] = $product['categoryId'];
-				}
+				$categoryIds[] = $product['categoryId'];
 			}
 
 			if (!empty($categoryIds))
 			{
 				$whereIn = ['field' => 'id', 'values' => $categoryIds];
-				$condition = ['parentId IS NOT NULL' => NULL];
-				$categories = $this->category->getWhereCustom('*', $condition, null, $whereIn)->result_array();
+				$categories = $this->category->getWhereCustom('*', null, null, $whereIn)->result_array();
 				
 				if (!empty($categories))
 				{
