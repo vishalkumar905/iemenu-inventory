@@ -94,25 +94,23 @@ IEWebsiteAdmin.ProductCreatePage = (function() {
 				$("#importExcelForm .text-danger").text('');	
 				IEWebsite.Utils.AjaxFileUpload(url, formData, function(resp) {
 					IEWebsite.Utils.HideLoadingScreen();
+					let responseMsg = resp.message;
 
 					if (resp.status)
 					{
 						file.val('');
-						IEWebsite.Utils.Swal('Success', 'Your data has been successully imported..', 'success');
-						window.setTimeout(function(){
-							window.location.reload();
-						}, 10000);
+						IEWebsite.Utils.Swal('Success', responseMsg, 'success');
+						$('#productsData').DataTable().ajax.reload();
 					}
 					else
 					{
-						let responseErrorMsg = resp.message;
-						if (responseErrorMsg.search('</p>') != -1)
+						if (responseMsg.search('</p>') != -1)
 						{
-							$(responseErrorMsg).insertAfter("#excelFileErrorMsg");
+							$(responseMsg).insertAfter("#excelFileErrorMsg");
 						}
 						else
 						{
-							$("#excelFileErrorMsg").text(responseErrorMsg);
+							$("#excelFileErrorMsg").text(responseMsg);
 						}
 					}
 				});

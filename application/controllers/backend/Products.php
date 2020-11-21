@@ -228,7 +228,7 @@ class Products extends Backend_Controller
 		$subCategory = $this->input->post('subCategory');
 		$subCategoryName = $this->input->post('subCategoryName');
 
-		if (empty($category) && empty($subCategory) && empty($subCategoryName))
+		if (empty($category))
 		{
 			$this->form_validation->set_message('category', 'Please select a category.');
             return false;
@@ -384,6 +384,7 @@ class Products extends Backend_Controller
 		$status = true;
 		$message = null;
 		$allowedTypes = 'csv|xlsx';
+		$duplicateData = $newData = 0;
 
 		$uploadFile = $this->doUpload('file', IMPORT_FILE_UPLOAD_PATH, $allowedTypes);
 
@@ -395,7 +396,8 @@ class Products extends Backend_Controller
 			
 			$results = $this->phpexcel->import($filePath);
 			$productTypes = $this->productTypes();
-
+			$existingProductCodes = $this->loadAllProductCodesWithProductCodeIndex();
+			
 			if (!empty($results) && count($results) > 2)
 			{
 				$columns =  ['SN', 'Product Code', 'Product Name', 'Product Type', 'HSN Code', 'Category', 'Shelf Life'];
@@ -432,27 +434,58 @@ class Products extends Backend_Controller
 						$hsnCode = trim($result[$hsnCodeIndex]);
 						$category = trim($result[$categoryIndex]);
 
-						$categoryId = $this->category->getIdFromCategoryName($category);
-						$productTypeId = array_search($productType, $productTypes);
-
-						if (!empty($productCode) && !empty($productName) && !empty($productType))
+						if (isset($existingProductCodes[$productCode]))
 						{
-							$insertData = [
-								'productName' => $productName,
-								'productCode' => $productCode,
-								'productType' => $productTypeId,
-								'hsnCode' 	  => $hsnCode,
-								'shelfLife'   => $shelfLife,
-								'categoryId'  => $categoryId,
-								'baseUnitId'  => null,
-								'productImage' => null,
-								'userId' => $this->loggedInUserId
-							];
-
-							$this->product->insert($insertData);
+							++$duplicateData;
 						}
+						else
+						{
+							$categoryId = $this->category->getIdFromCategoryName($category);
+							$productTypeId = 0;
+	
+							foreach($productTypes as $productTypeKey => $productTypeValue)
+							{
+								if (strtolower($productType) == strtolower($productTypeValue))
+								{
+									$productTypeId = $productTypeKey;
+									break;
+								}
+							}
+	
+							if (!empty($productCode) && !empty($productName) && !empty($productType))
+							{
+								$insertData = [
+									'productName' => $productName,
+									'productCode' => $productCode,
+									'productType' => $productTypeId,
+									'hsnCode' 	  => $hsnCode,
+									'shelfLife'   => $shelfLife,
+									'categoryId'  => $categoryId,
+									'productSiUnits'  => null,
+									'productImage' => null,
+									'userId' => $this->loggedInUserId
+								];
+	
+								$this->product->insert($insertData);
+							}
+
+							++$newData;
+						}
+
 					}
 					
+					$message = $newData . ' Product data has been successully imported.';
+
+					if ($duplicateData > 0)
+					{
+						$message = sprintf('%s %s Duplicate found', $message, $duplicateData);
+					}
+
+					if ($newData == 0 && $duplicateData > 0)
+					{
+						$message = sprintf('%s Duplicate found', $duplicateData);
+					}
+
 					$response = $results;
 				}
 				else
@@ -563,6 +596,22 @@ class Products extends Backend_Controller
 		}
 
 		return 0;
+	}
+
+	private function loadAllProductCodesWithProductCodeIndex()
+	{
+		$productCodes = [];
+		$results = $this->product->getWhereCustom(['productCode'], ['userId' => $this->loggedInUserId])->result_array();
+
+		if (!empty($results))
+		{
+			foreach($results as &$result)
+			{
+				$productCodes[$result['productCode']] = $result['productCode'];
+			}
+		}
+
+		return $productCodes;
 	}
 }
 

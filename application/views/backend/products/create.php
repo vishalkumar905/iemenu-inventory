@@ -39,13 +39,15 @@
 										'data-style' => 'select-with-transition select-box-horizontal',
 										'data-live-search' => 'true'
 									];
-									
+
+									$selectedCategory = !empty(set_value('category')) ? set_value('category') : (isset($category) ? $category : '');
+
 									if ($updateId > 0)
 									{
 										$extra['disabled'] = true;
+										echo form_hidden('category', $selectedCategory);
 									}
 
-									$selectedCategory = !empty(set_value('category')) ? set_value('category') : (isset($category) ? $category : '');
 									echo form_dropdown('category', $categories, $selectedCategory, $extra);
 								?>
 							</div>
@@ -126,7 +128,7 @@
 
 									if ($updateId > 0)
 									{
-										$extra['disabled'] = true;
+										// $extra['disabled'] = true;
 										echo form_hidden('siUnit', $siUnit);
 									}
 
