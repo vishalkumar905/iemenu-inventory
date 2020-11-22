@@ -20,7 +20,7 @@ class Closinginventory extends Backend_Controller
 
 	public function index()
 	{
-		$this->pageTitle = $this->navTitle = 'Inventory';
+		$this->pageTitle = $this->navTitle = 'Closing Inventory';
 		
 		$data['submitBtn']  = 'Save';
 		$data['headTitle']  = 'Closing Inventory';
