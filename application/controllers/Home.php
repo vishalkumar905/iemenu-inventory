@@ -28,6 +28,7 @@ class Home extends CI_Controller
 						'userId' => $user['id'],
 						'email' => $user['email'],
 						'type' => $user['type'],
+						'name' => $user['firstName'],
 					]
 				];
 				
@@ -65,6 +66,7 @@ class Home extends CI_Controller
 							'userId' => $user['id'],
 							'email' => $user['email'],
 							'type' => $user['type'],
+							'name' => $user['firstName'],
 						]
 					];
 					

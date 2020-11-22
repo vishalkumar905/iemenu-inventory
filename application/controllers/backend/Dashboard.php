@@ -10,6 +10,7 @@ class Dashboard extends Backend_Controller
     public function index()
     {
         $this->titleHeader = $this->navTitle = 'Dashboard';
+        $this->pageTitle = $this->navTitle = 'Dashboard';
 
         $this->load->view($this->template);
     }

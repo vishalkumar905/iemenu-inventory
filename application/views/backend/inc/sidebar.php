@@ -69,7 +69,7 @@
 	</li>
 	<li>
 		<a data-toggle="collapse" href="#openingInventorySideBar">
-			<i class="material-icons">assessment</i>
+			<i class="material-icons">store</i>
 			<p>Transaction<b class="caret"></b></p>
 		</a>
 		<div class="collapse" id="openingInventorySideBar">
@@ -91,7 +91,7 @@
 	</li>
 	<li>
 		<a data-toggle="collapse" href="#purchaseOrderSideBar">
-			<i class="material-icons">assessment</i>
+			<i class="material-icons">analytics</i>
 			<p>Purchase Order<b class="caret"></b></p>
 		</a>
 		<div class="collapse" id="purchaseOrderSideBar">
@@ -111,7 +111,7 @@
 
 	<li>
 		<a data-toggle="collapse" href="#reportSideBar">
-			<i class="material-icons">analytics</i>
+			<i class="material-icons">report</i>
 			<p>Report<b class="caret"></b></p>
 		</a>
 		<div class="collapse" id="reportSideBar">
