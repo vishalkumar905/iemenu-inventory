@@ -1,5 +1,6 @@
 <div class="col-md-12">
 	<?=showAlertMessage($flashMessage, $flashMessageType)?>
+	<?=$missingProductInfoMessage?>
 	<div class="card mt-0">
 		<form method="post" id="createProductForm" class="form-horizontal" enctype="multipart/form-data" action="<?=current_url()?>">
 			<div class="card-header card-header-text">
@@ -42,7 +43,7 @@
 
 									$selectedCategory = !empty(set_value('category')) ? set_value('category') : (isset($category) ? $category : '');
 
-									if ($updateId > 0)
+									if ($updateId > 0 && isset($this->disableUpdateField['category']) && $this->disableUpdateField['category'])
 									{
 										$extra['disabled'] = true;
 										echo form_hidden('category', $selectedCategory);
@@ -105,7 +106,7 @@
 										'data-style' => 'select-with-transition select-box-horizontal', 
 									];
 									
-									if ($updateId > 0)
+									if ($updateId > 0 && isset($this->disableUpdateField['baseUnit']) && $this->disableUpdateField['baseUnit'])
 									{
 										$extra['disabled'] = true;
 										echo form_hidden('baseUnit', $baseUnit);
@@ -161,7 +162,7 @@
 
 							$selectedProudctType = !empty(set_value('productType')) ? set_value('productType') : (isset($productType) ? $productType : '');
 							
-							if ($updateId > 0)
+							if ($updateId > 0 && isset($this->disableUpdateField['productType']) && $this->disableUpdateField['productType'])
 							{
 								$extra['disabled'] = true;
 								echo form_hidden('productType', $selectedProudctType);

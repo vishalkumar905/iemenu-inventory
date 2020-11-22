@@ -17,7 +17,11 @@ class Products extends Backend_Controller
 		$this->load->model('ProductModel', 'product');
 		$this->load->model('SIUnitModel', 'siunit');
 
-		$this->disableUpdateField = ['productType', 'baseUnit']; 
+		$this->disableUpdateField = [
+			'productType' => true, 
+			'baseUnit' => true,
+			'category' => true
+		]; 
 
 		if (empty($this->baseUnits))
 		{
@@ -55,7 +59,7 @@ class Products extends Backend_Controller
 			{
 				$data['baseUnit'] = $unserialized[0];
 			}
-			else 
+			else if (!empty($unserialized))
 			{
 				$baseUnitId = $this->siunit->getParentIdFromBaseUnitId($unserialized[0]);
 				$data['siUnit'] = $unserialized;
@@ -64,6 +68,11 @@ class Products extends Backend_Controller
 					$data['baseUnit'] = $baseUnitId;
 				}
 			}
+			else if (empty($unserialized))
+			{
+				// This product has no unit give them access to update the siUnits
+				$this->disableUpdateField['baseUnit'] = false; 
+			}
 
 			$parentCategoryId = $this->getParentCategoryId($data['categoryId']);
 
@@ -71,6 +80,11 @@ class Products extends Backend_Controller
 			{
 				$data['subCategory'] = $data['categoryId'];
 				$data['category'] = $parentCategoryId;
+			}
+
+			if (is_null($data['categoryId']) || $data['categoryId'] == 0)
+			{
+				$this->disableUpdateField['category'] = false;
 			}
 		}
 
@@ -205,9 +219,10 @@ class Products extends Backend_Controller
 		if ($updateId > 0 && empty($postedCategory))
 		{
 			$postedCategory = $data['category'];
-			$postedBaseUnit = $data['baseUnit'];
+			$postedBaseUnit = $data['baseUnit'] ?? 0;
 		}
 
+		$data['missingProductInfoMessage'] = $updateId == 0 ? $this->missingProductInfoMessage() : '';
 		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
 		$data['viewFile'] = 'backend/products/index';
 		$data['updateId'] = $updateId;
@@ -220,6 +235,66 @@ class Products extends Backend_Controller
 		$data['flashMessageType'] = $this->session->flashdata('flashMessageType');
 
 		$this->load->view($this->template, $data);
+	}
+
+	private function missingProductInfoMessage()
+	{
+		$condition['userId'] = $this->loggedInUserId; 
+		$condition['(productSiUnits IS NULL OR categoryId = 0)'] = NULL;
+		$products = $this->product->getWhereCustom('*', $condition)->result_array();
+		$html = '';
+
+		$result = [
+			'category' => [],
+			'productSiUnits' => [],
+		];
+
+		foreach($products as $product)
+		{
+			if ($product['categoryId'] == 0)
+			{
+				$result['category'][] = $product;
+			}
+
+			if (is_null($product['productSiUnits']))
+			{
+				$result['productSiUnits'][] = $product;
+			}
+		}
+
+		$editProductUrl = base_url() . 'backend/products/index';
+		
+		$siUnitLinks = [];
+		if (!empty($result['productSiUnits']))
+		{
+			foreach ($result['productSiUnits'] as $unit)
+			{
+				$siUnitLinks[] = sprintf('<a href="%s/%s">%s</a>', $editProductUrl, $unit['id'], $unit['productCode']);
+			}
+
+			if (!empty($siUnitLinks))
+			{
+				$message = sprintf('<p>The unit is not assigned to these products. Click on the product code to edit</p>%s', implode(', ', $siUnitLinks));
+				$html = showAlertMessage($message, 'danger');
+			}
+		}
+		
+		$categoryLinks = [];
+		if (!empty($result['category']))
+		{
+			foreach ($result['category'] as $category)
+			{
+				$categoryLinks[] = sprintf('<a href="%s/%s">%s</a>', $editProductUrl, $category['id'], $category['productCode']);
+			}
+
+			if (!empty($categoryLinks))
+			{
+				$message = sprintf('<p>The category is not assigned to these products. Click on the product code to edit</p>%s', implode(', ', $categoryLinks));
+				$html .= showAlertMessage($message, 'danger');
+			}
+		}
+
+		return $html;
 	}
 
 	public function category()
@@ -417,9 +492,46 @@ class Products extends Backend_Controller
 				$hsnCodeIndex   = array_search('HSN Code', $results[0]);
 				$shelfLifeIndex = array_search('Shelf Life', $results[0]);
 				$categoryIndex  = array_search('Category', $results[0]);
+				$unitIndex  = array_search('Unit', $results[0]);
 
 				if ($isColumnMissing === false)
 				{
+					$extractDataFromExcel = $this->extractDataFromExcel($results, [
+						$categoryIndex => 'Category',
+						$unitIndex => 'Unit',
+					]);
+
+					$categories = $siUnits = [];
+
+					if (!empty($extractDataFromExcel))
+					{	
+						if (!empty($extractDataFromExcel['Category']))
+						{							
+							$categoryNames = array_map('strtolower', $extractDataFromExcel['Category']);
+							$whereIn = ['field' => 'LCASE(categoryName)', 'values' => $categoryNames];
+
+							$categories = $this->category->getWhereCustom(['categoryName', 'id'], null, null, $whereIn)->result_array();
+
+							if (!empty($categories))
+							{
+								$categories = $this->convertArrayInToColumnIndex($categories, 'categoryName');
+							}							
+						}
+
+						if (!empty($extractDataFromExcel['Unit']))
+						{
+							$unitNames = array_map('strtolower', $extractDataFromExcel['Unit']);
+
+							$whereIn = ['field' => 'LCASE(unitName)', 'values' => $unitNames];
+							$siUnits = $this->siunit->getWhereCustom(['unitName', 'id'], null, null, $whereIn)->result_array();
+
+							if (!empty($siUnits))
+							{
+								$siUnits = $this->convertArrayInToColumnIndex($siUnits, 'unitName');
+							}
+						}
+					}
+
 					foreach($results as $resultIndex => $result)
 					{
 						if ($resultIndex < 1)
@@ -432,7 +544,8 @@ class Products extends Backend_Controller
 						$productType = trim($result[$productTypeIndex]);
 						$shelfLife = intval($result[$shelfLifeIndex]);
 						$hsnCode = trim($result[$hsnCodeIndex]);
-						$category = trim($result[$categoryIndex]);
+						$category = strtolower(trim($result[$categoryIndex]));
+						$unitName = strtolower(trim($result[$unitIndex]));
 
 						if (isset($existingProductCodes[$productCode]))
 						{
@@ -440,7 +553,9 @@ class Products extends Backend_Controller
 						}
 						else
 						{
-							$categoryId = $this->category->getIdFromCategoryName($category);
+							$categoryId = isset($categories[$category]) ? $categories[$category]['id'] : 0;
+							$productSiUnit = isset($siUnits[$unitName]) ? serialize([$siUnits[$unitName]['id']]) : NULL;
+
 							$productTypeId = 0;
 	
 							foreach($productTypes as $productTypeKey => $productTypeValue)
@@ -461,9 +576,10 @@ class Products extends Backend_Controller
 									'hsnCode' 	  => $hsnCode,
 									'shelfLife'   => $shelfLife,
 									'categoryId'  => $categoryId,
-									'productSiUnits'  => null,
+									'productSiUnits'  => $productSiUnit,
 									'productImage' => null,
-									'userId' => $this->loggedInUserId
+									'userId' => $this->loggedInUserId,
+									'uploadFromExcel' => 1,
 								];
 	
 								$this->product->insert($insertData);
@@ -478,7 +594,7 @@ class Products extends Backend_Controller
 
 					if ($duplicateData > 0)
 					{
-						$message = sprintf('%s %s Duplicate found', $message, $duplicateData);
+						$message = sprintf('%s and %s Duplicate found', $message, $duplicateData);
 					}
 
 					if ($newData == 0 && $duplicateData > 0)
@@ -491,7 +607,7 @@ class Products extends Backend_Controller
 				else
 				{
 					$status = false;
-					$message = 'Format is not valid... Plese upload again !';
+					$message = 'Format is not valid... Please upload again !';
 				}
 			}
 		}
@@ -502,6 +618,46 @@ class Products extends Backend_Controller
 		}
 
 		responseJson($status, $message, $response);
+	}
+
+	private function extractDataFromExcel(array $data, array $columnNameWithIndex)
+	{
+		$result = [];
+
+		if (!empty($data) && !empty($columnNameWithIndex))
+		{
+			foreach($data as $index => $row)
+			{
+				// Skip the first row
+				if ($index < 1)
+				{
+					continue;
+				}
+
+				foreach($columnNameWithIndex as $columnIndex => $columnName)
+				{
+					if (isset($result[$columnName]))
+					{
+						$columnResult = $result[$columnName];
+						if (!in_array($row[$columnIndex], $columnResult))
+						{
+							$result[$columnName][] = $row[$columnIndex];
+						}
+					}
+					else
+					{
+						// Extract value from excel
+						$result[$columnName][] = $row[$columnIndex];
+					}
+				}
+			}
+
+
+			return $result;
+		}
+
+
+		return $result;
 	}
 
 	public function siUnitsImport()
@@ -612,6 +768,21 @@ class Products extends Backend_Controller
 		}
 
 		return $productCodes;
+	}
+
+	private function convertArrayInToColumnIndex($data, $columnName)
+	{
+		$result = [];
+		if (!empty($data))
+		{
+			foreach ($data as $row)
+			{
+				$indexKey = strtolower($row[$columnName]);
+				$result[$indexKey] = $row;
+			}
+		}
+
+		return $result;
 	}
 }
 
