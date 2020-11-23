@@ -131,7 +131,11 @@ class Vendors extends Backend_Controller
 		$updateId = intval($this->uri->segment(4));
 		$vendorCode = $this->input->post('vendorCode');
 
-		$condition =  ['vendorCode' => $vendorCode];
+		$condition =  [
+			'vendorCode' => $vendorCode,
+			'userId' => $this->loggedInUserId
+		];
+		
 		if ($updateId > 0)
 		{
 			$condition['id != ' . $updateId ] = null;
