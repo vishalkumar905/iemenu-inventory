@@ -286,6 +286,8 @@ IEWebsiteAdmin.VendorProductsPage = (function() {
 			return 0;
 		};
 
+		$('div.dropdown-menu.open').css({'z-index': 9999});
+		
 		$('#vendorProductsData').DataTable({
 			// "bPaginate": false,
 			// "searching": false,   // Search Box will Be Disabled
@@ -374,7 +376,10 @@ IEWebsiteAdmin.VendorProductsPage = (function() {
 			{
 				fetchVendorProducts();
 
+				IEWebsite.Utils.ShowLoadingScreen();
 				IEWebsite.Utils.AjaxGet(`${FETCH_SUB_CATEGORIES}/${categoryId}`, null , function(resp) {
+					IEWebsite.Utils.HideLoadingScreen();
+
 					if (resp.status)
 					{
 						$("#subCategory").html('');
@@ -427,16 +432,19 @@ IEWebsiteAdmin.VendorProductsPage = (function() {
 		if (vendorId > 0)
 		{
 			let url = FETCH_VENDOR_PRODUCTS + '/' + vendorId + '/' + categoryId; 
-	
+
+			IEWebsite.Utils.ShowLoadingScreen();			
 			IEWebsite.Utils.AjaxGet(url, null, function(resp) {
+				IEWebsite.Utils.HideLoadingScreen();
+
 				if (resp.status)
 				{
 					$("#product").html('');
 	
 					if (!_.isEmpty(resp.response))
 					{
-						$("#product").html('').append($("<option>").attr('value', '').text('Choose Product'));
-	
+						$("#product").html('');
+						
 						_.each(resp.response, function(row)
 						{
 							$("#product").append($("<option>").attr('value', row.productId).text(row.productName));

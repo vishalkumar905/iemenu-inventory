@@ -130,9 +130,8 @@ class Products extends Backend_Controller
 					$categoryId = $subCategory;
 				}
 
-				$siUnit = $this->input->post('siUnit[]');
+				$siUnit = array_unique($this->input->post('siUnit[]'));
 				$baseUnit = $this->input->post('baseUnit');
-
 				$baseUnit = !empty($siUnit) ? $siUnit : [$baseUnit];
 
 				$insertData = [
