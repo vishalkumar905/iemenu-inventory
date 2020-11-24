@@ -70,9 +70,9 @@ class Report extends Backend_Controller
 			if ($startDateTimestamp == $endDateTimestamp)
 			{
 				// Day end timestamp
-				$endDateTimestamp = $endDateTimestamp + (TOTAL_SECONDS_IN_ONE_DAY - 1); 
+				$endDateTimestamp = $endDateTimestamp + (TOTAL_SECONDS_IN_ONE_DAY - 1);			
 			}
-
+			
 			if ($this->openingStockNumber > 0)
 			{
 				$timestamp['startDateTimestamp'] = $startDateTimestamp;
@@ -102,17 +102,19 @@ class Report extends Backend_Controller
 	{
 		$startDate = $timestamp['startDateTimestamp'];
 		$endDate = $timestamp['endDateTimestamp'];
+		// $getClosingWithPurchaseStocks = $this->getClosingWithPurchaseStocks($startDate, $endDate, $categoryIds, true);
 
 		$openingStocks = $this->getOpeningStocks($startDate, $endDate, $categoryIds);
-		$closingStocks = $this->getClosingStocks($startDate, $endDate, $categoryIds);
+		$closingStocks = $this->getClosingWithPurchaseStocks($startDate, $endDate, $categoryIds);
 		$purchaseStocks = $this->getPurchaseStocks($startDate, $endDate, $categoryIds);
+		$wastageStocks = $this->getWastageStocks($startDate, $endDate, $categoryIds);
 		
-		$previousClosingStocks = $this->getClosingStocks($startDate, $endDate, $categoryIds, true);
-		$previousPurchaseStocks = $this->getPurchaseStocks($startDate, $endDate, $categoryIds);
-		
+		$previousClosingStocks = $this->getClosingWithPurchaseStocks($startDate, $endDate, $categoryIds, true);
+		$previousPurchaseStocks = $this->getPurchaseStocks($startDate, $endDate, $categoryIds, true);
+
 		$previousClosingStockWithProduct = $this->changeArrayIndexByColumnValue($previousClosingStocks, 'productId');
 		$previousPurchaseStockWithProduct = $this->changeArrayIndexByColumnValue($previousPurchaseStocks, 'productId');
-		
+
 		$results = [];
 
 		$closingStocksWithProduct = $this->changeArrayIndexByColumnValue($closingStocks, 'productId');
@@ -124,7 +126,7 @@ class Report extends Backend_Controller
 		{
 			foreach($openingStocks as $openingStock)
 			{
-				$openingStockProductIds[] = $openingStock['productId'];
+				$openingStockProductIds[$openingStock['productId']] = $openingStock['productId'];
 				$results[] = $this->getItemInventoryStock($openingStock, 'purchase', $purchaseStocksWithProduct, $closingStocksWithProduct, $previousPurchaseStockWithProduct, $previousClosingStockWithProduct);
 			}
 		}
@@ -237,6 +239,11 @@ class Report extends Backend_Controller
 	
 			$data['openingInventoryQty'] = $previousClosingStockData['productQuantity'];
 			$data['openingInventoryAmt'] = $previousClosingStockData['productUnitPrice'];
+			
+			if (!empty($previousClosingStockData['purchaseProductQuantity']))
+			{
+				$data['openingInventoryQty'] += $previousClosingStockData['purchaseProductQuantity'];
+			}
 		}
 		else if (isset($previousPurchaseStockWithProduct[$productId]))
 		{
@@ -251,15 +258,16 @@ class Report extends Backend_Controller
 		return $data;
 	}
 
-
 	private function getClosingStocks($startDate, $endDate, $categoryIds, $previousDay = false)
 	{
 		$closingStockSubQueryCondition = [
-			'openingStockNumber' => $this->openingStockNumber
+			'openingStockNumber' => $this->openingStockNumber,
+			'userId' => $this->loggedInUserId
 		];
 
 		$closingStockCondition = [
 			'cs1.openingStockNumber' => $this->openingStockNumber ,
+			'cs1.userId' => $this->loggedInUserId
 		];
 
 		if ($previousDay)
@@ -275,7 +283,8 @@ class Report extends Backend_Controller
 
 		$closingStockSubQuery = $this->db->select([
 			'MAX(id) as maxId',
-			'productId'
+			'productId',
+			'createdOn'
 		])->from('ie_closing_stocks')->where($closingStockSubQueryCondition)->group_by('productId')->get_compiled_select();
 
 		$closingStocks = $this->db->select([
@@ -293,9 +302,9 @@ class Report extends Backend_Controller
 		])->from('ie_closing_stocks cs1')->join(
 			"($closingStockSubQuery) cs2", "cs1.productId = cs2.productId AND cs1.id = cs2.maxId", "INNER"
 		)->join(
-			'ie_products p', 'p.id = cs1.productId', 'inner'
+			'ie_products p', 'p.id = cs1.productId', 'INNER'
 		)->join(
-			'ie_si_units su', 'su.id = cs1.productSiUnitId', 'inner'
+			'ie_si_units su', 'su.id = cs1.productSiUnitId', 'INNER'
 		)->where($closingStockCondition);
 
 		if (!empty($categoryIds))
@@ -313,6 +322,7 @@ class Report extends Backend_Controller
 
 		$purchaseStockSubQueryCondition = [
 			'openingStockNumber' => $this->openingStockNumber,
+			'userId' => $this->loggedInUserId
 			// sprintf('(createdOn >= %s AND createdOn <= %s)', $startDate, $endDate) => NULL
 		];
 
@@ -381,7 +391,6 @@ class Report extends Backend_Controller
 			$purchaseStockCondition[sprintf('(ps.createdOn >= %s AND ps.createdOn <= %s)', $startDate, $endDate)] = NULL;
 		}
 
-
 		$purchaseStocks = $this->db->select([
 			'SUM(ps.productQuantity) AS productQuantity',
 			'ps.productId',
@@ -407,6 +416,113 @@ class Report extends Backend_Controller
 		$purchaseStocks = $purchaseStocks->group_by('ps.productId')->order_by('ps.productId', 'ASC')->get()->result_array();
 
 		return $purchaseStocks;
+	}
+
+	private function getWastageStocks($startDate, $endDate, $categoryIds, $previousDay = false)
+	{
+		$wastageStockCondition['ws.userId'] = $this->loggedInUserId;
+		$wastageStockCondition['ws.openingStockNumber'] = $this->openingStockNumber;
+		// $wastageStockCondition['ws.productId NOT IN (SELECT productId FROM ie_opening_stocks WHERE openingStockNumber = ' . $this->openingStockNumber .')'] = NULL;
+		
+		if ($previousDay)
+		{
+			$wastageStockCondition[sprintf('ws.createdOn <= %s', $startDate)] = NULL;
+		}
+		else
+		{
+			$wastageStockCondition[sprintf('(ws.createdOn >= %s AND ws.createdOn <= %s)', $startDate, $endDate)] = NULL;
+		}
+	
+		$wastageStocks = $this->db->select([
+			'SUM(ws.productQuantity) AS productQuantity',
+			'ws.productId',
+			'ws.openingStockNumber',
+			'ws.productUnitPrice',
+			'ws.productSiUnitId',
+			'ws.productTax',
+			'su.parentId as siUnitParentId',
+			'ws.comment',
+			'p.productName',
+			'p.productCode'
+		])->from('ie_wastage_stocks ws')->join(
+			'ie_products p', 'p.id = ws.productId', 'inner'
+		)->join(
+			'ie_si_units su', 'su.id = ws.productSiUnitId', 'inner'
+		)->where($wastageStockCondition);
+	
+		if (!empty($categoryIds))
+		{
+			$wastageStocks->where_in('p.categoryId', $categoryIds);
+		}
+	
+		$wastageStocks = $wastageStocks->group_by('ws.productId')->order_by('ws.productId', 'ASC')->get()->result_array();
+	
+		return $wastageStocks;
+	}
+
+	private function getClosingWithPurchaseStocks($startDate, $endDate, $categoryIds, $previousDay = false)
+	{
+		$closingStockSubQueryCondition = [
+			'openingStockNumber' => $this->openingStockNumber,
+			'userId' => $this->loggedInUserId
+		];
+
+		$closingStockCondition = [
+			'cs1.openingStockNumber' => $this->openingStockNumber,
+			'cs1.userId' => $this->loggedInUserId
+		];
+
+		if ($previousDay)
+		{
+			$closingStockSubQueryCondition[sprintf('createdOn <= %s', $startDate)] = NULL;
+			$closingStockCondition[sprintf('cs1.createdOn <= %s', $startDate)] = NULL;
+		}
+		else
+		{
+			$closingStockSubQueryCondition[sprintf('(createdOn >= %s AND createdOn <= %s)', $startDate, $endDate)] = NULL;
+			$closingStockCondition[sprintf('(cs1.createdOn >= %s AND cs1.createdOn <= %s)', $startDate, $endDate)] = NULL;
+		}
+
+		$closingStockSubQuery = $this->db->select([
+			'MAX(id) as maxId',
+			'productId',
+			'createdOn'
+		])->from('ie_closing_stocks')->where($closingStockSubQueryCondition)->group_by('productId')->get_compiled_select();
+
+		$closingStocks = $this->db->select([
+			'SUM(ps.productQuantity) AS purchaseProductQuantity',
+			'cs1.productId',
+			'cs1.openingStockNumber',
+			'cs1.productQuantity',
+			'cs1.closingStockNumber',
+			'cs1.productSiUnitId',
+			'cs1.productUnitPrice',
+			'cs1.productTax',
+			'cs1.comment',
+			'su.parentId as siUnitParentId',
+			'p.productName',
+			'p.productCode'
+		])->from('ie_closing_stocks cs1')->join(
+			"($closingStockSubQuery) cs2", "cs1.productId = cs2.productId AND cs1.id = cs2.maxId", "INNER"
+		)->join(
+			'ie_products p', 'p.id = cs1.productId', 'INNER'
+		)->join(
+			'ie_si_units su', 'su.id = cs1.productSiUnitId', 'INNER'
+		)->join(
+			'ie_purchase_stocks ps', 'ps.productId = cs1.productId AND ps.createdOn > cs1.createdOn AND ps.createdOn < ' . $startDate , 'LEFT'
+		)->where($closingStockCondition);
+
+		if (!empty($categoryIds))
+		{
+			$closingStocks->where_in('p.categoryId', $categoryIds);
+		}
+
+		$closingStocks = $closingStocks->group_by([
+			'cs1.productId',
+			'ps.productId'
+		])->order_by('cs1.productId', 'ASC')->get()->result_array();
+
+		return $closingStocks;
 	}
 
 	private function changeArrayIndexByColumnValue($data, $columnName): array

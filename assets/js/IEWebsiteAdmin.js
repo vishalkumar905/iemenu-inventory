@@ -619,7 +619,7 @@ IEWebsiteAdmin.OpeningStockPage = (function() {
 				return false;
 			}
 
-			if (!_.isEmpty(openingStocksData))
+			if (!_.isEmpty(openingStocksData) && validateData())
 			{
 				IEWebsite.Utils.ShowLoadingScreen();
 				IEWebsite.Utils.AjaxPost(SAVE_OPENING_INVETORY_PRODUCTS, openingStocksData, function(resp) {
@@ -632,6 +632,10 @@ IEWebsiteAdmin.OpeningStockPage = (function() {
 						}, 5000);
 					}
 				});
+			}
+			else
+			{
+				alert('Please add product data.');
 			}
 		});
 	
@@ -659,7 +663,7 @@ IEWebsiteAdmin.OpeningStockPage = (function() {
 				page: pagination.currentPage,
 				limit: Number(pagination.limit)
 			};
-
+			
 			IEWebsite.Utils.ShowLoadingScreen();
 			IEWebsite.Utils.AjaxPost(FETCH_OPENING_INVETORY_PRODUCTS, data , function(resp) {
 				IEWebsite.Utils.HideLoadingScreen();
@@ -713,11 +717,13 @@ IEWebsiteAdmin.OpeningStockPage = (function() {
 				let qty = '',
 					unitPrice = '',
 					comment = '',
-					subTotal = 0;
+					subTotal = 0,
+					unit = 0;
 
 				if (openingStocksData[row.productId])
 				{
 					qty = openingStocksData[row.productId].qty,
+					unit = openingStocksData[row.productId].unit,
 					unitPrice = openingStocksData[row.productId].unitPrice,
 					comment = openingStocksData[row.productId].comment,
 					subTotal = qty * unitPrice;
@@ -729,13 +735,13 @@ IEWebsiteAdmin.OpeningStockPage = (function() {
 				let commentInputHtml = '<input type="text" productid="'+ row.productId +'" name="product[comment]['+ row.productId +']" value="'+ comment +'" />';
 				let subTotalInputHtml = '<span productid="'+ row.productId +'" id="product[subTotal]['+ row.productId +']" name="product[subTotal]['+ row.productId +']">'+ subTotal +'</span>';
 				let unitPriceInputHtml = '<input productid="'+ row.productId +'" type="text" style="width:100px"  name="product[unitPrice]['+ row.productId +']" value="'+ unitPrice +'"/>';
-
+				let siUnitSelectBoxHtml = productSiUnitSelectBox(row.productId, row.productSiUnitsDropdown, unit);
 
 				let tableRow = '<tr>';
 					tableRow += '<td><span productid="'+ row.productId +'" id="removeRow-'+ row.productId +'"><i class="material-icons cursor-pointer">clear</i></span></td>';
 					tableRow += '<td>'+ row.productCode +'</td>';
 					tableRow += '<td>'+ row.productName +'</td>';
-					tableRow += '<td>'+ row.selectSiUnit +'</td>';
+					tableRow += '<td>'+ siUnitSelectBoxHtml +'</td>';
 					tableRow += '<td>'+ qtyInputHtml +'</td>';
 					tableRow += '<td>'+ unitPriceInputHtml +'</td>';
 					tableRow += '<td>'+ subTotalInputHtml +'</td>';
@@ -756,14 +762,55 @@ IEWebsiteAdmin.OpeningStockPage = (function() {
 			});
 
 			$("input[name^='product[qty]']").change(calulateSubtotal);
+			$("select[name^='product[unit]']").change(calulateSubtotal);
 			$("input[name^='product[unitPrice]']").keyup(calulateSubtotal);
 			$("input[name^='product[comment]']").keyup(calulateSubtotal);
 		}
 	};
+
+	var productSiUnitSelectBox = function(productId, siUnits, selectedUnitId = 0)
+	{
+		if (!_.isEmpty(siUnits))
+		{
+			let options = '';
+
+			for(let i in siUnits)
+			{
+				let selected = selectedUnitId == i ? 'selected' : '';
+				options += '<option value="'+ i +'" '+ selected +'>' + siUnits[i] +  '</option>';
+			}
+
+			return '<select productid="'+ productId +'" name="product[unit]['+ productId +']">'+ options +'</select>';
+		}
+
+		return '';
+	}
+
+	var validateData = function()
+	{
+		if (!_.isEmpty(openingStocksData))
+		{
+			for(let i in openingStocksData)
+			{
+				if (openingStocksData[i].qty > 0 && openingStocksData[i].unitPrice > 0)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
 	
 	var calulateSubtotal = function() 
 	{
 		let productId = Number($(this).attr('productid'));
+
+		if (isNaN(productId))
+		{
+			throw 'Missing productId';
+		}
+
 		let qty = Number($("input[name='product[qty]["+ productId +"]']").val());
 		let unitPrice = Number($("input[name='product[unitPrice]["+ productId +"]']").val());
 		let unit = Number($("select[name='product[unit]["+ productId +"]']").val());
@@ -817,7 +864,7 @@ IEWebsiteAdmin.ClosingInventoryPage = (function() {
 				return false;
 			}
 
-			if (!_.isEmpty(closingStocksData))
+			if (!_.isEmpty(closingStocksData) && validateData())
 			{
 				IEWebsite.Utils.ShowLoadingScreen();
 				IEWebsite.Utils.AjaxPost(SAVE_CLOSING_INVETORY_PRODUCTS, closingStocksData, function(resp) {
@@ -830,6 +877,10 @@ IEWebsiteAdmin.ClosingInventoryPage = (function() {
 						}, 2000);
 					}
 				});
+			}
+			else
+			{
+				alert('Please add product data.');
 			}
 		});
 	
@@ -911,11 +962,13 @@ IEWebsiteAdmin.ClosingInventoryPage = (function() {
 				let qty = '',
 					unitPrice = '',
 					comment = '',
-					subTotal = 0;
+					subTotal = 0,
+					unit = 0;
 
 				if (closingStocksData[row.productId])
 				{
 					qty = closingStocksData[row.productId].qty,
+					unit = closingStocksData[row.productId].unit,
 					unitPrice = closingStocksData[row.productId].unitPrice,
 					comment = closingStocksData[row.productId].comment,
 					subTotal = qty * unitPrice;
@@ -927,13 +980,14 @@ IEWebsiteAdmin.ClosingInventoryPage = (function() {
 				let commentInputHtml = '<input type="text" productid="'+ row.productId +'" name="product[comment]['+ row.productId +']" value="'+ comment +'" />';
 				let subTotalInputHtml = '<span productid="'+ row.productId +'" id="product[subTotal]['+ row.productId +']" name="product[subTotal]['+ row.productId +']">'+ subTotal +'</span>';
 				let unitPriceInputHtml = '<input productid="'+ row.productId +'" type="text" style="width:100px"  name="product[unitPrice]['+ row.productId +']" value="'+ unitPrice +'"/>';
+				let siUnitSelectBoxHtml = productSiUnitSelectBox(row.productId, row.productSiUnitsDropdown, unit);
 
 
 				let tableRow = '<tr>';
 					tableRow += '<td><span productid="'+ row.productId +'" id="removeRow-'+ row.productId +'"><i class="material-icons cursor-pointer">clear</i></span></td>';
 					tableRow += '<td>'+ row.productCode +'</td>';
 					tableRow += '<td>'+ row.productName +'</td>';
-					tableRow += '<td>'+ row.selectSiUnit +'</td>';
+					tableRow += '<td>'+ siUnitSelectBoxHtml +'</td>';
 					tableRow += '<td>'+ qtyInputHtml +'</td>';
 					// tableRow += '<td>'+ unitPriceInputHtml +'</td>';
 					// tableRow += '<td>'+ subTotalInputHtml +'</td>';
@@ -954,9 +1008,44 @@ IEWebsiteAdmin.ClosingInventoryPage = (function() {
 			});
 
 			$("input[name^='product[qty]']").change(calulateSubtotal);
+			$("select[name^='product[unit]']").change(calulateSubtotal);
 			$("input[name^='product[unitPrice]']").keyup(calulateSubtotal);
 			$("input[name^='product[comment]']").keyup(calulateSubtotal);
 		}
+	};
+
+	var productSiUnitSelectBox = function(productId, siUnits, selectedUnitId = 0)
+	{
+		if (!_.isEmpty(siUnits))
+		{
+			let options = '';
+
+			for(let i in siUnits)
+			{
+				let selected = selectedUnitId == i ? 'selected' : '';
+				options += '<option value="'+ i +'" '+ selected +'>' + siUnits[i] +  '</option>';
+			}
+
+			return '<select productid="'+ productId +'" name="product[unit]['+ productId +']">'+ options +'</select>';
+		}
+
+		return '';
+	};
+
+	var validateData = function()
+	{
+		if (!_.isEmpty(closingStocksData))
+		{
+			for(let i in closingStocksData)
+			{
+				if (closingStocksData[i].qty > 0 && closingStocksData[i].unitPrice > 0)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
 	};
 	
 	var calulateSubtotal = function() 
@@ -1015,7 +1104,7 @@ IEWebsiteAdmin.WastageInventoryPage = (function() {
 				return false;
 			}
 
-			if (!_.isEmpty(wastageStocksData))
+			if (!_.isEmpty(wastageStocksData) && validateData())
 			{
 				IEWebsite.Utils.ShowLoadingScreen();
 				IEWebsite.Utils.AjaxPost(SAVE_WASTAGE_INVETORY_PRODUCTS, wastageStocksData, function(resp) {
@@ -1028,6 +1117,10 @@ IEWebsiteAdmin.WastageInventoryPage = (function() {
 						}, 2000);
 					}
 				});
+			}
+			else
+			{
+				alert('Please add product data.');
 			}
 		});
 	
@@ -1099,7 +1192,7 @@ IEWebsiteAdmin.WastageInventoryPage = (function() {
 			});
 		}
 
-	}
+	};
 
 	var showTableData = function(data) 
 	{
@@ -1109,11 +1202,13 @@ IEWebsiteAdmin.WastageInventoryPage = (function() {
 				let qty = '',
 					unitPrice = '',
 					comment = '',
-					subTotal = 0;
+					subTotal = 0,
+					unit = 0;
 
 				if (wastageStocksData[row.productId])
 				{
 					qty = wastageStocksData[row.productId].qty,
+					unit = wastageStocksData[row.productId].unit,
 					unitPrice = wastageStocksData[row.productId].unitPrice,
 					comment = wastageStocksData[row.productId].comment,
 					subTotal = qty * unitPrice;
@@ -1125,13 +1220,14 @@ IEWebsiteAdmin.WastageInventoryPage = (function() {
 				let commentInputHtml = '<input type="text" productid="'+ row.productId +'" name="product[comment]['+ row.productId +']" value="'+ comment +'" />';
 				let subTotalInputHtml = '<span productid="'+ row.productId +'" id="product[subTotal]['+ row.productId +']" name="product[subTotal]['+ row.productId +']">'+ subTotal +'</span>';
 				let unitPriceInputHtml = '<input productid="'+ row.productId +'" type="text" style="width:100px"  name="product[unitPrice]['+ row.productId +']" value="'+ unitPrice +'"/>';
+				let siUnitSelectBoxHtml = productSiUnitSelectBox(row.productId, row.productSiUnitsDropdown, unit);
 
 
 				let tableRow = '<tr>';
 					tableRow += '<td><span productid="'+ row.productId +'" id="removeRow-'+ row.productId +'"><i class="material-icons cursor-pointer">clear</i></span></td>';
 					tableRow += '<td>'+ row.productCode +'</td>';
 					tableRow += '<td>'+ row.productName +'</td>';
-					tableRow += '<td>'+ row.selectSiUnit +'</td>';
+					tableRow += '<td>'+ siUnitSelectBoxHtml +'</td>';
 					tableRow += '<td>'+ qtyInputHtml +'</td>';
 					// tableRow += '<td>'+ unitPriceInputHtml +'</td>';
 					// tableRow += '<td>'+ subTotalInputHtml +'</td>';
@@ -1152,6 +1248,7 @@ IEWebsiteAdmin.WastageInventoryPage = (function() {
 			});
 
 			$("input[name^='product[qty]']").change(calulateSubtotal);
+			$("select[name^='product[unit]']").change(calulateSubtotal);
 			$("input[name^='product[unitPrice]']").keyup(calulateSubtotal);
 			$("input[name^='product[comment]']").keyup(calulateSubtotal);
 		}
@@ -1179,7 +1276,41 @@ IEWebsiteAdmin.WastageInventoryPage = (function() {
 
 			$("span[id='product[subTotal]["+ productId +"]']").text(totalPrice);
 		}
-	}
+	};
+
+	var productSiUnitSelectBox = function(productId, siUnits, selectedUnitId = 0)
+	{
+		if (!_.isEmpty(siUnits))
+		{
+			let options = '';
+
+			for(let i in siUnits)
+			{
+				let selected = selectedUnitId == i ? 'selected' : '';
+				options += '<option value="'+ i +'" '+ selected +'>' + siUnits[i] +  '</option>';
+			}
+
+			return '<select productid="'+ productId +'" name="product[unit]['+ productId +']">'+ options +'</select>';
+		}
+
+		return '';
+	};
+
+	var validateData = function()
+	{
+		if (!_.isEmpty(wastageStocksData))
+		{
+			for(let i in wastageStocksData)
+			{
+				if (wastageStocksData[i].qty > 0 && wastageStocksData[i].unitPrice > 0)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	};
 
 	return {
 		Init: init
@@ -1223,12 +1354,19 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 			let billDate = $("input[name='billDate']").val();
 			let billNumber = $("input[name='billNumber']").val();
 
-			if (_.isEmpty(billNumber) || _.isEmpty(billNumber))
+			if (_.isEmpty(billNumber))
 			{
+				alert('Please enter bill number.');
+				return;
+			}
+
+			if (_.isEmpty(_.isEmpty(billDate)))
+			{
+				alert('Please enter bill date.');
 				return;
 			}
 			
-			if (!_.isEmpty(directOrdersData) && !_.isEmpty(vendorId) && !_.isEmpty(billDate) && !_.isEmpty(billNumber))
+			if (!_.isEmpty(directOrdersData) && !_.isEmpty(vendorId) && !_.isEmpty(billDate) && !_.isEmpty(billNumber) && validateData())
 			{
 				let postData = {
 					productData: directOrdersData,
@@ -1249,6 +1387,10 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 						}, 2000);
 					}
 				});
+			}
+			else
+			{
+				alert('Please add product data.');
 			}
 		});
 	
@@ -1348,7 +1490,7 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 			});
 		}
 
-	}
+	};
 
 	var showTableData = function(data) 
 	{
@@ -1402,6 +1544,7 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 			});
 
 			$("input[name^='product[qty]']").change(calulateSubtotal);
+			$("select[name^='product[unit]']").change(calulateSubtotal);
 			$("input[name^='product[unitPrice]']").keyup(calulateSubtotal);
 			$("input[name^='product[comment]']").keyup(calulateSubtotal);
 		}
@@ -1429,7 +1572,41 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 
 			$("span[id='product[subTotal]["+ productId +"]']").text(totalPrice);
 		}
-	}
+	};
+
+	var productSiUnitSelectBox = function(productId, siUnits, selectedUnitId = 0)
+	{
+		if (!_.isEmpty(siUnits))
+		{
+			let options = '';
+
+			for(let i in siUnits)
+			{
+				let selected = selectedUnitId == i ? 'selected' : '';
+				options += '<option value="'+ i +'" '+ selected +'>' + siUnits[i] +  '</option>';
+			}
+
+			return '<select productid="'+ productId +'" name="product[unit]['+ productId +']">'+ options +'</select>';
+		}
+
+		return '';
+	};
+
+	var validateData = function()
+	{
+		if (!_.isEmpty(directOrdersData))
+		{
+			for(let i in directOrdersData)
+			{
+				if (directOrdersData[i].qty > 0 && directOrdersData[i].unitPrice > 0)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	};
 
 	return {
 		Init: init

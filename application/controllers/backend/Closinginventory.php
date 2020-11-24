@@ -159,6 +159,7 @@ class Closinginventory extends Backend_Controller
 				{
 					$unserializedSiUnits = unserialize($product['productSiUnits']);	
 					$dropdownOptions = '';
+					$productSiUnitsDropdown = [];
 
 					foreach($unserializedSiUnits as $siUnitId)
 					{
@@ -166,6 +167,7 @@ class Closinginventory extends Backend_Controller
 						{
 							if ($row['id'] === $siUnitId)
 							{
+								$productSiUnitsDropdown[$siUnitId] = $row['unitName'];
 								$dropdownOptions .= sprintf('<option value="%s">%s</options>', $siUnitId, $row['unitName']);
 								break;
 							}
@@ -176,6 +178,8 @@ class Closinginventory extends Backend_Controller
 					{
 						$data['selectSiUnit'] = sprintf('<select name="product[unit][%s]">%s<select>', $product['id'], $dropdownOptions);
 					}
+
+					$data['productSiUnitsDropdown'] = $productSiUnitsDropdown;
 				}
 
 				$results['data'][] = $data;
