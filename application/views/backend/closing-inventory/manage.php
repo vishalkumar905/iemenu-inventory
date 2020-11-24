@@ -28,8 +28,10 @@
 								<th>Product Name</th>
 								<th>Unit</th>
 								<th width="10%">Qty</th>
+								<?php /*?>
 								<th>Unit Price</th>
 								<th  width="10%">Sub Total</th>
+								<?php*/ ?>
 								<th>Comment</th>
 							</tr>
 						</thead>

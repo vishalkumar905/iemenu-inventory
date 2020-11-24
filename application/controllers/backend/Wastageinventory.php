@@ -49,14 +49,14 @@ class Wastageinventory extends Backend_Controller
 			$insertData = [];
 			foreach($post as $productId => $row)
 			{
-				if ($row['qty'] > 0 && $row['unitPrice'] > 0)
+				if ($row['qty'] > 0)
 				{
 					$insertData[] = [
 						'productId' => $productId,
 						'productSiUnitId' => $row['unit'],
-						'productUnitPrice' => $row['unitPrice'],
+						'productUnitPrice' => floatval($row['unitPrice']),
 						'productQuantity' => $row['qty'],
-						'productSubtotal' => $row['qty'] * $row['unitPrice'],
+						'productSubtotal' => $row['qty'] * floatval($row['unitPrice']),
 						'comment' => $row['comment'],
 						'wastageStockNumber' => $this->getWastageStockNumber(),
 						'openingStockNumber' => $this->openingstock->getCurrentOpeningStockNumber(),

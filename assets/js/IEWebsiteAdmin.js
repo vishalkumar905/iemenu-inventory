@@ -935,8 +935,8 @@ IEWebsiteAdmin.ClosingInventoryPage = (function() {
 					tableRow += '<td>'+ row.productName +'</td>';
 					tableRow += '<td>'+ row.selectSiUnit +'</td>';
 					tableRow += '<td>'+ qtyInputHtml +'</td>';
-					tableRow += '<td>'+ unitPriceInputHtml +'</td>';
-					tableRow += '<td>'+ subTotalInputHtml +'</td>';
+					// tableRow += '<td>'+ unitPriceInputHtml +'</td>';
+					// tableRow += '<td>'+ subTotalInputHtml +'</td>';
 					tableRow += '<td>'+ commentInputHtml +'</td>';
 					tableRow += '</tr>';
 					
@@ -1133,8 +1133,8 @@ IEWebsiteAdmin.WastageInventoryPage = (function() {
 					tableRow += '<td>'+ row.productName +'</td>';
 					tableRow += '<td>'+ row.selectSiUnit +'</td>';
 					tableRow += '<td>'+ qtyInputHtml +'</td>';
-					tableRow += '<td>'+ unitPriceInputHtml +'</td>';
-					tableRow += '<td>'+ subTotalInputHtml +'</td>';
+					// tableRow += '<td>'+ unitPriceInputHtml +'</td>';
+					// tableRow += '<td>'+ subTotalInputHtml +'</td>';
 					tableRow += '<td>'+ commentInputHtml +'</td>';
 					tableRow += '</tr>';
 					
@@ -1161,7 +1161,7 @@ IEWebsiteAdmin.WastageInventoryPage = (function() {
 	{
 		let productId = Number($(this).attr('productid'));
 		let qty = Number($("input[name='product[qty]["+ productId +"]']").val());
-		let unitPrice = Number($("input[name='product[unitPrice]["+ productId +"]']").val());
+		let unitPrice = Number($("input[name='product[unitPrice]["+ productId +"]']").val()) || 0;
 		let unit = Number($("select[name='product[unit]["+ productId +"]']").val());
 		let comment = $("input[name='product[comment]["+ productId +"]']").val();
 
