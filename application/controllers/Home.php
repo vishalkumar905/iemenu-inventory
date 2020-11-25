@@ -6,6 +6,8 @@ class Home extends CI_Controller
 	{
 		parent::__construct();
 		$this->load->model('UserModel', 'user');
+		header('Access-Control-Allow-Origin: *');
+		header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
 	}
 
 	public function devlogin()
@@ -94,10 +96,10 @@ class Home extends CI_Controller
 
 	public function generateLoginToken()
 	{
-		if (!$this->input->is_ajax_request())
-		{
-			exit('Direct script not allowed');
-		}
+		// if (!$this->input->is_ajax_request())
+		// {
+		// 	exit('Direct script not allowed');
+		// }
 
 		$isSuccess = false;
 		$data = [];

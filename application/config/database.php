@@ -70,7 +70,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | The $query_builder variables lets you determine whether or not to load
 | the query builder class.
 */
-$active_group = 'default';
 $query_builder = TRUE;
 
 $db['default'] = array(
@@ -82,7 +81,7 @@ $db['default'] = array(
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
-	'db_debug' => (ENVIRONMENT !== 'production'),
+	'db_debug' => TRUE,
 	'cache_on' => FALSE,
 	'cachedir' => '',
 	'char_set' => 'utf8',
@@ -104,7 +103,7 @@ $db['iemenu'] = array(
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
-	'db_debug' => (ENVIRONMENT !== 'production'),
+	'db_debug' => TRUE,
 	'cache_on' => FALSE,
 	'cachedir' => '',
 	'char_set' => 'utf8',
@@ -120,14 +119,14 @@ $db['iemenu'] = array(
 if (ENVIRONMENT == 'testing')
 {
 	$db['default']['hostname'] = 'localhost';
-	$db['default']['username'] = 'u606579078_inventory';
-	$db['default']['password'] = '2yFP@mvtxA|';
-	$db['default']['database'] = 'u606579078_inventory';
+	$db['default']['username'] = 'u159299809_inventory';
+	$db['default']['password'] = '*Otcs*Rp3c@Y';
+	$db['default']['database'] = 'u159299809_inventory';
 
 	$db['iemenu']['hostname'] = 'localhost';
-	$db['iemenu']['username'] = 'root';
-	$db['iemenu']['password'] = '123456';
-	$db['iemenu']['database'] = 'inventory';
+	$db['iemenu']['username'] = 'u159299809_iemenu';
+	$db['iemenu']['password'] = 'Shiva@1937';
+	$db['iemenu']['database'] = 'u159299809_iemenu';
 }
 
 if (ENVIRONMENT == 'production')
@@ -155,3 +154,5 @@ if (ENVIRONMENT == 'development')
 	$db['iemenu']['password'] = '123456';
 	$db['iemenu']['database'] = 'inventory';
 }
+
+$active_group = 'default';
