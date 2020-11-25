@@ -1038,7 +1038,7 @@ IEWebsiteAdmin.ClosingInventoryPage = (function() {
 		{
 			for(let i in closingStocksData)
 			{
-				if (closingStocksData[i].qty > 0 && closingStocksData[i].unitPrice > 0)
+				if (closingStocksData[i].qty > 0)
 				{
 					return true;
 				}
@@ -1302,7 +1302,7 @@ IEWebsiteAdmin.WastageInventoryPage = (function() {
 		{
 			for(let i in wastageStocksData)
 			{
-				if (wastageStocksData[i].qty > 0 && wastageStocksData[i].unitPrice > 0)
+				if (wastageStocksData[i].qty > 0)
 				{
 					return true;
 				}
@@ -1372,7 +1372,7 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 					productData: directOrdersData,
 				};
 
-				postData.vendorId =vendorId;
+				postData.vendorId = vendorId;
 				postData.billDate = billDate;
 				postData.billNumber = billNumber;
 				
@@ -1731,6 +1731,259 @@ IEWebsiteAdmin.MasterReport = (function() {
 	}
 })();
 
+IEWebsiteAdmin.DirectTransferPage = (function() {
+	var searchBoxEnabled = false;
+	var pagination = {
+		currentPage: 1,
+		totalPages: 0,
+		limit: 10,
+	}
+	var directTransfersData = {};
+
+	var init = function()
+	{
+		if ($("#directTransferPageContainer").length <= 0)
+		{
+			return 0;
+		};
+
+		$("#saveDirectTransfer").attr("disabled", "true");
+		$("#searchBar").keyup(_.debounce(loadProducts, 500));
+		$("#category").change(loadProducts);
+		$("#productType").change(loadProducts);
+
+		$("#saveDirectTransfer").click(function() {
+			if (pagination.currentPage !== pagination.currentPage)
+			{
+				return false;
+			}
+
+			let outlet = $("#outlet").val();
+			if (_.isEmpty(outlet))
+			{
+				alert('Please select an outlet.');
+				return false;
+			}
+
+			if (!_.isEmpty(directTransfersData) && validateData())
+			{
+				let postData = {
+					productData: directTransfersData,
+					outlet
+				};
+
+				IEWebsite.Utils.ShowLoadingScreen();
+				IEWebsite.Utils.AjaxPost(SAVE_DIRECT_TRANSFER_PRODUCTS, postData, function(resp) {
+					IEWebsite.Utils.HideLoadingScreen();
+					if (resp.status)
+					{
+						IEWebsite.Utils.Swal('Success', 'Direct Transfer Created Successfully..', 'success');
+						window.setTimeout(function() {
+							window.location.reload();
+						}, 2000);
+					}
+				});
+			}
+			else
+			{
+				alert('Please add product data.');
+			}
+		});
+	
+		$("#tableDataLimit").change(function() {
+			pagination.limit = Number($(this).val());
+			pagination.currentPage = 1;
+			pagination.totalPages  = 0;
+			loadProducts();
+		});
+	};
+
+	var loadProducts = function() {
+		let searchText = $.trim($("#searchBar").val());
+		let category = $("#category").val();
+		let productType = $("#productType").val();
+
+		$("#directTransferTableBody").html('');
+
+		if (!_.isEmpty(category) > 0)
+		{
+			let data = {
+				search: searchText,
+				category: category,
+				productType: productType,
+				page: pagination.currentPage,
+				limit: Number(pagination.limit)
+			};
+
+			IEWebsite.Utils.ShowLoadingScreen();
+			IEWebsite.Utils.AjaxPost(FETCH_DIRECT_TRANSFER_PRODUCTS, data , function(resp) {
+				IEWebsite.Utils.HideLoadingScreen();
+	
+				if (resp.status)
+				{
+					$("#manageDirectTransferContainer").show();
+
+					pagination.totalPages = resp.response.pagination.totalPages;
+					
+					$("#saveDirectTransfer").attr("disabled", "true");
+					
+					if (resp.response.pagination.totalPages == resp.response.pagination.current)
+					{
+						$("#saveDirectTransfer").attr("disabled", false);
+					}
+
+					searchBoxEnabled = true;
+					if (!_.isEmpty(resp.response.data))
+					{
+						showTableData(resp.response.data);
+					}
+					else
+					{
+						$("#directTransferTableBody").append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
+					}
+
+					let paginationHtml = IEWebsiteAdmin.CustomPagination.Init(resp.response.pagination);
+					$("#pagination").html(paginationHtml);
+
+					$("[id^=paginate-]").click(function() {
+						let page = Number($(this).attr('page'));
+
+						if (page > 0)
+						{
+							pagination.currentPage = page;
+							loadProducts();
+						}
+					});
+				}
+			});
+		}
+
+	}
+
+	var showTableData = function(data) 
+	{
+		if (!_.isEmpty(data))
+		{
+			_.each(data, function(row) {
+				let qty = '',
+					unitPrice = '',
+					comment = '',
+					subTotal = 0,
+					unit = 0;
+
+				if (directTransfersData[row.productId])
+				{
+					qty = directTransfersData[row.productId].qty,
+					unit = directTransfersData[row.productId].unit,
+					unitPrice = directTransfersData[row.productId].unitPrice,
+					comment = directTransfersData[row.productId].comment,
+					subTotal = qty * unitPrice;
+				}
+
+				subTotal = (Math.round(subTotal * 100) / 100).toFixed(2);
+
+				let qtyInputHtml = '<input type="number" productid="'+ row.productId +'" style="width:60px" min="0" name="product[qty]['+ row.productId +']" value="'+ qty +'"/>';
+				let commentInputHtml = '<input type="text" productid="'+ row.productId +'" name="product[comment]['+ row.productId +']" value="'+ comment +'" />';
+				let subTotalInputHtml = '<span productid="'+ row.productId +'" id="product[subTotal]['+ row.productId +']" name="product[subTotal]['+ row.productId +']">'+ subTotal +'</span>';
+				let unitPriceInputHtml = '<input productid="'+ row.productId +'" type="text" style="width:100px"  name="product[unitPrice]['+ row.productId +']" value="'+ unitPrice +'"/>';
+				let siUnitSelectBoxHtml = productSiUnitSelectBox(row.productId, row.productSiUnitsDropdown, unit);
+
+
+				let tableRow = '<tr>';
+					tableRow += '<td><span productid="'+ row.productId +'" id="removeRow-'+ row.productId +'"><i class="material-icons cursor-pointer">clear</i></span></td>';
+					tableRow += '<td>'+ row.productCode +'</td>';
+					tableRow += '<td>'+ row.productName +'</td>';
+					tableRow += '<td>'+ siUnitSelectBoxHtml +'</td>';
+					tableRow += '<td>'+ qtyInputHtml +'</td>';
+					// tableRow += '<td>'+ unitPriceInputHtml +'</td>';
+					// tableRow += '<td>'+ subTotalInputHtml +'</td>';
+					tableRow += '<td>'+ commentInputHtml +'</td>';
+					tableRow += '</tr>';
+					
+				$("#directTransferTableBody").append(tableRow);
+			});
+
+			$("span[id^=removeRow-]").click(function(){
+				$(this).parent().parent().remove();
+				let productId = $(this).attr('productid');
+
+				if (directTransfersData[productId])
+				{
+					delete directTransfersData[productId];
+				}
+			});
+
+			$("input[name^='product[qty]']").change(calulateSubtotal);
+			$("select[name^='product[unit]']").change(calulateSubtotal);
+			$("input[name^='product[unitPrice]']").keyup(calulateSubtotal);
+			$("input[name^='product[comment]']").keyup(calulateSubtotal);
+		}
+	};
+
+	var productSiUnitSelectBox = function(productId, siUnits, selectedUnitId = 0)
+	{
+		if (!_.isEmpty(siUnits))
+		{
+			let options = '';
+
+			for(let i in siUnits)
+			{
+				let selected = selectedUnitId == i ? 'selected' : '';
+				options += '<option value="'+ i +'" '+ selected +'>' + siUnits[i] +  '</option>';
+			}
+
+			return '<select productid="'+ productId +'" name="product[unit]['+ productId +']">'+ options +'</select>';
+		}
+
+		return '';
+	};
+
+	var validateData = function()
+	{
+		if (!_.isEmpty(directTransfersData))
+		{
+			for(let i in directTransfersData)
+			{
+				if (directTransfersData[i].qty > 0)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	};
+	
+	var calulateSubtotal = function() 
+	{
+		let productId = Number($(this).attr('productid'));
+		let qty = Number($("input[name='product[qty]["+ productId +"]']").val());
+		let unitPrice = Number($("input[name='product[unitPrice]["+ productId +"]']").val());
+		let unit = Number($("select[name='product[unit]["+ productId +"]']").val());
+		let comment = $("input[name='product[comment]["+ productId +"]']").val();
+
+		directTransfersData[productId] = {
+			qty,
+			unitPrice,
+			unit,
+			comment
+		};
+
+		if (productId > 0)
+		{
+			let totalPrice = qty * unitPrice;
+				totalPrice = (Math.round(totalPrice * 100) / 100).toFixed(2);
+
+			$("span[id='product[subTotal]["+ productId +"]']").text(totalPrice);
+		}
+	}
+
+	return {
+		Init: init
+	}
+})();
+
+
 IEWebsiteAdmin.CustomPagination = (function() {
 	
 	var init = function(pagination)
@@ -1820,4 +2073,5 @@ $(document).ready(function(){
 	IEWebsiteAdmin.WastageInventoryPage.Init();
 	IEWebsiteAdmin.DirectOrderPage.Init();
 	IEWebsiteAdmin.MasterReport.Init();
+	IEWebsiteAdmin.DirectTransferPage.Init();
 });

@@ -20,3 +20,6 @@ const FETCH_MASTER_REPORT = BASE_URL + 'backend/report/fetchMaster';
 
 const FETCH_WASTAGE_INVETORY_PRODUCTS = BASE_URL + 'backend/wastageinventory/fetchProducts';
 const SAVE_WASTAGE_INVETORY_PRODUCTS = BASE_URL + 'backend/wastageinventory/save';
+
+const FETCH_DIRECT_TRANSFER_PRODUCTS = BASE_URL + 'backend/directtransfer/fetchProducts';
+const SAVE_DIRECT_TRANSFER_PRODUCTS = BASE_URL + 'backend/directtransfer/save';

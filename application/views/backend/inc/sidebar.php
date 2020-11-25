@@ -99,9 +99,10 @@
 				<li>
 					<a href="<?=base_url()?>backend/directorder">Direct Order</a>
 				</li>
-				<!-- <li>
-					<a href="<?=base_url()?>backend/vendorproducts">Vendor Products</a>
+				<li>
+					<a href="<?=base_url()?>backend/directtransfer">Direct Transfer</a>
 				</li>
+				<!-- 
 				<li>
 					<a href="<?=base_url()?>backend/vendorproducttaxes">Vendor Product Taxes</a>
 				</li> -->

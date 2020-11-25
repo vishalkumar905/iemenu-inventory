@@ -39,14 +39,55 @@ class IeMenuUserModel extends CI_Model
 		return $query;
 	}
 	
-	public function getWhereCustom($columns = '*', $condition, $orderBy = null)
+	public function getWhereCustom($columns = '*', $condition = null, $orderBy = null, $whereIn = null, $whereNotIn = null, $like = null, $limit = null, $offset = null)
 	{
 		$this->iemenuDB->select($columns);
-		$this->iemenuDB->where($condition);
 		
+		if (!empty($condition))
+		{
+			$this->iemenuDB->where($condition);
+		}
+		
+		if (!empty($whereIn['field']) && !empty($whereIn['values']))
+		{
+			$this->iemenuDB->where_in($whereIn['field'], $whereIn['values']);
+		}
+
+		if (!empty($whereNotIn['field']) && !empty($whereNotIn['values']))
+		{
+			$this->iemenuDB->where_not_in($whereNotIn['field'], $whereNotIn['values']);
+		}
+		
+		if (!empty($like['fields']) && !empty($like['search']) && !empty($like['side']) && is_array($like['fields']))
+		{
+			foreach ($like['fields'] as $key => $field)
+			{
+				if ($key == 0) 
+				{
+					$this->iemenuDB->group_start();
+					$this->iemenuDB->like($field, $like['search'], $like['side']);
+				}
+				else
+				{
+					$this->iemenuDB->or_like($field, $like['search'], $like['side']);
+				}
+
+				
+				if (($key + 1) == count($like['fields']))
+				{
+					$this->iemenuDB->group_end();
+				}
+			}
+		}
+
 		if (!empty($orderBy['field']) && !empty($orderBy['type']))
 		{
 			$this->iemenuDB->order_by($orderBy['field'], $orderBy['type']);
+		}
+
+		if ($limit > 0 && $offset >= 0)
+		{
+			$this->iemenuDB->limit($limit, $offset);
 		}
 
 		$query = $this->iemenuDB->get($this->tableName);
@@ -124,13 +165,41 @@ class IeMenuUserModel extends CI_Model
 		return $query;
 	}
 
-	public function getProducts($limit, $offset)
+	public function getRestaurants()
 	{
-		$this->getDatatableQuery();
-		$this->iemenuDB->limit($limit, $offset);
-		$query=$this->iemenuDB->get();
-		return $query;
+		$ignoreIds = [13];
+
+		$whereNotIn = [
+			'field' => 'rest_id',
+			'values' => $ignoreIds
+		];
+
+		$condition['delete_status'] = 0;
+		return $this->getWhereCustom('*', $condition, null, null, $whereNotIn)->result_array();
+	}
+
+	public function getRestaurantDropdownOptions()
+	{
+		$ddOptions = [];
+		$restaurants = $this->getRestaurants();
+		
+		if (!empty($restaurants))
+		{
+			$ddOptions[''] = 'Choose outlet';
+			foreach($restaurants as $restaurant)
+			{
+				$title = $restaurant['name'];
+
+				if (!empty($restaurant['tagline']))
+				{
+					$title .= ' => ' . $restaurant['tagline']; 
+				}
+
+				$ddOptions[$restaurant['rest_id']] = $title;
+			}
+		}
+
+		return $ddOptions;
 	}
 }
-
 ?>

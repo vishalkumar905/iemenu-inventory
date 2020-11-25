@@ -240,6 +240,21 @@ class ClosingStockModel extends CI_Model
 		$results = $this->db->get();
 		return $results;
 	}
+
+	public function getClosingStockNumber()
+	{
+		$columns = ['MAX(closingStockNumber) as closingStockNumber'];
+		$result = $this->closingstock->getWhereCustom($columns, ['userId' => $this->loggedInUserId])->result_array();
+
+		if (!empty($result))
+		{
+			return $result[0]['closingStockNumber'] + 1;
+		}
+		else
+		{
+			return 1;
+		}
+	}
 }
 
 ?>
