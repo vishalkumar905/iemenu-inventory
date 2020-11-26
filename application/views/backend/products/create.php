@@ -63,7 +63,7 @@
 									];
 
 									$selectedSubCategory = !empty(set_value('subCategory')) ? set_value('subCategory') : (isset($subCategory) ? $subCategory : '');
-									if ($updateId > 0)
+									if ($updateId > 0 && isset($this->disableUpdateField['subCategory']) && $this->disableUpdateField['subCategory'])
 									{
 										$extra['disabled'] = true;
 										echo form_hidden('subCategory', $selectedSubCategory);

@@ -656,6 +656,25 @@ IEWebsiteAdmin.OpeningStockPage = (function() {
 
 		if (!_.isEmpty(category) > 0)
 		{
+			let resetPage = false;
+			if (_.isEmpty(searchBarText) && !_.isEmpty(searchText))
+			{
+				resetPage = true;
+			}
+			else if (!_.isEmpty(searchText) && !_.isEmpty(searchBarText) && searchText != searchBarText)
+			{
+				resetPage = true;
+			}
+
+			if (resetPage)
+			{
+				pagination = {
+					currentPage: 1,
+					totalPages: 0,
+					limit: 10,
+				}
+			}
+
 			let data = {
 				search: searchText,
 				category: category,
@@ -845,6 +864,7 @@ IEWebsiteAdmin.ClosingInventoryPage = (function() {
 		limit: 10,
 	}
 	var closingStocksData = {};
+	var searchBarText = '';
 
 	var init = function()
 	{
@@ -901,6 +921,25 @@ IEWebsiteAdmin.ClosingInventoryPage = (function() {
 
 		if (!_.isEmpty(category) > 0)
 		{
+			let resetPage = false;
+			if (_.isEmpty(searchBarText) && !_.isEmpty(searchText))
+			{
+				resetPage = true;
+			}
+			else if (!_.isEmpty(searchText) && !_.isEmpty(searchBarText) && searchText != searchBarText)
+			{
+				resetPage = true;
+			}
+
+			if (resetPage)
+			{
+				pagination = {
+					currentPage: 1,
+					totalPages: 0,
+					limit: 10,
+				}
+			}
+
 			let data = {
 				search: searchText,
 				category: category,
@@ -908,6 +947,8 @@ IEWebsiteAdmin.ClosingInventoryPage = (function() {
 				page: pagination.currentPage,
 				limit: Number(pagination.limit)
 			};
+
+			searchBarText = searchText;
 
 			IEWebsite.Utils.ShowLoadingScreen();
 			IEWebsite.Utils.AjaxPost(FETCH_CLOSING_INVETORY_PRODUCTS, data , function(resp) {
@@ -1141,6 +1182,25 @@ IEWebsiteAdmin.WastageInventoryPage = (function() {
 
 		if (!_.isEmpty(category) > 0)
 		{
+			let resetPage = false;
+			if (_.isEmpty(searchBarText) && !_.isEmpty(searchText))
+			{
+				resetPage = true;
+			}
+			else if (!_.isEmpty(searchText) && !_.isEmpty(searchBarText) && searchText != searchBarText)
+			{
+				resetPage = true;
+			}
+
+			if (resetPage)
+			{
+				pagination = {
+					currentPage: 1,
+					totalPages: 0,
+					limit: 10,
+				}
+			}
+
 			let data = {
 				search: searchText,
 				category: category,
@@ -1439,6 +1499,25 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 
 		if (!_.isEmpty(category) > 0)
 		{
+			let resetPage = false;
+			if (_.isEmpty(searchBarText) && !_.isEmpty(searchText))
+			{
+				resetPage = true;
+			}
+			else if (!_.isEmpty(searchText) && !_.isEmpty(searchBarText) && searchText != searchBarText)
+			{
+				resetPage = true;
+			}
+
+			if (resetPage)
+			{
+				pagination = {
+					currentPage: 1,
+					totalPages: 0,
+					limit: 10,
+				}
+			}
+			
 			let data = {
 				search: searchText,
 				category: category,
@@ -1807,6 +1886,25 @@ IEWebsiteAdmin.DirectTransferPage = (function() {
 
 		if (!_.isEmpty(category) > 0)
 		{
+			let resetPage = false;
+			if (_.isEmpty(searchBarText) && !_.isEmpty(searchText))
+			{
+				resetPage = true;
+			}
+			else if (!_.isEmpty(searchText) && !_.isEmpty(searchBarText) && searchText != searchBarText)
+			{
+				resetPage = true;
+			}
+
+			if (resetPage)
+			{
+				pagination = {
+					currentPage: 1,
+					totalPages: 0,
+					limit: 10,
+				}
+			}
+
 			let data = {
 				search: searchText,
 				category: category,

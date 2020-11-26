@@ -80,9 +80,9 @@
 				<li>
 					<a href="<?=base_url()?>backend/closinginventory">Closing Inventory</a>
 				</li>
-				<li>
+				<!-- <li>
 					<a href="<?=base_url()?>backend/wastageinventory">Wastage Inventory</a>
-				</li>
+				</li> -->
 				<!-- <li>
 					<a href="<?=base_url()?>backend/vendorproducttaxes">Vendor Product Taxes</a>
 				</li> -->

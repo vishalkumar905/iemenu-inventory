@@ -257,6 +257,31 @@ class OpeningStockModel extends CI_Model
 
 		return 0;
 	}
+
+
+	public function getCurrentOpeningInvenroyProducts()
+	{
+		$this->load->model('PurchaseStockModel', 'purchasestock');
+
+		$openingStockNumber = $this->getCurrentOpeningStockNumber();
+
+		$this->purchasestock->getPurchaseProductsCountWhichAreNotInOpening($openingStockNumber);
+		
+		p($this->purchasestock->getPurchaseProductsWhichAreNotInOpening($openingStockNumber), $this->db->last_query());
+		
+		
+		die();
+
+
+		$condition = [
+			'openingStockNumber' => $openingStockNumber,
+			'userId' => $this->loggedInUserId
+		];
+
+		$columns = ['is', 'productId'];
+
+		$this->db->select($columns)->from('ie_opening_stocks')->where($condition);
+	}
 }
 
 ?>

@@ -14,7 +14,7 @@ class Directorder extends Backend_Controller
 		$this->load->model('OpeningStockModel', 'openingstock');
 		$this->load->model('VendorModel', 'vendor');
 		$this->load->model('VendorProductModel', 'vendorproduct');
-		$this->load->model('DirectOrderOpeningStockModel', 'directorderopeningstock');
+		$this->load->model('PurchaseStockModel', 'directorderopeningstock');
 		$this->load->model('CategoryModel', 'category');
 		$this->load->model('ProductModel', 'product');
 		$this->load->model('SIUnitModel', 'siunit');

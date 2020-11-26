@@ -1,6 +1,6 @@
 <?php
 
-class DirectOrderOpeningStockModel extends CI_Model
+class PurchaseStockModel extends CI_Model
 {
 	private $tableName = 'ie_purchase_stocks';
 	private $primaryKey = 'id';
@@ -254,6 +254,51 @@ class DirectOrderOpeningStockModel extends CI_Model
 		{
 			return 1;
 		}
+	}
+
+	public function getPurchaseProductsWhichAreNotInOpening($openingStockNumber, $limit = 10, $offset = 0)
+	{
+		$openingStockQuery = $this->db->select('productId')->from('ie_opening_stocks')->where([
+			'openingStockNumber' => $openingStockNumber,
+			'userId' => $this->loggedInUserId
+		])->get_compiled_select();
+		
+		return $this->db->select([
+			'ps.id AS purchaseStockId',
+			'ps.productId',
+			'ps.createdOn AS purchaseCreatedOn',
+			'p.productName',
+		])->from('ie_purchase_stocks ps')->join(
+			'ie_products p', 'p.id = ps.productId', 'INNER'
+		)->where([
+			'ps.openingStockNumber' => $openingStockNumber,
+			'ps.userId' => $this->loggedInUserId,
+			'ps.productId NOT IN (' . $openingStockQuery . ')' => NULL
+		])->limit($limit, $offset)->group_by('ps.productId')->get()->result_array();
+	}
+
+	public function getPurchaseProductsCountWhichAreNotInOpening($openingStockNumber)
+	{
+		$openingStockQuery = $this->db->select('productId')->from('ie_opening_stocks')->where([
+			'openingStockNumber' => $openingStockNumber,
+			'userId' => $this->loggedInUserId
+		])->get_compiled_select();
+
+		$result = $this->db->select('COUNT(DISTINCT productId) as totalCount')->from('ie_purchase_stocks ps')->join(
+			'ie_products p', 'p.id = ps.productId', 'INNER'
+		)->where([
+			'ps.openingStockNumber' => $openingStockNumber,
+			'ps.userId' => $this->loggedInUserId,
+			'ps.productId NOT IN (' . $openingStockQuery . ')' => NULL
+		])->get()->result_array();
+
+		$totalCount = 0;
+		if (!empty($result))
+		{
+			$totalCount = $result[0]['totalCount'];
+		}
+
+		return $totalCount;
 	}
 }
 
