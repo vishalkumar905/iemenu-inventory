@@ -256,3 +256,56 @@ IEWebsite.Utils = (function() {
 		Notification: showNotification
 	};
 })();
+
+
+IEWebsite.Storage = (function() {
+	var isLocalStorageExists = function(){
+		try {
+			let mod = 'localStorageTest';
+			localStorage.setItem(mod, mod);
+			localStorage.removeItem(mod);
+			return true;
+		} catch(e) {
+			return false;
+		}
+	}
+
+	var get = function(key) {
+		if (isLocalStorageExists())
+		{
+			return localStorage.getItem(key);
+		}
+
+		return '';
+	}
+
+	var store = function(key, value) {
+		if (isLocalStorageExists())
+		{
+			localStorage.setItem(key, value);
+		}
+	}
+
+	var remove = function(key) {
+		if (isLocalStorageExists())
+		{
+			localStorage.removeItem(key);
+		}
+	}
+	
+	var hasKey = function(key) {
+		if (isLocalStorageExists())
+		{
+			return localStorage.getItem(key) !== null;
+		}
+
+		return false;
+	}
+
+	return {
+		hasKey,
+		store,
+		get,
+		remove
+	}
+})();

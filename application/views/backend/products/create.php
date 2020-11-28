@@ -127,9 +127,9 @@
 										'data-live-search' => 'true',
 									];
 
-									if ($updateId > 0)
+									if ($updateId > 0 && isset($this->disableUpdateField['siUnit']) && $this->disableUpdateField['siUnit'])
 									{
-										// $extra['disabled'] = true;
+										$extra['disabled'] = true;
 										echo form_hidden('siUnit', $siUnit);
 									}
 

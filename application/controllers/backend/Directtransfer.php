@@ -12,6 +12,7 @@ class Directtransfer extends Backend_Controller
 		$this->exportUrl = base_url() . 'backend/closing-inventory/export/';
 
 		$this->load->model('IeMenuUserModel', 'iemenuuser');
+		$this->load->model('RequestModel', 'request');
 		$this->load->model('TransferStockModel', 'transferstock');
 		$this->load->model('OpeningStockModel', 'openingstock');
 		$this->load->model('CategoryModel', 'category');
@@ -66,6 +67,7 @@ class Directtransfer extends Backend_Controller
 						'createdOn' => time(),
 						'userIdFrom' => $this->loggedInUserId,
 						'userIdTo' => $outlet,
+						'requestType' => DIRECT_TRANSER_REQUEST
 					];
 				}
 			}
@@ -73,6 +75,11 @@ class Directtransfer extends Backend_Controller
 			if (!empty($insertData))
 			{
 				$this->transferstock->insertBatch($insertData);
+
+				$requestData['userId'] = $this->loggedInUserId;
+				$requestData['requestType'] = DIRECT_TRANSER_REQUEST;
+
+				$this->request->insert($requestData);
 			}
 		}
 

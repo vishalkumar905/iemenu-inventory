@@ -199,6 +199,17 @@
 				PRODUCT_TYPE_RAWMATERIAL => 'Raw Materials',
 			];
 		}
+
+		public function requestTransferTypes($requestTypeId = null)
+		{
+			$requestTypes = [
+				'' => 'Choose Type',
+				DIRECT_TRANSER_REQUEST => 'Direct Transfer',
+				REPLENISHMENT_REQUEST => 'Replenishment Request',
+			];
+
+			return intval($requestTypeId) > 0 ? (isset($requestTypes[$requestTypeId]) ? $requestTypes[$requestTypeId] : '') : $requestTypes;
+		}
 		
 		public function getProductTypeName($typeId = null)
 		{

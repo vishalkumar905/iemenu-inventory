@@ -1,6 +1,6 @@
 <?php
 
-class Wastageinventory extends Backend_Controller
+class Requesttransfer extends Backend_Controller
 {
 	public $exportUrl;
 	public $productSiUnitsData;
@@ -9,27 +9,45 @@ class Wastageinventory extends Backend_Controller
 	{
 		parent::__construct();
 
-		$this->exportUrl = base_url() . 'backend/wastage-inventory/export/';
+		$this->exportUrl = base_url() . 'backend/closing-inventory/export/';
 
-		$this->load->model('WastageStockModel', 'wastagestock');
+		$this->load->model('IeMenuUserModel', 'iemenuuser');
+		$this->load->model('RequestModel', 'request');
+		$this->load->model('TransferStockModel', 'transferstock');
 		$this->load->model('OpeningStockModel', 'openingstock');
 		$this->load->model('CategoryModel', 'category');
 		$this->load->model('ProductModel', 'product');
 		$this->load->model('SIUnitModel', 'siunit');
+
+		$this->pageTitle = $this->navTitle = 'Request Transfer';
 	}
 
 	public function index()
 	{
-		$this->pageTitle = $this->navTitle = 'Wastage Inventory';
-		
 		$data['submitBtn']  = 'Save';
-		$data['headTitle']  = 'Wastage Inventory';
+		$data['headTitle']  = 'Request Transfer';
 
 		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
-		$data['viewFile'] = 'backend/wastage-inventory/index';
-		$data['wastageStockNumber'] = $this->getWastageStockNumber();
+		$data['viewFile'] = 'backend/request-transfer/index';
 		$data['productTypes'] = $this->productTypes();
+		$data['requestTransferTypes'] = $this->requestTransferTypes();
 		$data['dropdownSubCategories'] = $this->category->getAllDropdownSubCategories(['userId' => $this->loggedInUserId]);
+		$data['indentRequestNumber'] = $this->getIndentRequestNumber();
+		$data['restaurantDropdownOptions'] = $this->iemenuuser->getRestaurantDropdownOptions();
+
+		$data['flashMessage'] = $this->session->flashdata('flashMessage');
+		$data['flashMessageType'] = $this->session->flashdata('flashMessageType');
+
+		$this->load->view($this->template, $data);
+	}
+
+	public function manage()
+	{
+		$data['submitBtn']  = 'Save';
+		$data['headTitle']  = 'Manage Requests';
+
+		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
+		$data['viewFile'] = 'backend/request-transfer/manage';
 		$data['flashMessage'] = $this->session->flashdata('flashMessage');
 		$data['flashMessageType'] = $this->session->flashdata('flashMessageType');
 
@@ -42,15 +60,34 @@ class Wastageinventory extends Backend_Controller
 			exit('No direct script access allowed');
 		}
 
-		$post = $this->input->post();
-		
-		if (!empty($post))
+		$message = 'Request transfer submitted successfully.';
+		$outlet = $this->input->post('outlet');
+		$productData = $this->input->post('productData');
+		$requestTransferType = $this->input->post('requestTransferType');
+
+		if (!empty($productData) && !empty($outlet) && !empty($requestTransferType))
 		{
+			$requestId = null;
 			$insertData = [];
-			foreach($post as $productId => $row)
+
+			$openingStockNumber =  $this->openingstock->getCurrentOpeningStockNumber();
+			$indentRequestNumber =  $this->getIndentRequestNumber();
+
+			foreach($productData as $productId => $row)
 			{
 				if ($row['qty'] > 0)
 				{
+					if (empty($insertData))
+					{
+						$requestData['userIdFrom'] = $this->loggedInUserId;
+						$requestData['userIdTo'] = $outlet;
+						$requestData['requestType'] = $requestTransferType;
+						$requestData['openingStockNumber'] = $openingStockNumber;
+						$requestData['indentRequestNumber'] = $indentRequestNumber;
+		
+						$requestId = $this->request->insert($requestData);
+					}
+					
 					$insertData[] = [
 						'productId' => $productId,
 						'productSiUnitId' => $row['unit'],
@@ -58,36 +95,23 @@ class Wastageinventory extends Backend_Controller
 						'productQuantity' => $row['qty'],
 						'productSubtotal' => $row['qty'] * floatval($row['unitPrice']),
 						'comment' => $row['comment'],
-						'wastageStockNumber' => $this->getWastageStockNumber(),
-						'openingStockNumber' => $this->openingstock->getCurrentOpeningStockNumber(),
+						'openingStockNumber' => $openingStockNumber,
 						'createdOn' => time(),
-						'userId' => $this->loggedInUserId
+						'userIdFrom' => $this->loggedInUserId,
+						'userIdTo' => $outlet,
+						'requestType' => $requestTransferType,
+						'requestId' => $requestId
 					];
 				}
 			}
 
 			if (!empty($insertData))
 			{
-				$this->wastagestock->insertBatch($insertData);
+				$this->transferstock->insertBatch($insertData);
 			}
 		}
 
-		responseJson(true, null, []);
-	}
-
-	public function getWastageStockNumber()
-	{
-		$columns = ['MAX(wastageStockNumber) as wastageStockNumber'];
-		$result = $this->wastagestock->getWhereCustom($columns, ['userId' => $this->loggedInUserId])->result_array();
-
-		if (!empty($result))
-		{
-			return $result[0]['wastageStockNumber'] + 1;
-		}
-		else
-		{
-			return 1;
-		}
+		responseJson(true, $message, []);
 	}
 
 	public function fetchProducts()
@@ -285,6 +309,30 @@ class Wastageinventory extends Backend_Controller
 		}
 		
 		responseJson(true, null, []);
+	}
+
+	public function getIndentRequestNumber()
+	{
+		$select = ['MAX(indentRequestNumber) as indentRequestNumber'];
+		$condition = [
+			'userId' => $this->loggedInUserId
+		];
+
+		$query = $this->request->getWhereCustom($select, $condition)->result_array();
+
+		if (!empty($query))
+		{
+			return $query[0]['indentRequestNumber'] + 1;
+		}
+		else
+		{
+			return 1;
+		}
+	}
+
+	public function fetchRequests()
+	{
+		// $this->get->where('')
 	}
 }
 

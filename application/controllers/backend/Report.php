@@ -176,11 +176,13 @@ class Report extends Backend_Controller
 		$data['openingInventoryQty'] = $inventoryStock['productQuantity'];
 		$data['openingInventoryAmt'] = $inventoryStock['productUnitPrice'];
 	
-		if (!empty($this->siBaseUnits) && !is_null($inventoryStock['siUnitParentId']) && isset($this->siBaseUnits[$inventoryStock['siUnitParentId']]))
-		{
-			$data['averageUnit'] = $this->siBaseUnits[$inventoryStock['siUnitParentId']];
-		}
-	
+		// if (!empty($this->siBaseUnits) && !is_null($inventoryStock['siUnitParentId']) && isset($this->siBaseUnits[$inventoryStock['siUnitParentId']]))
+		// {
+		// 	$data['averageUnit'] = $this->siBaseUnits[$inventoryStock['siUnitParentId']];
+		// }
+		
+		$data['averageUnit'] = $inventoryStock['unitName'];
+		
 		// Check do we have any closing or purchase stock from previous stocks will be opening for today
 		$openingStock = [];
 		if ($stockType == 'opening')
@@ -297,6 +299,7 @@ class Report extends Backend_Controller
 			'cs1.productTax',
 			'cs1.comment',
 			'su.parentId as siUnitParentId',
+			'su.unitName',
 			'p.productName',
 			'p.productCode'
 		])->from('ie_closing_stocks cs1')->join(
@@ -357,6 +360,7 @@ class Report extends Backend_Controller
 			'os.productQuantity',
 			'os.productUnitPrice',
 			'su.parentId as siUnitParentId',
+			'su.unitName',
 			'p.productName',
 			'p.productCode',
 		])->from('ie_opening_stocks os')->join(
@@ -399,6 +403,7 @@ class Report extends Backend_Controller
 			'ps.productSiUnitId',
 			'ps.productTax',
 			'su.parentId as siUnitParentId',
+			'su.unitName',
 			'ps.comment',
 			'p.productName',
 			'p.productCode'

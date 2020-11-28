@@ -212,6 +212,34 @@ class VendorProductModel extends CI_Model
 		{
 			$this->db->where_in($whereIn['field'], $whereIn['values']);
 		}
+
+		$like = [
+			'fields' => ['p.productName', 'p.productCode'],
+			'search' => $this->input->post('search'),
+			'side' => 'both'
+		];
+		
+		if (!empty($like['fields']) && !empty($like['search']) && !empty($like['side']) && is_array($like['fields']))
+		{
+			foreach ($like['fields'] as $key => $field)
+			{
+				if ($key == 0) 
+				{
+					$this->db->group_start();
+					$this->db->like($field, $like['search'], $like['side']);
+				}
+				else
+				{
+					$this->db->or_like($field, $like['search'], $like['side']);
+				}
+
+				
+				if (($key + 1) == count($like['fields']))
+				{
+					$this->db->group_end();
+				}
+			}
+		}
 	}
 
 

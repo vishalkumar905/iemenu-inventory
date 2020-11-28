@@ -600,6 +600,7 @@ IEWebsiteAdmin.OpeningStockPage = (function() {
 		limit: 10,
 	}
 	var openingStocksData = {};
+	var searchBarText = '';
 
 	var init = function()
 	{
@@ -1126,6 +1127,7 @@ IEWebsiteAdmin.WastageInventoryPage = (function() {
 		limit: 10,
 	}
 	var wastageStocksData = {};
+	var searchBarText = '';
 
 	var init = function()
 	{
@@ -1384,7 +1386,8 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 		limit: 10,
 	}
 	var directOrdersData = {}, searchBoxEnabled = false;
-
+	var searchBarText = '';
+	
 	var init = function()
 	{
 		if ($("#directOrderPageContainer").length <= 0)
@@ -1393,11 +1396,7 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 		};
 
 		$("#saveDirectOrder").attr("disabled", "true");
-
-		if (searchBoxEnabled)
-		{
-			$("#searchBar").keyup(_.debounce(loadProducts, 500));
-		}
+		$("#searchBar").keyup(_.debounce(loadProducts, 500));
 
 		IEWebsite.Utils.JqueryFormValidation('#createOpeningStockForm');
 
@@ -1413,14 +1412,14 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 			let vendorId = $("#vendor").val();
 			let billDate = $("input[name='billDate']").val();
 			let billNumber = $("input[name='billNumber']").val();
-
+			
 			if (_.isEmpty(billNumber))
 			{
 				alert('Please enter bill number.');
 				return;
 			}
-
-			if (_.isEmpty(_.isEmpty(billDate)))
+			
+			if (_.isEmpty(billDate))
 			{
 				alert('Please enter bill date.');
 				return;
@@ -1463,7 +1462,7 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 	};
 
 	var loadVendorProductCategories = function() {
-		let vendorId = $("#vendor").val();
+		let vendorId = parseInt($("#vendor").val());
 		if (vendorId >= 0)
 		{
 			IEWebsite.Utils.AjaxGet(FETCH_VENDOR_ASSIGNED_PRODUCT_CATEGORIES + '/' + vendorId, directOrdersData, function(resp) {
@@ -1818,6 +1817,7 @@ IEWebsiteAdmin.DirectTransferPage = (function() {
 		limit: 10,
 	}
 	var directTransfersData = {};
+	var searchBarText = '';
 
 	var init = function()
 	{
@@ -2081,6 +2081,661 @@ IEWebsiteAdmin.DirectTransferPage = (function() {
 	}
 })();
 
+IEWebsiteAdmin.RequestTransferPage = (function() {
+	var searchBoxEnabled = false;
+	var pagination = {
+		currentPage: 1,
+		totalPages: 0,
+		limit: 10,
+	}
+	var requestTransfersData = {};
+	var searchBarText = '';
+
+	var init = function()
+	{
+		if ($("#requestTransferPageContainer").length <= 0)
+		{
+			return 0;
+		};
+
+		$("#saveRequestTransfer").attr("disabled", "true");
+		$("#searchBar").keyup(_.debounce(loadProducts, 500));
+		$("#category").change(loadProducts);
+		$("#productType").change(loadProducts);
+
+		$("#saveRequestTransfer").click(function() {
+			if (pagination.currentPage !== pagination.currentPage)
+			{
+				return false;
+			}
+
+            let outlet = $("#outlet").val();
+            let requestTransferType = $("#requestTransferType").val();
+            
+			if (_.isEmpty(outlet))
+			{
+				alert('Please select an outlet.');
+				return false;
+			}
+
+			if (_.isEmpty(requestTransferType))
+			{
+				alert('Please select a request type.');
+				return false;
+			}
+
+			if (!_.isEmpty(requestTransfersData) && validateData())
+			{
+				let postData = {
+					productData: requestTransfersData,
+                    outlet,
+                    requestTransferType
+				};
+
+				IEWebsite.Utils.ShowLoadingScreen();
+				IEWebsite.Utils.AjaxPost(SAVE_REQUEST_TRANSFER_PRODUCTS, postData, function(resp) {
+					IEWebsite.Utils.HideLoadingScreen();
+					if (resp.status)
+					{
+						IEWebsite.Utils.Swal('Success', resp.message, 'success');
+						window.setTimeout(function() {
+							window.location.reload();
+						}, 2000);
+					}
+				});
+			}
+			else
+			{
+				alert('Please add product data.');
+			}
+		});
+	
+		$("#tableDataLimit").change(function() {
+			pagination.limit = Number($(this).val());
+			pagination.currentPage = 1;
+			pagination.totalPages  = 0;
+			loadProducts();
+		});
+	};
+
+	var loadProducts = function() {
+		let searchText = $.trim($("#searchBar").val());
+		let category = $("#category").val();
+		let productType = $("#productType").val();
+		let requestTransferType = $("#requestTransferType").val();
+
+		$("#requestTransferTableBody").html('');
+
+		if (!_.isEmpty(category) > 0)
+		{
+			let resetPage = false;
+			if (_.isEmpty(searchBarText) && !_.isEmpty(searchText))
+			{
+				resetPage = true;
+			}
+			else if (!_.isEmpty(searchText) && !_.isEmpty(searchBarText) && searchText != searchBarText)
+			{
+				resetPage = true;
+			}
+
+			if (resetPage)
+			{
+				pagination = {
+					currentPage: 1,
+					totalPages: 0,
+					limit: 10,
+				}
+			}
+
+			let data = {
+				search: searchText,
+				category: category,
+				productType: productType,
+				requestTransferType: requestTransferType,
+				page: pagination.currentPage,
+				limit: Number(pagination.limit)
+			};
+
+			IEWebsite.Utils.ShowLoadingScreen();
+			IEWebsite.Utils.AjaxPost(FETCH_REQUEST_TRANSFER_PRODUCTS, data , function(resp) {
+				IEWebsite.Utils.HideLoadingScreen();
+	
+				if (resp.status)
+				{
+					$("#manageRequestTransferContainer").show();
+
+					pagination.totalPages = resp.response.pagination.totalPages;
+					
+					$("#saveRequestTransfer").attr("disabled", "true");
+					
+					if (resp.response.pagination.totalPages == resp.response.pagination.current)
+					{
+						$("#saveRequestTransfer").attr("disabled", false);
+					}
+
+					searchBoxEnabled = true;
+					if (!_.isEmpty(resp.response.data))
+					{
+						showTableData(resp.response.data);
+					}
+					else
+					{
+						$("#requestTransferTableBody").append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
+					}
+
+					let paginationHtml = IEWebsiteAdmin.CustomPagination.Init(resp.response.pagination);
+					$("#pagination").html(paginationHtml);
+
+					$("[id^=paginate-]").click(function() {
+						let page = Number($(this).attr('page'));
+
+						if (page > 0)
+						{
+							pagination.currentPage = page;
+							loadProducts();
+						}
+					});
+				}
+			});
+		}
+
+	}
+
+	var showTableData = function(data) 
+	{
+		if (!_.isEmpty(data))
+		{
+			_.each(data, function(row) {
+				let qty = '',
+					unitPrice = '',
+					comment = '',
+					subTotal = 0,
+					unit = 0;
+
+				if (requestTransfersData[row.productId])
+				{
+					qty = requestTransfersData[row.productId].qty,
+					unit = requestTransfersData[row.productId].unit,
+					unitPrice = requestTransfersData[row.productId].unitPrice,
+					comment = requestTransfersData[row.productId].comment,
+					subTotal = qty * unitPrice;
+				}
+
+				subTotal = (Math.round(subTotal * 100) / 100).toFixed(2);
+
+				let qtyInputHtml = '<input type="number" productid="'+ row.productId +'" style="width:60px" min="0" name="product[qty]['+ row.productId +']" value="'+ qty +'"/>';
+				let commentInputHtml = '<input type="text" productid="'+ row.productId +'" name="product[comment]['+ row.productId +']" value="'+ comment +'" />';
+				let subTotalInputHtml = '<span productid="'+ row.productId +'" id="product[subTotal]['+ row.productId +']" name="product[subTotal]['+ row.productId +']">'+ subTotal +'</span>';
+				let unitPriceInputHtml = '<input productid="'+ row.productId +'" type="text" style="width:100px"  name="product[unitPrice]['+ row.productId +']" value="'+ unitPrice +'"/>';
+				let siUnitSelectBoxHtml = productSiUnitSelectBox(row.productId, row.productSiUnitsDropdown, unit);
+
+
+				let tableRow = '<tr>';
+					tableRow += '<td><span productid="'+ row.productId +'" id="removeRow-'+ row.productId +'"><i class="material-icons cursor-pointer">clear</i></span></td>';
+					tableRow += '<td>'+ row.productCode +'</td>';
+					tableRow += '<td>'+ row.productName +'</td>';
+					tableRow += '<td>'+ siUnitSelectBoxHtml +'</td>';
+					tableRow += '<td>'+ qtyInputHtml +'</td>';
+					// tableRow += '<td>'+ unitPriceInputHtml +'</td>';
+					// tableRow += '<td>'+ subTotalInputHtml +'</td>';
+					tableRow += '<td>'+ commentInputHtml +'</td>';
+					tableRow += '</tr>';
+					
+				$("#requestTransferTableBody").append(tableRow);
+			});
+
+			$("span[id^=removeRow-]").click(function(){
+				$(this).parent().parent().remove();
+				let productId = $(this).attr('productid');
+
+				if (requestTransfersData[productId])
+				{
+					delete requestTransfersData[productId];
+				}
+			});
+
+			$("input[name^='product[qty]']").change(calulateSubtotal);
+			$("select[name^='product[unit]']").change(calulateSubtotal);
+			$("input[name^='product[unitPrice]']").keyup(calulateSubtotal);
+			$("input[name^='product[comment]']").keyup(calulateSubtotal);
+		}
+	};
+
+	var productSiUnitSelectBox = function(productId, siUnits, selectedUnitId = 0)
+	{
+		if (!_.isEmpty(siUnits))
+		{
+			let options = '';
+
+			for(let i in siUnits)
+			{
+				let selected = selectedUnitId == i ? 'selected' : '';
+				options += '<option value="'+ i +'" '+ selected +'>' + siUnits[i] +  '</option>';
+			}
+
+			return '<select productid="'+ productId +'" name="product[unit]['+ productId +']">'+ options +'</select>';
+		}
+
+		return '';
+	};
+
+	var validateData = function()
+	{
+		if (!_.isEmpty(requestTransfersData))
+		{
+			for(let i in requestTransfersData)
+			{
+				if (requestTransfersData[i].qty > 0)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	};
+	
+	var calulateSubtotal = function() 
+	{
+		let productId = Number($(this).attr('productid'));
+		let qty = Number($("input[name='product[qty]["+ productId +"]']").val());
+		let unitPrice = Number($("input[name='product[unitPrice]["+ productId +"]']").val());
+		let unit = Number($("select[name='product[unit]["+ productId +"]']").val());
+		let comment = $("input[name='product[comment]["+ productId +"]']").val();
+
+		requestTransfersData[productId] = {
+			qty,
+			unitPrice,
+			unit,
+			comment
+		};
+
+		if (productId > 0)
+		{
+			let totalPrice = qty * unitPrice;
+				totalPrice = (Math.round(totalPrice * 100) / 100).toFixed(2);
+
+			$("span[id='product[subTotal]["+ productId +"]']").text(totalPrice);
+		}
+	}
+
+	return {
+		Init: init
+	}
+})();
+
+IEWebsiteAdmin.ManageRequestTransferPage = (function() {
+	var init = function() 
+	{
+		if ($("#manageRequestTransferPageContainer").length <= 0)
+		{
+			return;
+		};
+	}
+
+	var loadProducts = function() {
+		let searchText = $.trim($("#searchBar").val());
+
+		$("#manageRequestTransferTableBody").html('');
+
+		if (!_.isEmpty(category) > 0)
+		{
+			let resetPage = false;
+			if (_.isEmpty(searchBarText) && !_.isEmpty(searchText))
+			{
+				resetPage = true;
+			}
+			else if (!_.isEmpty(searchText) && !_.isEmpty(searchBarText) && searchText != searchBarText)
+			{
+				resetPage = true;
+			}
+
+			if (resetPage)
+			{
+				pagination = {
+					currentPage: 1,
+					totalPages: 0,
+					limit: 10,
+				}
+			}
+
+			let data = {
+				search: searchText,
+				category: category,
+				page: pagination.currentPage,
+				limit: Number(pagination.limit)
+			};
+
+			IEWebsite.Utils.ShowLoadingScreen();
+			IEWebsite.Utils.AjaxPost(FETCH_REQUEST_TRANSFER_PRODUCTS, data , function(resp) {
+				IEWebsite.Utils.HideLoadingScreen();
+	
+				if (resp.status)
+				{
+					pagination.totalPages = resp.response.pagination.totalPages;
+
+					if (!_.isEmpty(resp.response.data))
+					{
+						showTableData(resp.response.data);
+					}
+					else
+					{
+						$("#manageRequestTransferTableBody").append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
+					}
+
+					let paginationHtml = IEWebsiteAdmin.CustomPagination.Init(resp.response.pagination);
+					$("#pagination").html(paginationHtml);
+
+					$("[id^=paginate-]").click(function() {
+						let page = Number($(this).attr('page'));
+
+						if (page > 0)
+						{
+							pagination.currentPage = page;
+							loadProducts();
+						}
+					});
+				}
+			});
+		}
+	}
+
+	var showTableData = function(data) 
+	{
+		if (!_.isEmpty(data))
+		{
+			let action = null;
+			_.each(data, function(row) {
+
+				let tableRow = '<tr>';
+					tableRow += '<td>'+ row.indentRequestNumber +'</td>';
+					tableRow += '<td>'+ row.transferFrom +'</td>';
+					tableRow += '<td>'+ row.transferFrom +'</td>';
+					tableRow += '<td>'+ row.status +'</td>';
+					tableRow += '<td>'+ row.createdOn +'</td>';
+					tableRow += '<td>'+ action +'</td>';
+					tableRow += '</tr>';
+					
+				$("#manageRequestTransferTableBody").append(tableRow);
+			});
+		}
+	};
+
+	return {
+		Init: init
+	}
+})();
+
+IEWebsiteAdmin.ReplenishmentRequestPage = (function() {
+	var searchBoxEnabled = false;
+	var pagination = {
+		currentPage: 1,
+		totalPages: 0,
+		limit: 10,
+	}
+	var replenishmentRequestsData = {};
+	var searchBarText = '';
+
+	var init = function()
+	{
+		if ($("#replenishmentRequestPageContainer").length <= 0)
+		{
+			return 0;
+		};
+
+		$("#saveReplenishmentRequest").attr("disabled", "true");
+		$("#searchBar").keyup(_.debounce(loadProducts, 500));
+		$("#category").change(loadProducts);
+		$("#productType").change(loadProducts);
+
+		$("#saveReplenishmentRequest").click(function() {
+			if (pagination.currentPage !== pagination.currentPage)
+			{
+				return false;
+			}
+
+			let outlet = $("#outlet").val();
+			if (_.isEmpty(outlet))
+			{
+				alert('Please select an outlet.');
+				return false;
+			}
+
+			if (!_.isEmpty(replenishmentRequestsData) && validateData())
+			{
+				let postData = {
+					productData: replenishmentRequestsData,
+					outlet
+				};
+
+				IEWebsite.Utils.ShowLoadingScreen();
+				IEWebsite.Utils.AjaxPost(SAVE_REPLENISMENT_REQUEST_PRODUCTS, postData, function(resp) {
+					IEWebsite.Utils.HideLoadingScreen();
+					if (resp.status)
+					{
+						IEWebsite.Utils.Swal('Success', resp.message, 'success');
+						window.setTimeout(function() {
+							window.location.reload();
+						}, 2000);
+					}
+				});
+			}
+			else
+			{
+				alert('Please add product data.');
+			}
+		});
+	
+		$("#tableDataLimit").change(function() {
+			pagination.limit = Number($(this).val());
+			pagination.currentPage = 1;
+			pagination.totalPages  = 0;
+			loadProducts();
+		});
+	};
+
+	var loadProducts = function() {
+		let searchText = $.trim($("#searchBar").val());
+		let category = $("#category").val();
+		let productType = $("#productType").val();
+
+		$("#replenishmentRequestTableBody").html('');
+
+		if (!_.isEmpty(category) > 0)
+		{
+			let resetPage = false;
+			if (_.isEmpty(searchBarText) && !_.isEmpty(searchText))
+			{
+				resetPage = true;
+			}
+			else if (!_.isEmpty(searchText) && !_.isEmpty(searchBarText) && searchText != searchBarText)
+			{
+				resetPage = true;
+			}
+
+			if (resetPage)
+			{
+				pagination = {
+					currentPage: 1,
+					totalPages: 0,
+					limit: 10,
+				}
+			}
+
+			let data = {
+				search: searchText,
+				category: category,
+				productType: productType,
+				page: pagination.currentPage,
+				limit: Number(pagination.limit)
+			};
+
+			IEWebsite.Utils.ShowLoadingScreen();
+			IEWebsite.Utils.AjaxPost(FETCH_REPLENISMENT_REQUEST_PRODUCTS, data , function(resp) {
+				IEWebsite.Utils.HideLoadingScreen();
+	
+				if (resp.status)
+				{
+					$("#manageReplenishmentRequestContainer").show();
+
+					pagination.totalPages = resp.response.pagination.totalPages;
+					
+					$("#saveReplenishmentRequest").attr("disabled", "true");
+					
+					if (resp.response.pagination.totalPages == resp.response.pagination.current)
+					{
+						$("#saveReplenishmentRequest").attr("disabled", false);
+					}
+
+					searchBoxEnabled = true;
+					if (!_.isEmpty(resp.response.data))
+					{
+						showTableData(resp.response.data);
+					}
+					else
+					{
+						$("#replenishmentRequestTableBody").append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
+					}
+
+					let paginationHtml = IEWebsiteAdmin.CustomPagination.Init(resp.response.pagination);
+					$("#pagination").html(paginationHtml);
+
+					$("[id^=paginate-]").click(function() {
+						let page = Number($(this).attr('page'));
+
+						if (page > 0)
+						{
+							pagination.currentPage = page;
+							loadProducts();
+						}
+					});
+				}
+			});
+		}
+	}
+
+	var showTableData = function(data) 
+	{
+		if (!_.isEmpty(data))
+		{
+			_.each(data, function(row) {
+				let qty = '',
+					unitPrice = '',
+					comment = '',
+					subTotal = 0,
+					unit = 0;
+
+				if (replenishmentRequestsData[row.productId])
+				{
+					qty = replenishmentRequestsData[row.productId].qty,
+					unit = replenishmentRequestsData[row.productId].unit,
+					unitPrice = replenishmentRequestsData[row.productId].unitPrice,
+					comment = replenishmentRequestsData[row.productId].comment,
+					subTotal = qty * unitPrice;
+				}
+
+				subTotal = (Math.round(subTotal * 100) / 100).toFixed(2);
+
+				let qtyInputHtml = '<input type="number" productid="'+ row.productId +'" style="width:60px" min="0" name="product[qty]['+ row.productId +']" value="'+ qty +'"/>';
+				let commentInputHtml = '<input type="text" productid="'+ row.productId +'" name="product[comment]['+ row.productId +']" value="'+ comment +'" />';
+				let subTotalInputHtml = '<span productid="'+ row.productId +'" id="product[subTotal]['+ row.productId +']" name="product[subTotal]['+ row.productId +']">'+ subTotal +'</span>';
+				let unitPriceInputHtml = '<input productid="'+ row.productId +'" type="text" style="width:100px"  name="product[unitPrice]['+ row.productId +']" value="'+ unitPrice +'"/>';
+				let siUnitSelectBoxHtml = productSiUnitSelectBox(row.productId, row.productSiUnitsDropdown, unit);
+
+
+				let tableRow = '<tr>';
+					tableRow += '<td><span productid="'+ row.productId +'" id="removeRow-'+ row.productId +'"><i class="material-icons cursor-pointer">clear</i></span></td>';
+					tableRow += '<td>'+ row.productCode +'</td>';
+					tableRow += '<td>'+ row.productName +'</td>';
+					tableRow += '<td>'+ siUnitSelectBoxHtml +'</td>';
+					tableRow += '<td>'+ qtyInputHtml +'</td>';
+					// tableRow += '<td>'+ unitPriceInputHtml +'</td>';
+					// tableRow += '<td>'+ subTotalInputHtml +'</td>';
+					tableRow += '<td>'+ commentInputHtml +'</td>';
+					tableRow += '</tr>';
+					
+				$("#replenishmentRequestTableBody").append(tableRow);
+			});
+
+			$("span[id^=removeRow-]").click(function(){
+				$(this).parent().parent().remove();
+				let productId = $(this).attr('productid');
+
+				if (replenishmentRequestsData[productId])
+				{
+					delete replenishmentRequestsData[productId];
+				}
+			});
+
+			$("input[name^='product[qty]']").change(calulateSubtotal);
+			$("select[name^='product[unit]']").change(calulateSubtotal);
+			$("input[name^='product[unitPrice]']").keyup(calulateSubtotal);
+			$("input[name^='product[comment]']").keyup(calulateSubtotal);
+		}
+	};
+
+	var productSiUnitSelectBox = function(productId, siUnits, selectedUnitId = 0)
+	{
+		if (!_.isEmpty(siUnits))
+		{
+			let options = '';
+
+			for(let i in siUnits)
+			{
+				let selected = selectedUnitId == i ? 'selected' : '';
+				options += '<option value="'+ i +'" '+ selected +'>' + siUnits[i] +  '</option>';
+			}
+
+			return '<select productid="'+ productId +'" name="product[unit]['+ productId +']">'+ options +'</select>';
+		}
+
+		return '';
+	};
+
+	var validateData = function()
+	{
+		if (!_.isEmpty(replenishmentRequestsData))
+		{
+			for(let i in replenishmentRequestsData)
+			{
+				if (replenishmentRequestsData[i].qty > 0)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	};
+	
+	var calulateSubtotal = function() 
+	{
+		let productId = Number($(this).attr('productid'));
+		let qty = Number($("input[name='product[qty]["+ productId +"]']").val());
+		let unitPrice = Number($("input[name='product[unitPrice]["+ productId +"]']").val());
+		let unit = Number($("select[name='product[unit]["+ productId +"]']").val());
+		let comment = $("input[name='product[comment]["+ productId +"]']").val();
+
+		replenishmentRequestsData[productId] = {
+			qty,
+			unitPrice,
+			unit,
+			comment
+		};
+
+		if (productId > 0)
+		{
+			let totalPrice = qty * unitPrice;
+				totalPrice = (Math.round(totalPrice * 100) / 100).toFixed(2);
+
+			$("span[id='product[subTotal]["+ productId +"]']").text(totalPrice);
+		}
+	}
+
+	return {
+		Init: init
+	}
+})();
 
 IEWebsiteAdmin.CustomPagination = (function() {
 	
@@ -2172,4 +2827,7 @@ $(document).ready(function(){
 	IEWebsiteAdmin.DirectOrderPage.Init();
 	IEWebsiteAdmin.MasterReport.Init();
 	IEWebsiteAdmin.DirectTransferPage.Init();
+	IEWebsiteAdmin.ReplenishmentRequestPage.Init();
+	IEWebsiteAdmin.RequestTransferPage.Init();
+	IEWebsiteAdmin.ManageRequestTransferPage.Init();
 });

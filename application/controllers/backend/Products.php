@@ -21,7 +21,8 @@ class Products extends Backend_Controller
 			'productType' => true, 
 			// 'subCategory' => true, 
 			// 'baseUnit' => true,
-			// 'category' => true
+			// 'category' => true,
+			// 'siUnit' => true,
 		]; 
 
 		if (empty($this->baseUnits))
@@ -131,10 +132,11 @@ class Products extends Backend_Controller
 					$categoryId = $subCategory;
 				}
 
-				$siUnit = array_unique($this->input->post('siUnit[]'));
+				$siUnit = $this->input->post('siUnit[]');
+				$siUnit = !empty($siUnit) ? array_unique($siUnit) : [];
 				$baseUnit = $this->input->post('baseUnit');
 				$baseUnit = !empty($siUnit) ? $siUnit : [$baseUnit];
-
+				
 				$insertData = [
 					'productName' => $this->input->post('productName'),
 					'productCode' => $this->input->post('productCode'),

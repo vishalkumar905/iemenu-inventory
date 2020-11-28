@@ -23,3 +23,10 @@ const SAVE_WASTAGE_INVETORY_PRODUCTS = BASE_URL + 'backend/wastageinventory/save
 
 const FETCH_DIRECT_TRANSFER_PRODUCTS = BASE_URL + 'backend/directtransfer/fetchProducts';
 const SAVE_DIRECT_TRANSFER_PRODUCTS = BASE_URL + 'backend/directtransfer/save';
+
+const FETCH_REQUEST_TRANSFER_PRODUCTS = BASE_URL + 'backend/requesttransfer/fetchProducts';
+const SAVE_REQUEST_TRANSFER_PRODUCTS = BASE_URL + 'backend/requesttransfer/save';
+const FETCH_REQUESTS = BASE_URL + 'backend/requests/fetchRequests';
+
+const FETCH_REPLENISMENT_REQUEST_PRODUCTS = BASE_URL + 'backend/replenishmentrequest/fetchProducts';
+const SAVE_REPLENISMENT_REQUEST_PRODUCTS = BASE_URL + 'backend/replenishmentrequest/save';

@@ -1,6 +1,6 @@
 <?php
 
-class Wastageinventory extends Backend_Controller
+class Replenishmentrequest extends Backend_Controller
 {
 	public $exportUrl;
 	public $productSiUnitsData;
@@ -9,27 +9,31 @@ class Wastageinventory extends Backend_Controller
 	{
 		parent::__construct();
 
-		$this->exportUrl = base_url() . 'backend/wastage-inventory/export/';
+		$this->exportUrl = base_url() . 'backend/closing-inventory/export/';
 
-		$this->load->model('WastageStockModel', 'wastagestock');
+		$this->load->model('IeMenuUserModel', 'iemenuuser');
+		$this->load->model('RequestModel', 'request');
+		$this->load->model('TransferStockModel', 'transferstock');
 		$this->load->model('OpeningStockModel', 'openingstock');
 		$this->load->model('CategoryModel', 'category');
 		$this->load->model('ProductModel', 'product');
 		$this->load->model('SIUnitModel', 'siunit');
+
+		$this->pageTitle = $this->navTitle = 'Replenishment Request';
 	}
 
 	public function index()
 	{
-		$this->pageTitle = $this->navTitle = 'Wastage Inventory';
-		
 		$data['submitBtn']  = 'Save';
-		$data['headTitle']  = 'Wastage Inventory';
+		$data['headTitle']  = 'Replenishment Request';
 
 		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
-		$data['viewFile'] = 'backend/wastage-inventory/index';
-		$data['wastageStockNumber'] = $this->getWastageStockNumber();
+		$data['viewFile'] = 'backend/replenishment-request/index';
 		$data['productTypes'] = $this->productTypes();
 		$data['dropdownSubCategories'] = $this->category->getAllDropdownSubCategories(['userId' => $this->loggedInUserId]);
+
+		$data['restaurantDropdownOptions'] = $this->iemenuuser->getRestaurantDropdownOptions();
+
 		$data['flashMessage'] = $this->session->flashdata('flashMessage');
 		$data['flashMessageType'] = $this->session->flashdata('flashMessageType');
 
@@ -42,15 +46,27 @@ class Wastageinventory extends Backend_Controller
 			exit('No direct script access allowed');
 		}
 
-		$post = $this->input->post();
+		$message = null;
+		$outlet = $this->input->post('outlet');
+		$productData = $this->input->post('productData');
 		
-		if (!empty($post))
+		if (!empty($productData) && !empty($outlet))
 		{
+			$requestId = null;
 			$insertData = [];
-			foreach($post as $productId => $row)
+			
+			foreach($productData as $productId => $row)
 			{
 				if ($row['qty'] > 0)
 				{
+					if (empty($insertData))
+					{
+						$requestData['userId'] = $this->loggedInUserId;
+						$requestData['requestType'] = REPLENISHMENT_REQUEST;
+		
+						$requestId = $this->request->insert($requestData);
+					}
+
 					$insertData[] = [
 						'productId' => $productId,
 						'productSiUnitId' => $row['unit'],
@@ -58,36 +74,25 @@ class Wastageinventory extends Backend_Controller
 						'productQuantity' => $row['qty'],
 						'productSubtotal' => $row['qty'] * floatval($row['unitPrice']),
 						'comment' => $row['comment'],
-						'wastageStockNumber' => $this->getWastageStockNumber(),
 						'openingStockNumber' => $this->openingstock->getCurrentOpeningStockNumber(),
 						'createdOn' => time(),
-						'userId' => $this->loggedInUserId
+						'userIdFrom' => $this->loggedInUserId,
+						'userIdTo' => $outlet,
+						'requestType' => REPLENISHMENT_REQUEST,
+						'requestId' => $requestId
 					];
 				}
 			}
 
 			if (!empty($insertData))
 			{
-				$this->wastagestock->insertBatch($insertData);
+				$this->transferstock->insertBatch($insertData);
+
+				$message = 'Replenishment Request Submitted Successfully..';
 			}
 		}
 
-		responseJson(true, null, []);
-	}
-
-	public function getWastageStockNumber()
-	{
-		$columns = ['MAX(wastageStockNumber) as wastageStockNumber'];
-		$result = $this->wastagestock->getWhereCustom($columns, ['userId' => $this->loggedInUserId])->result_array();
-
-		if (!empty($result))
-		{
-			return $result[0]['wastageStockNumber'] + 1;
-		}
-		else
-		{
-			return 1;
-		}
+		responseJson(true, $message, []);
 	}
 
 	public function fetchProducts()

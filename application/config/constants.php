@@ -102,6 +102,10 @@ define('DISABLE', -1);
 define('DELETED', 0);
 define('INACTIVE', -2);
 
+define('STATUS_PENDING', 0);
+define('STATUS_ACCEPTED', 1);
+define('STATUS_REJECTED', 2);
+
 define("USER", 1);
 define("USER_VENDOR", 2);
 define("ADMIN", 3);
@@ -110,6 +114,7 @@ define("SUPER_ADMIN", 4);
 define('OPENING_STOCK_SHORT_NAME', 'OS');
 define('CLOSING_STOCK_SHORT_NAME', 'CS');
 define('WASTAGE_STOCK_SHORT_NAME', 'WS');
+define('INDENT_REQUEST_SHORT_NAME', 'IR');
 define('GRN_SHOR_NAME', 'GRN');
 
 define('CIPHERING', 'AES-128-CTR');
@@ -131,3 +136,6 @@ else
 }
 
 define('TOTAL_SECONDS_IN_ONE_DAY', 86400);
+
+define('DIRECT_TRANSER_REQUEST', 1);
+define('REPLENISHMENT_REQUEST', 2);

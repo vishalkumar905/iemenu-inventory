@@ -80,9 +80,9 @@
 				<li>
 					<a href="<?=base_url()?>backend/closinginventory">Closing Inventory</a>
 				</li>
-				<!-- <li>
+				<li>
 					<a href="<?=base_url()?>backend/wastageinventory">Wastage Inventory</a>
-				</li> -->
+				</li>
 				<!-- <li>
 					<a href="<?=base_url()?>backend/vendorproducttaxes">Vendor Product Taxes</a>
 				</li> -->
@@ -99,13 +99,29 @@
 				<li>
 					<a href="<?=base_url()?>backend/directorder">Direct Order</a>
 				</li>
-				<li>
+				<!-- <li>
 					<a href="<?=base_url()?>backend/directtransfer">Direct Transfer</a>
 				</li>
-				<!-- 
 				<li>
-					<a href="<?=base_url()?>backend/vendorproducttaxes">Vendor Product Taxes</a>
+					<a href="<?=base_url()?>backend/replenishmentrequest">Replenishment Request</a>
 				</li> -->
+			</ul>
+		</div>
+	</li>
+
+	<li>
+		<a data-toggle="collapse" href="#transferSideBar">
+			<i class="material-icons">sync_alt</i>
+			<p>Transfer<b class="caret"></b></p>
+		</a>
+		<div class="collapse" id="transferSideBar">
+			<ul class="nav">
+				<li>
+					<a href="<?=base_url()?>backend/requesttransfer">Request Transfer</a>
+				</li>
+				<li>
+					<a href="<?=base_url()?>backend/requesttransfer/manage">Manage Requests</a>
+				</li>
 			</ul>
 		</div>
 	</li>
