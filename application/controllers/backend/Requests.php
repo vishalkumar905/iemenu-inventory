@@ -33,16 +33,33 @@ class Requests extends Backend_Controller
             redirect($redirectUrl);
         }
 
-        $data['isSender'] = true;
+        $data['showBtn'] = true;
 
         if ($requestData['userIdTo'] == $this->loggedInUserId)
         {
-            $data['isSender'] = false;
+            $data['showBtn'] = false;
+        }
+        
+        if ($requestData['status'] != STATUS_PENDING)
+        {
+            $data['showBtn'] = false;
+        }
+
+        $flashMessage = $flashMessageType = '';
+        if ($requestData['status'] == STATUS_ACCEPTED)
+        {
+            $flashMessage = 'Request approved.';
+            $flashMessageType = 'success';
+        }
+        else if ($requestData['status'] == STATUS_REJECTED)
+        {
+            $flashMessage = 'Request rejected.';
+            $flashMessageType = 'danger';
         }
 
         $data['viewFile'] = 'backend/requests/view';
-        $data['flashMessage'] = $this->session->flashdata('flashMessage');
-        $data['flashMessageType'] = $this->session->flashdata('flashMessageType');
+        $data['flashMessage'] = $flashMessage;
+        $data['flashMessageType'] = $flashMessageType;
         
         $this->titleHeader = $this->navTitle = 'Request Details';
         $this->load->view($this->template, $data);
@@ -56,6 +73,41 @@ class Requests extends Backend_Controller
 
         $this->titleHeader = $this->navTitle = 'Tax';
         $this->load->view($this->template, $data);
+    }
+
+    public function processRequest(int $requestId)
+    {
+        if (!$this->input->is_ajax_request() && ENVIRONMENT == 'production') {
+			exit('No direct script access allowed');
+        }
+
+        $message = '';
+        if ($requestId > 0)
+        {
+            $status = $this->input->post('status');
+        
+            $update = [
+                'status' => STATUS_PENDING
+            ];
+
+            if ($status == 'accept')
+            {
+                $update['status'] = STATUS_ACCEPTED;
+                $message = 'Request accepted';
+            }
+            else if ($status == 'reject')
+            {
+                $update['status'] = STATUS_REJECTED;
+                $message = 'Request rejected';
+            }
+
+            if ($update['status'] > STATUS_PENDING)
+            {
+                $this->request->update($requestId, $update);
+            }
+        }
+
+        responseJson(true, $message, null);
     }
 
 

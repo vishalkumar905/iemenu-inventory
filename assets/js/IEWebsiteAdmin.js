@@ -2800,7 +2800,7 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 		currentPage: 1,
 		totalPages: 0,
 		limit: 20,
-	};
+	}, requestId = IEWebsite.Uri.Segment(4);
 
 	var init = function() {
 		if ($("#viewRequestsPageContainer").length <= 0)
@@ -2810,17 +2810,71 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 
 		loadProducts();
 
-		$("#acceptRequest").click(function() {
+		$("#acceptRequest, #rejectRequest").click(function() {
 
-		});
-		
-		$("#rejectRequest").click(function() {
-			
+			let data = {}, textMessage = '';
+			if ($(this).attr('id') == 'acceptRequest')
+			{
+				data.status = 'accept';
+				textMessage = 'You want to approve this request';
+			}
+			else if ($(this).attr('id') == 'rejectRequest')
+			{
+				data.status = 'reject';
+				textMessage = 'You want to reject this request';
+			}
+
+			if (!_.isEmpty(data))
+			{
+				swal({
+					title: 'Are you sure?',
+					text: textMessage,
+					type: 'warning',
+					showCancelButton: true,
+					confirmButtonText: 'Yes',
+					cancelButtonText: 'No',
+					confirmButtonClass: "btn btn-success",
+					cancelButtonClass: "btn btn-danger",
+					buttonsStyling: false
+				}).then(function() {
+					IEWebsite.Utils.ShowLoadingScreen();
+
+					let apiUrl = SAVE_REQUEST_STATUS + '/' + requestId;
+					IEWebsite.Utils.AjaxPost(apiUrl, data, function(resp) {
+						IEWebsite.Utils.HideLoadingScreen();
+
+						swal({
+							title: 'Success',
+							text: resp.message,
+							type: 'success',
+							confirmButtonClass: "btn btn-success",
+							buttonsStyling: false
+						}).then(function() {
+							window.location.reload();
+						});
+					});
+				}, 
+				function(dismiss)
+				{
+					// dismiss can be 'overlay', 'cancel', 'close', 'esc', 'timer'
+					if (dismiss === 'cancel') 
+					{
+						swal({
+							title: 'Cancelled',
+							text: 'Nothing performed :)',
+							type: 'error',
+							confirmButtonClass: "btn btn-info",
+							buttonsStyling: false
+						});
+					  }
+				});
+
+
+			}
 		});
 	};
 
 	var loadProducts = function() {
-		let requestId = IEWebsite.Uri.Segment(4);
 		let apiUrl = FETCH_REQUEST_DETAILS + '/' + requestId;
 
 		let searchText = $.trim($("#searchBar").val());
@@ -2852,7 +2906,9 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 			limit: Number(pagination.limit),
 		};
 
+		IEWebsite.Utils.ShowLoadingScreen();
 		IEWebsite.Utils.AjaxGet(apiUrl, data, function(resp) {
+			IEWebsite.Utils.HideLoadingScreen();
 			if (resp.status)
 			{
 				showTableData(resp.response.data);

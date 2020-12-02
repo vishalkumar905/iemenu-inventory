@@ -96,10 +96,10 @@ class Home extends CI_Controller
 
 	public function generateLoginToken()
 	{
-		// if (!$this->input->is_ajax_request())
-		// {
-		// 	exit('Direct script not allowed');
-		// }
+		if (!$this->input->is_ajax_request() && ENVIRONMENT == 'production')
+		{
+			exit('Direct script not allowed');
+		}
 
 		$isSuccess = false;
 		$data = [];
@@ -153,7 +153,7 @@ class Home extends CI_Controller
 
 		if (ENVIRONMENT == 'production' && strpos('iemenu.in', $referrer) == false)
 		{
-			// redirect(base_url());
+			redirect(base_url());
 		}
 
 		$token = str_replace(['-plus-', '-slash-'], ['+', '/'], $this->input->get('token'));
@@ -200,7 +200,7 @@ class Home extends CI_Controller
 
 	public function destroySession()
 	{
-		if (!$this->input->is_ajax_request())
+		if (!$this->input->is_ajax_request() && ENVIRONMENT == 'production')
 		{
 			exit('Direct script not allowed');
 		}

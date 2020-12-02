@@ -1,5 +1,6 @@
 <div class="row" id="viewRequestsPageContainer">
     <div class="col-md-12" id="viewRequestsContainer">
+		<?=showAlertMessage($flashMessage, $flashMessageType)?>
         <div class="card mt-0">
 			<div class="card-header">
 				<h4 class="card-title"><?= $this->navTitle?></h4>
@@ -23,7 +24,7 @@
 				
 				<div id="pagination"></div>
 
-				<?php if ($isSender) { ?>
+				<?php if ($showBtn) { ?>
 					<div class="toolbar mb-10">
 						<div class="row">
 							<div class="col-md-12">
