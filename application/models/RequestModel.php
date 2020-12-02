@@ -172,6 +172,56 @@ class RequestModel extends CI_Model
 		$query = $this->db->query($mysqlQuery);
 		return $query;
 	}
+
+
+
+	public function getRequestDetails(int $requestId, int $limit = null, int $offset = null): array
+	{
+		$columns = [
+			'p.productCode',
+			'p.productName',
+			'su.unitName',
+			'ts.productId',
+			'ts.productQuantity',
+			'ts.comment',
+		];
+
+		$condition = [
+			'ts.requestId' => $requestId
+		];
+
+		$transferStockQuery = $this->db->select($columns)->from(
+			'ie_transfer_stocks ts'
+		)->join(
+			'ie_products p', 'p.id = ts.productId', 'INNER'
+		)->join(
+			'ie_si_units su', 'su.id = ts.productSiUnitId', 'INNER'
+		)->where($condition);
+
+		if ($limit > 0 && $offset >= 0)
+		{
+			$transferStockQuery->limit($limit, $offset);
+		}
+
+		return $transferStockQuery->get()->result_array();
+	}
+
+	public function getRequestDetailsCount(int $requestId)
+	{
+		$condition = [
+			'ts.requestId' => $requestId
+		];
+
+		$transferStockQuery = $this->db->select('COUNT(ts.id) as totalCount')->from(
+			'ie_transfer_stocks ts'
+		)->join(
+			'ie_products p', 'p.id = ts.productId', 'INNER'
+		)->join(
+			'ie_si_units su', 'su.id = ts.productSiUnitId', 'INNER'
+		)->where($condition);
+
+		return $transferStockQuery->get()->result_array();
+	}
 }
 
 ?>

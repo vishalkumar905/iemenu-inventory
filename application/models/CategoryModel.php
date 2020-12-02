@@ -187,7 +187,7 @@ class CategoryModel extends CI_Model
 	public function getDropdownSubCategories($categoryId): array
 	{
 		$categoryId = intval($categoryId) > 0 ? $categoryId : 0;
-		$subCategories = $this->getWhereCustom('*', ['parentId' => $categoryId])->result_array();
+		$subCategories = $this->getWhereCustom('*', ['parentId' => $categoryId, 'userId' => $this->loggedInUserId])->result_array();
 		$result = [];
 
 		if (!empty($subCategories))

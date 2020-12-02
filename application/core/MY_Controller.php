@@ -216,5 +216,20 @@
 			$productTypes = $this->productTypes();
 			return isset($productTypes[$typeId]) ? $productTypes[$typeId] : '';
 		}
+
+		public function getRequestStatus(int $statusId)
+		{
+			switch ($statusId)
+			{
+				case 0:
+					return 'Pending';
+				case 1:
+					return 'Pending';
+				case 2:
+					return 'Rejected';
+				default:
+					return '';
+			}
+		}
 	}
 ?>

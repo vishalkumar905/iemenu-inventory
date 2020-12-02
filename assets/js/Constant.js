@@ -1,3 +1,5 @@
+//  API's:
+
 const FETCH_SUB_CATEGORIES = BASE_URL + 'backend/categories/fetch-subcategories';
 const FETCH_SUB_SI_UNITS = BASE_URL + 'backend/siunits/fetch-sub-siunits';
 const FETCH_PRODUCTS = BASE_URL + 'backend/products/fetchProducts';
@@ -30,3 +32,16 @@ const FETCH_REQUESTS = BASE_URL + 'backend/requests/fetchRequests';
 
 const FETCH_REPLENISMENT_REQUEST_PRODUCTS = BASE_URL + 'backend/replenishmentrequest/fetchProducts';
 const SAVE_REPLENISMENT_REQUEST_PRODUCTS = BASE_URL + 'backend/replenishmentrequest/save';
+
+const FETCH_REQUEST_DETAILS = BASE_URL + 'backend/requests/fetchRequestDetail';
+
+
+// API- End
+
+
+
+// Custom constants
+
+
+const OUTGOING = 1;
+const INCOMMING = 2;

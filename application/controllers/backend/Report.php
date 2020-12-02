@@ -375,6 +375,34 @@ class Report extends Backend_Controller
 			$openingStocks->where_in('p.categoryId', $categoryIds);
 		}
 
+		$like = [
+			'fields' => ['p.productName', 'p.productCode'],
+			'search' => $this->input->post('search'),
+			'side' => 'both'
+		];
+		
+		if (!empty($like['fields']) && !empty($like['search']) && !empty($like['side']) && is_array($like['fields']))
+		{
+			foreach ($like['fields'] as $key => $field)
+			{
+				if ($key == 0) 
+				{
+					$openingStocks->group_start();
+					$openingStocks->like($field, $like['search'], $like['side']);
+				}
+				else
+				{
+					$openingStocks->or_like($field, $like['search'], $like['side']);
+				}
+
+				
+				if (($key + 1) == count($like['fields']))
+				{
+					$openingStocks->group_end();
+				}
+			}
+		}
+
 		$openingStocks = $openingStocks->group_by('os.productId')->order_by('os.productId', 'ASC')->get()->result_array();
 
 		return $openingStocks;
@@ -416,6 +444,34 @@ class Report extends Backend_Controller
 		if (!empty($categoryIds))
 		{
 			$purchaseStocks->where_in('p.categoryId', $categoryIds);
+		}
+
+		$like = [
+			'fields' => ['p.productName', 'p.productCode'],
+			'search' => $this->input->post('search'),
+			'side' => 'both'
+		];
+		
+		if (!empty($like['fields']) && !empty($like['search']) && !empty($like['side']) && is_array($like['fields']))
+		{
+			foreach ($like['fields'] as $key => $field)
+			{
+				if ($key == 0) 
+				{
+					$purchaseStocks->group_start();
+					$purchaseStocks->like($field, $like['search'], $like['side']);
+				}
+				else
+				{
+					$purchaseStocks->or_like($field, $like['search'], $like['side']);
+				}
+
+				
+				if (($key + 1) == count($like['fields']))
+				{
+					$purchaseStocks->group_end();
+				}
+			}
 		}
 
 		$purchaseStocks = $purchaseStocks->group_by('ps.productId')->order_by('ps.productId', 'ASC')->get()->result_array();
@@ -460,6 +516,35 @@ class Report extends Backend_Controller
 			$wastageStocks->where_in('p.categoryId', $categoryIds);
 		}
 	
+		$like = [
+			'fields' => ['p.productName', 'p.productCode'],
+			'search' => $this->input->post('search'),
+			'side' => 'both'
+		];
+		
+		if (!empty($like['fields']) && !empty($like['search']) && !empty($like['side']) && is_array($like['fields']))
+		{
+			foreach ($like['fields'] as $key => $field)
+			{
+				if ($key == 0) 
+				{
+					$wastageStocks->group_start();
+					$wastageStocks->like($field, $like['search'], $like['side']);
+				}
+				else
+				{
+					$wastageStocks->or_like($field, $like['search'], $like['side']);
+				}
+
+				
+				if (($key + 1) == count($like['fields']))
+				{
+					$wastageStocks->group_end();
+				}
+			}
+		}
+
+
 		$wastageStocks = $wastageStocks->group_by('ws.productId')->order_by('ws.productId', 'ASC')->get()->result_array();
 	
 		return $wastageStocks;
@@ -520,6 +605,34 @@ class Report extends Backend_Controller
 		if (!empty($categoryIds))
 		{
 			$closingStocks->where_in('p.categoryId', $categoryIds);
+		}
+
+		$like = [
+			'fields' => ['p.productName', 'p.productCode'],
+			'search' => $this->input->post('search'),
+			'side' => 'both'
+		];
+		
+		if (!empty($like['fields']) && !empty($like['search']) && !empty($like['side']) && is_array($like['fields']))
+		{
+			foreach ($like['fields'] as $key => $field)
+			{
+				if ($key == 0) 
+				{
+					$closingStocks->group_start();
+					$closingStocks->like($field, $like['search'], $like['side']);
+				}
+				else
+				{
+					$closingStocks->or_like($field, $like['search'], $like['side']);
+				}
+
+				
+				if (($key + 1) == count($like['fields']))
+				{
+					$closingStocks->group_end();
+				}
+			}
 		}
 
 		$closingStocks = $closingStocks->group_by([

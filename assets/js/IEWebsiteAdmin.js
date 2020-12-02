@@ -1727,40 +1727,45 @@ IEWebsiteAdmin.MasterReport = (function() {
 			defaultDate: new Date()
 		});
 		
-		$("#search").click(function() {
-			let startDate = $("#startDate").val();
-			let endDate = $("#endDate").val();
-			let category = $("#category").val();
-
-			if (startDate && endDate && category)
-			{
-				let postData = {
-					startDate,
-					endDate,
-					category
-				};
-
-				IEWebsite.Utils.ShowLoadingScreen();
-				IEWebsite.Utils.AjaxPost(FETCH_MASTER_REPORT, postData, function(resp) {
-					IEWebsite.Utils.HideLoadingScreen();
-					$("#reportTableBody").html('');
-
-					if (resp.status)
-					{	
-						if (!_.isEmpty(resp.response))
-						{
-							showReportTableData(resp.response);
-						}
-					}
-					else
-					{
-						IEWebsite.Utils.Notification(resp.message);
-					}
-				});
-			}
-		});
+		$("#searchBar").keyup(_.debounce(loadProducts, 500));
+		$("#search").click(loadProducts);
 	};
 	
+	var loadProducts = function() {
+		let search = $("#searchBar").val();
+		let startDate = $("#startDate").val();
+		let endDate = $("#endDate").val();
+		let category = $("#category").val();
+
+		if (startDate && endDate && category)
+		{
+			let postData = {
+				startDate,
+				endDate,
+				category,
+				search
+			};
+
+			IEWebsite.Utils.ShowLoadingScreen();
+			IEWebsite.Utils.AjaxPost(FETCH_MASTER_REPORT, postData, function(resp) {
+				IEWebsite.Utils.HideLoadingScreen();
+				$("#reportTableBody").html('');
+
+				if (resp.status)
+				{	
+					if (!_.isEmpty(resp.response))
+					{
+						showReportTableData(resp.response);
+					}
+				}
+				else
+				{
+					IEWebsite.Utils.Notification(resp.message);
+				}
+			});
+		}
+	}
+
 	var showReportTableData = function(response)
 	{
 		if (!_.isEmpty(response.data))
@@ -2365,82 +2370,116 @@ IEWebsiteAdmin.RequestTransferPage = (function() {
 })();
 
 IEWebsiteAdmin.ManageRequestTransferPage = (function() {
-	var init = function() 
+	var currentTab, searchBarText, pagination = {
+		currentPage: 1,
+		totalPages: 0,
+		limit: 20,
+	}; 
+	var init = function()
 	{
 		if ($("#manageRequestTransferPageContainer").length <= 0)
 		{
 			return;
 		};
+
+		currentTab = $('.nav-tabs li.active > a').text();
+
+		$('.nav-tabs a').on('shown.bs.tab', function(event){
+			currentTab = $(event.target).text();         // active tab
+			// $(event.relatedTarget).text();  // previous tab
+		});
+
+		loadProducts('Incomming');
+		loadProducts('Outgoing');
 	}
 
-	var loadProducts = function() {
+	var loadProducts = function(type = null) {
 		let searchText = $.trim($("#searchBar").val());
 
 		$("#manageRequestTransferTableBody").html('');
 
-		if (!_.isEmpty(category) > 0)
+		let resetPage = false;
+		if (_.isEmpty(searchBarText) && !_.isEmpty(searchText))
 		{
-			let resetPage = false;
-			if (_.isEmpty(searchBarText) && !_.isEmpty(searchText))
-			{
-				resetPage = true;
-			}
-			else if (!_.isEmpty(searchText) && !_.isEmpty(searchBarText) && searchText != searchBarText)
-			{
-				resetPage = true;
-			}
-
-			if (resetPage)
-			{
-				pagination = {
-					currentPage: 1,
-					totalPages: 0,
-					limit: 10,
-				}
-			}
-
-			let data = {
-				search: searchText,
-				category: category,
-				page: pagination.currentPage,
-				limit: Number(pagination.limit)
-			};
-
-			IEWebsite.Utils.ShowLoadingScreen();
-			IEWebsite.Utils.AjaxPost(FETCH_REQUEST_TRANSFER_PRODUCTS, data , function(resp) {
-				IEWebsite.Utils.HideLoadingScreen();
-	
-				if (resp.status)
-				{
-					pagination.totalPages = resp.response.pagination.totalPages;
-
-					if (!_.isEmpty(resp.response.data))
-					{
-						showTableData(resp.response.data);
-					}
-					else
-					{
-						$("#manageRequestTransferTableBody").append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
-					}
-
-					let paginationHtml = IEWebsiteAdmin.CustomPagination.Init(resp.response.pagination);
-					$("#pagination").html(paginationHtml);
-
-					$("[id^=paginate-]").click(function() {
-						let page = Number($(this).attr('page'));
-
-						if (page > 0)
-						{
-							pagination.currentPage = page;
-							loadProducts();
-						}
-					});
-				}
-			});
+			resetPage = true;
 		}
+		else if (!_.isEmpty(searchText) && !_.isEmpty(searchBarText) && searchText != searchBarText)
+		{
+			resetPage = true;
+		}
+
+		if (resetPage)
+		{
+			pagination = {
+				currentPage: 1,
+				totalPages: 0,
+				limit: 10,
+			}
+		}
+
+		let data = {
+			search: searchText,
+			page: pagination.currentPage,
+			limit: Number(pagination.limit),
+		};
+
+
+		let apiUrl = FETCH_REQUESTS;
+
+		
+		if (!type)
+		{
+			type = currentTab;
+		}
+
+		if (type == 'Incomming')
+		{
+			apiUrl += '/' + INCOMMING;
+		}
+		else if (type == 'Outgoing')
+		{
+			apiUrl += '/' + OUTGOING;
+		}
+		else 
+		{
+			throw new Exception('Invalid tab');
+		}
+
+		IEWebsite.Utils.ShowLoadingScreen();
+		IEWebsite.Utils.AjaxPost(apiUrl, data , function(resp) {
+			IEWebsite.Utils.HideLoadingScreen();
+
+			if (resp.status)
+			{
+				let paginationHtml = IEWebsiteAdmin.CustomPagination.Init(resp.response.pagination);
+				if (type == 'Incomming')
+				{
+					$("#incommingPagination").html(paginationHtml);
+					$("#manageIncommingRequestTransferTableBody").html('');
+				}
+				else if (type == 'Outgoing')
+				{
+					$("#outgoingPagination").html(paginationHtml);
+					$("#manageOutgoingRequestTransferTableBody").html('');
+				}
+
+				pagination.totalPages = resp.response.pagination.totalPages;
+				showTableData(resp.response.data, type);
+
+				$("[id^=paginate-]").click(function() {
+					let page = Number($(this).attr('page'));
+
+					if (page > 0)
+					{
+						pagination.currentPage = page;
+						loadProducts();
+					}
+				});
+			}
+		});
 	}
 
-	var showTableData = function(data) 
+	var showTableData = function(data, type) 
 	{
 		if (!_.isEmpty(data))
 		{
@@ -2450,14 +2489,33 @@ IEWebsiteAdmin.ManageRequestTransferPage = (function() {
 				let tableRow = '<tr>';
 					tableRow += '<td>'+ row.indentRequestNumber +'</td>';
 					tableRow += '<td>'+ row.transferFrom +'</td>';
-					tableRow += '<td>'+ row.transferFrom +'</td>';
+					tableRow += '<td>'+ row.transferTo +'</td>';
+					tableRow += '<td>'+ row.requestType +'</td>';
 					tableRow += '<td>'+ row.status +'</td>';
 					tableRow += '<td>'+ row.createdOn +'</td>';
-					tableRow += '<td>'+ action +'</td>';
+					tableRow += '<td>'+ row.action +'</td>';
 					tableRow += '</tr>';
-					
-				$("#manageRequestTransferTableBody").append(tableRow);
+				
+				if (type == 'Incomming')
+				{
+					$("#manageIncommingRequestTransferTableBody").append(tableRow);
+				}
+				else if (type == 'Outgoing')
+				{
+					$("#manageOutgoingRequestTransferTableBody").append(tableRow);
+				}
 			});
+		}
+		else
+		{
+			if (type == 'Incomming')
+			{
+				$("#manageIncommingRequestTransferTableBody").append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
+			}
+			else if (type == 'Outgoing')
+			{
+				$("#manageOutgoingRequestTransferTableBody").append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
+			}
 		}
 	};
 
@@ -2737,6 +2795,113 @@ IEWebsiteAdmin.ReplenishmentRequestPage = (function() {
 	}
 })();
 
+IEWebsiteAdmin.ViewRequestPage = (function() {
+	var searchBarText, pagination = {
+		currentPage: 1,
+		totalPages: 0,
+		limit: 20,
+	};
+
+	var init = function() {
+		if ($("#viewRequestsPageContainer").length <= 0)
+		{
+			return;
+		};
+
+		loadProducts();
+
+		$("#acceptRequest").click(function() {
+
+		});
+		
+		$("#rejectRequest").click(function() {
+			
+		});
+	};
+
+	var loadProducts = function() {
+		let requestId = IEWebsite.Uri.Segment(4);
+		let apiUrl = FETCH_REQUEST_DETAILS + '/' + requestId;
+
+		let searchText = $.trim($("#searchBar").val());
+
+		$("#manageRequestTransferTableBody").html('');
+
+		let resetPage = false;
+		if (_.isEmpty(searchBarText) && !_.isEmpty(searchText))
+		{
+			resetPage = true;
+		}
+		else if (!_.isEmpty(searchText) && !_.isEmpty(searchBarText) && searchText != searchBarText)
+		{
+			resetPage = true;
+		}
+
+		if (resetPage)
+		{
+			pagination = {
+				currentPage: 1,
+				totalPages: 0,
+				limit: 10,
+			}
+		}
+
+		let data = {
+			search: searchText,
+			page: pagination.currentPage,
+			limit: Number(pagination.limit),
+		};
+
+		IEWebsite.Utils.AjaxGet(apiUrl, data, function(resp) {
+			if (resp.status)
+			{
+				showTableData(resp.response.data);
+
+				$("#pagination").html(IEWebsiteAdmin.CustomPagination.Init(resp.response.pagination));
+				$("[id^=paginate-]").click(function() {
+					let page = Number($(this).attr('page'));
+
+					if (page > 0)
+					{
+						pagination.currentPage = page;
+						loadProducts();
+					}
+				});
+			}
+		});
+	};
+
+	var showTableData = function(data) 
+	{
+		$("#viewRequestsTableBody").html('');
+
+		if (!_.isEmpty(data))
+		{
+			_.each(data, function(row) {
+
+				let tableRow = '<tr>';
+					tableRow += '<td>'+ row.sn +'</td>';
+					tableRow += '<td>'+ row.productCode +'</td>';
+					tableRow += '<td>'+ row.productName +'</td>';
+					tableRow += '<td>'+ row.unitName +'</td>';
+					tableRow += '<td>'+ row.productQuantity +'</td>';
+					tableRow += '<td>'+ row.comment +'</td>';
+					tableRow += '</tr>';
+				
+				$("#viewRequestsTableBody").append(tableRow);
+			});
+		}
+		else
+		{
+			$("#viewRequestsTableBody").append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
+		}
+	};
+
+	return {
+		Init: init
+	}
+})();
+
 IEWebsiteAdmin.CustomPagination = (function() {
 	
 	var init = function(pagination)
@@ -2830,4 +2995,5 @@ $(document).ready(function(){
 	IEWebsiteAdmin.ReplenishmentRequestPage.Init();
 	IEWebsiteAdmin.RequestTransferPage.Init();
 	IEWebsiteAdmin.ManageRequestTransferPage.Init();
+	IEWebsiteAdmin.ViewRequestPage.Init();
 });

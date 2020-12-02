@@ -97,9 +97,6 @@ class Requesttransfer extends Backend_Controller
 						'comment' => $row['comment'],
 						'openingStockNumber' => $openingStockNumber,
 						'createdOn' => time(),
-						'userIdFrom' => $this->loggedInUserId,
-						'userIdTo' => $outlet,
-						'requestType' => $requestTransferType,
 						'requestId' => $requestId
 					];
 				}
@@ -315,7 +312,7 @@ class Requesttransfer extends Backend_Controller
 	{
 		$select = ['MAX(indentRequestNumber) as indentRequestNumber'];
 		$condition = [
-			'userId' => $this->loggedInUserId
+			'userIdFrom' => $this->loggedInUserId
 		];
 
 		$query = $this->request->getWhereCustom($select, $condition)->result_array();

@@ -213,9 +213,15 @@ class VendorProductModel extends CI_Model
 			$this->db->where_in($whereIn['field'], $whereIn['values']);
 		}
 
+		$search = $this->input->post('search');
+		if (!empty($search) && is_array($search) && isset($search['value']))
+		{
+			$search = $search['value'];
+		}
+
 		$like = [
 			'fields' => ['p.productName', 'p.productCode'],
-			'search' => $this->input->post('search'),
+			'search' => $search,
 			'side' => 'both'
 		];
 		

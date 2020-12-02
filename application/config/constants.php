@@ -139,3 +139,9 @@ define('TOTAL_SECONDS_IN_ONE_DAY', 86400);
 
 define('DIRECT_TRANSER_REQUEST', 1);
 define('REPLENISHMENT_REQUEST', 2);
+
+define('SENDER', 1);
+define('RECEIVER', 2);
+
+define('OUTGOING', 1);
+define('INCOMMING', 2);

@@ -37,8 +37,9 @@
 								<thead class="text-primary">
 									<tr>
 										<th>IR NO</th>
-										<th>Transfer From</th>
-										<th>Transfer To</th>
+										<th>Request from</th>
+										<th>Request to</th>
+										<th>Request type</th>
 										<th>Status</th>
 										<th>Date</th>
 										<th width="10%">Action</th>
@@ -48,7 +49,7 @@
 							</table>
 						</div>
 						
-						<div id="pagination">
+						<div id="incommingPagination">
 								
 						</div>
 					</div>
@@ -58,8 +59,9 @@
 								<thead class="text-primary">
 									<tr>
 										<th>IR NO</th>
-										<th>Transfer From</th>
-										<th>Transfer To</th>
+										<th>Request from</th>
+										<th>Request to</th>
+										<th>Request type</th>
 										<th>Status</th>
 										<th>Date</th>
 										<th width="10%">Action</th>
@@ -69,7 +71,7 @@
 							</table>
 						</div>
 						
-						<div id="pagination">
+						<div id="outgoingPagination">
 								
 						</div>
 					</div>

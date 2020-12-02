@@ -309,3 +309,21 @@ IEWebsite.Storage = (function() {
 		remove
 	}
 })();
+
+IEWebsite.Uri = (function(){
+	var segments = [];
+	var loadSegments = function() {
+		segments = window.location.pathname.split('/').filter(function(e) {
+			return e;
+		});
+	}
+
+	var segment = function(uri) {
+		loadSegments();
+		return segments[uri] || null;
+	};
+
+	return {
+		Segment: segment
+	}
+})();
