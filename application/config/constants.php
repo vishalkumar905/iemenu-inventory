@@ -104,7 +104,9 @@ define('INACTIVE', -2);
 
 define('STATUS_PENDING', 0);
 define('STATUS_ACCEPTED', 1);
+define('STATUS_RECEIVED', 1);
 define('STATUS_REJECTED', 2);
+define('STATUS_DISPATCHED', 3);
 
 define("USER", 1);
 define("USER_VENDOR", 2);

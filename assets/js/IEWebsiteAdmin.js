@@ -2810,25 +2810,31 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 
 		loadProducts();
 
-		$("#acceptRequest, #rejectRequest").click(function() {
-
-			let data = {}, textMessage = '';
-			if ($(this).attr('id') == 'acceptRequest')
+		$(".acceptRequest").click(function() {
+			
+			let modalMessage = '';
+			let data = {
+				status: $(this).val()
+			};
+			
+			if (data.status == STATUS_ACCEPTED || data.status == STATUS_RECEIVED)
 			{
-				data.status = 'accept';
-				textMessage = 'You want to approve this request';
+				modalMessage = 'You have got everything.';
 			}
-			else if ($(this).attr('id') == 'rejectRequest')
+			else if (data.status == STATUS_REJECTED)
 			{
-				data.status = 'reject';
-				textMessage = 'You want to reject this request';
+				modalMessage = 'You want to reject this request';
+			}
+			else if (data.status == STATUS_DISPATCHED)
+			{
+				modalMessage = 'You have dispatched this request';
 			}
 
 			if (!_.isEmpty(data))
 			{
 				swal({
 					title: 'Are you sure?',
-					text: textMessage,
+					text: modalMessage,
 					type: 'warning',
 					showCancelButton: true,
 					confirmButtonText: 'Yes',
@@ -2844,9 +2850,9 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 						IEWebsite.Utils.HideLoadingScreen();
 
 						swal({
-							title: 'Success',
+							// title: resp.status == 'true' ? 'Success' : 'Danger',
 							text: resp.message,
-							type: 'success',
+							type: resp.status == 'true' ? 'success' : 'danger',
 							confirmButtonClass: "btn btn-success",
 							buttonsStyling: false
 						}).then(function() {

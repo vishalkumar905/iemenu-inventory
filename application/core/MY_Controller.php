@@ -217,19 +217,26 @@
 			return isset($productTypes[$typeId]) ? $productTypes[$typeId] : '';
 		}
 
-		public function getRequestStatus(int $statusId)
+		public function getRequestStatus(int $statusId): string
 		{
 			switch ($statusId)
 			{
-				case 0:
+				case STATUS_PENDING:
 					return 'Pending';
-				case 1:
-					return 'Pending';
-				case 2:
+				case STATUS_ACCEPTED:
+					return 'Accepted';
+				case STATUS_DISPATCHED:
+					return 'Dispatched';
+				case STATUS_REJECTED:
 					return 'Rejected';
 				default:
 					return '';
 			}
+		}
+
+		public function getAllRequestStatus(): array
+		{
+			return [STATUS_PENDING, STATUS_RECEIVED, STATUS_ACCEPTED, STATUS_DISPATCHED, STATUS_REJECTED];
 		}
 	}
 ?>

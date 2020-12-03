@@ -46,3 +46,9 @@ const SAVE_REQUEST_STATUS = BASE_URL + 'backend/requests/processRequest';
 
 const OUTGOING = 1;
 const INCOMMING = 2;
+
+const STATUS_PENDING = 0;
+const STATUS_ACCEPTED = 1;
+const STATUS_RECEIVED = 1;
+const STATUS_REJECTED = 2;
+const STATUS_DISPATCHED = 3;

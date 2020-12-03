@@ -310,17 +310,22 @@ IEWebsite.Storage = (function() {
 	}
 })();
 
-IEWebsite.Uri = (function(){
+IEWebsite.Uri = (function() {
 	var segments = [];
 	var loadSegments = function() {
-		segments = window.location.pathname.split('/').filter(function(e) {
+		let pathname = String(getPathFromUrl(window.location.href)).replace(BASE_URL, '/');
+		segments = pathname.split('/').filter(function(e) {
 			return e;
 		});
-	}
+	};
+
+	var getPathFromUrl = function(url) {
+		return url.split(/[?#]/)[0];
+	};
 
 	var segment = function(uri) {
 		loadSegments();
-		return segments[uri] || null;
+		return segments[uri - 1] || null;
 	};
 
 	return {

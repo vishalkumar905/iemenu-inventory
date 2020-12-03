@@ -33,28 +33,29 @@ class Requests extends Backend_Controller
             redirect($redirectUrl);
         }
 
-        $data['showBtn'] = true;
-
-        if ($requestData['userIdTo'] == $this->loggedInUserId)
-        {
-            $data['showBtn'] = false;
-        }
-        
-        if ($requestData['status'] != STATUS_PENDING)
-        {
-            $data['showBtn'] = false;
-        }
+        $data['showDisptachBtn'] = 0;
+        $data['showReceiveBtn'] = 0;
 
         $flashMessage = $flashMessageType = '';
         if ($requestData['status'] == STATUS_ACCEPTED)
         {
-            $flashMessage = 'Request approved.';
+            $flashMessage = 'Request completed.';
             $flashMessageType = 'success';
         }
         else if ($requestData['status'] == STATUS_REJECTED)
         {
             $flashMessage = 'Request rejected.';
             $flashMessageType = 'danger';
+        }
+
+        if ($requestData['status'] == STATUS_PENDING && $requestData['userIdFrom'] !== $this->loggedInUserId)
+        {
+            $data['showDisptachBtn'] = 1;
+        }
+
+        if ($requestData['status'] == STATUS_DISPATCHED && $requestData['userIdFrom'] == $this->loggedInUserId)
+        {
+            $data['showReceiveBtn'] = 1;
         }
 
         $data['viewFile'] = 'backend/requests/view';
@@ -71,7 +72,7 @@ class Requests extends Backend_Controller
         $data['flashMessage'] = $this->session->flashdata('flashMessage');
         $data['flashMessageType'] = $this->session->flashdata('flashMessageType');
 
-        $this->titleHeader = $this->navTitle = 'Tax';
+        $this->titleHeader = $this->navTitle = 'Create Request';
         $this->load->view($this->template, $data);
     }
 
@@ -81,33 +82,31 @@ class Requests extends Backend_Controller
 			exit('No direct script access allowed');
         }
 
-        $message = '';
+        $message = 'Something went wrong.';
+        $status = false;
+
         if ($requestId > 0)
         {
             $status = $this->input->post('status');
-        
-            $update = [
-                'status' => STATUS_PENDING
-            ];
+            $requestStatuses = $this->getAllRequestStatus();
 
-            if ($status == 'accept')
+            if (in_array($status, $requestStatuses))
             {
-                $update['status'] = STATUS_ACCEPTED;
-                $message = 'Request accepted';
-            }
-            else if ($status == 'reject')
-            {
-                $update['status'] = STATUS_REJECTED;
-                $message = 'Request rejected';
-            }
-
-            if ($update['status'] > STATUS_PENDING)
-            {
-                $this->request->update($requestId, $update);
+                $update = [
+                    'status' => $status
+                ];
+    
+                $status = true; 
+                if ($update['status'] > STATUS_PENDING)
+                {
+                    $this->request->update($requestId, $update);
+                    $status = true;
+                    $message = 'Request submitted.'; 
+                }
             }
         }
 
-        responseJson(true, $message, null);
+        responseJson($status, $message, null);
     }
 
 
@@ -177,7 +176,7 @@ class Requests extends Backend_Controller
         $orderBy = [
             'field' => 'id',
             'type' => 'DESC'
-        ]; 
+        ];
 
         $requests = $this->request->getWhereCustom($columns, $condition, $orderBy, null, null, $limit, $offset)->result_array();
         $requestsCount = $this->request->getWhereCustom('COUNT(id) totalCount', $condition)->result_array();
