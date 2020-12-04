@@ -99,6 +99,11 @@ class Requests extends Backend_Controller
                 $status = true; 
                 if ($update['status'] > STATUS_PENDING)
                 {
+                    if ($update['status'] == STATUS_RECEIVED)
+                    {
+                        $update['completedOn'] = time();
+                    }
+
                     $this->request->update($requestId, $update);
                     $status = true;
                     $message = 'Request submitted.'; 

@@ -30,7 +30,7 @@
 								<th colspan="2">Opening Inventory</th>
 								<th colspan="2">Purchase Inventory</th>
 								<th colspan="2">Wastage Inventory</th>
-								<th colspan="2">Transfer</th>
+								<th colspan="2">Transfer Stocks</th>
 								<th colspan="2">Current Inventory</th>
 								<th colspan="3">Closing Inventory</th>
 								<th colspan="2">Consumption</th>
@@ -44,8 +44,8 @@
 								<th>Amt</th>
 								<th>Qty</th>
 								<th>Amt</th>
-								<th>Qty</th>
-								<th>Amt</th>
+								<th style="white-space: nowrap;">In Qty</th>
+								<th style="white-space: nowrap;">Out Qty</th>
 								<th>Qty</th>
 								<th>Amt</th>
 								<th>Qty</th>
