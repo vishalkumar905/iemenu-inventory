@@ -109,12 +109,6 @@ class Report extends Backend_Controller
 		$previousTranferStocksIn = $this->getTransferStocks('in', $startDate, $endDate, $categoryIds, true);
 		$previousTranferStocksOut = $this->getTransferStocks('out', $startDate, $endDate, $categoryIds, true);
 
-		$tranferStocksInWithProduct = $this->changeArrayIndexByColumnValue($tranferStocksIn, 'productId');
-		$tranferStocksOutWithProduct = $this->changeArrayIndexByColumnValue($tranferStocksOut, 'productId');
-
-		$previousTranferStocksInWithProduct = $this->changeArrayIndexByColumnValue($previousTranferStocksIn, 'productId');
-		$previousTranferStocksOutWithProduct = $this->changeArrayIndexByColumnValue($previousTranferStocksOut, 'productId');
-
 		$openingStocks = $this->getOpeningStocks($startDate, $endDate, $categoryIds);
 		$closingStocks = $this->getClosingWithPurchaseStocks($startDate, $endDate, $categoryIds);
 		$purchaseStocks = $this->getPurchaseStocks($startDate, $endDate, $categoryIds);
@@ -137,10 +131,10 @@ class Report extends Backend_Controller
 			'closingStocksWithProduct' => $closingStocksWithProduct, 
 			'previousPurchaseStockWithProduct' => $previousPurchaseStockWithProduct, 
 			'previousClosingStockWithProduct' => $previousClosingStockWithProduct,
-			'tranferStocksInWithProduct' => $tranferStocksInWithProduct,
-			'tranferStocksOutWithProduct' => $tranferStocksOutWithProduct,
-			'previousTranferStocksInWithProduct' => $previousTranferStocksInWithProduct,
-			'previousTranferStocksOutWithProduct' => $previousTranferStocksOutWithProduct,
+			'tranferStocksInWithProduct' => $tranferStocksIn,
+			'tranferStocksOutWithProduct' => $tranferStocksOut,
+			'previousTranferStocksInWithProduct' => $previousTranferStocksIn,
+			'previousTranferStocksOutWithProduct' => $previousTranferStocksOut,
 		];
 
 		$openingStockProductIds = [];
@@ -202,6 +196,7 @@ class Report extends Backend_Controller
 		$data = $sampleArray;
 	
 		$productId = $inventoryStock['productId'];
+		$productCode = $inventoryStock['productCode'];
 		
 		$data['productId'] = $productId;
 		$data['productName'] = $inventoryStock['productName'];
@@ -212,19 +207,35 @@ class Report extends Backend_Controller
 		$data['openingInventoryAmt'] = $inventoryStock['productUnitPrice'];
 
 
-		if (!empty($tranferStocksInWithProduct[$productId]))
+		$directTransferInStocks =  $tranferStocksInWithProduct[DIRECT_TRANSER_REQUEST];
+		$replenishmentTransferInStocks =  $tranferStocksInWithProduct[REPLENISHMENT_REQUEST];
+		
+		$directTransferOutStocks =  $tranferStocksOutWithProduct[DIRECT_TRANSER_REQUEST];
+		$replenishmentTransferOutStocks =  $tranferStocksOutWithProduct[REPLENISHMENT_REQUEST];
+
+		if (!empty($directTransferInStocks[$productCode]))
 		{
-			$data['transferQtyIn'] = $tranferStocksInWithProduct[$productId]['productQuantity'];
+			$data['transferQtyIn'] = $directTransferInStocks[$productCode]['productQuantity'];
 		}
 
-		if (!empty($tranferStocksOutWithProduct[$productId]))
+		if (!empty($replenishmentTransferInStocks[$productCode]))
 		{
-			$data['transferQtyOut'] = $tranferStocksOutWithProduct[$productId]['productQuantity'];
+			$data['transferQtyOut'] = $replenishmentTransferInStocks[$productCode]['productQuantity'];
+		}
+
+		if (!empty($directTransferOutStocks[$productCode]))
+		{
+			$data['transferQtyOut'] = $data['transferQtyOut'] + $directTransferOutStocks[$productCode]['productQuantity'];
+		}
+
+		if (!empty($replenishmentTransferOutStocks[$productCode]))
+		{
+			$data['transferQtyIn'] = $data['transferQtyIn'] + $replenishmentTransferOutStocks[$productCode]['productQuantity'];
 		}
 
 		// if (!empty($this->siBaseUnits) && !is_null($inventoryStock['siUnitParentId']) && isset($this->siBaseUnits[$inventoryStock['siUnitParentId']]))
 		// {
-		// 	 $data['averageUnit'] = $this->siBaseUnits[$inventoryStock['siUnitParentId']];
+		// 		$data['averageUnit'] = $this->siBaseUnits[$inventoryStock['siUnitParentId']];
 		// }
 		
 		$data['averageUnit'] = $inventoryStock['unitName'];
@@ -246,15 +257,37 @@ class Report extends Backend_Controller
 			$data['openingInventoryAmt'] = $todayItemOpeningStock['openingInventoryAmt'];
 		}
 
-		if (!empty($previousTranferStocksInWithProduct[$productId]))
+
+		$previousDirectTranferStocksIn = $previousTranferStocksInWithProduct[DIRECT_TRANSER_REQUEST];
+		$previousReplenishmentTranferStocksIn = $previousTranferStocksInWithProduct[REPLENISHMENT_REQUEST];
+		
+		$previousDirectTranferStocksOut = $previousTranferStocksOutWithProduct[DIRECT_TRANSER_REQUEST];
+		$previousReplenishmentTranferStocksOut = $previousTranferStocksOutWithProduct[REPLENISHMENT_REQUEST];
+		
+		$previousStockInQty = 0;
+		$previousStockOutQty = 0;
+
+		if (!empty($previousDirectTranferStocksIn[$productCode]))
 		{
-			$data['openingInventoryQty'] = $data['openingInventoryQty'] + $previousTranferStocksInWithProduct[$productId]['productQuantity'];
+			$previousStockInQty = $previousDirectTranferStocksIn[$productCode]['productQuantity'];
 		}
 
-		if (!empty($previousTranferStocksOutWithProduct[$productId]))
+		if (!empty($previousReplenishmentTranferStocksIn[$productCode]))
 		{
-			$data['openingInventoryQty'] = $data['openingInventoryQty'] - $previousTranferStocksOutWithProduct[$productId]['productQuantity'];
+			$previousStockOutQty = $previousReplenishmentTranferStocksIn[$productCode]['productQuantity'];
 		}
+
+		if (!empty($previousDirectTranferStocksOut[$productCode]))
+		{
+			$previousStockOutQty = $previousStockOutQty + $previousDirectTranferStocksOut[$productCode]['productQuantity'];
+		}
+
+		if (!empty($previousReplenishmentTranferStocksOut[$productCode]))
+		{
+			$previousStockInQty = $previousStockInQty + $previousReplenishmentTranferStocksOut[$productCode]['productQuantity'];
+		}
+
+		$data['openingInventoryQty'] = ($data['openingInventoryQty'] + $previousStockInQty) - $previousStockOutQty;
 
 		// Check do we have any purchase stock in the specified date range
 		if (isset($purchaseStocksWithProduct[$productId]))
@@ -641,7 +674,8 @@ class Report extends Backend_Controller
 			'su.parentId as siUnitParentId',
 			'ts.comment',
 			'p.productName',
-			'p.productCode'
+			'p.productCode',
+			'r.requestType'
 		])->from('ie_requests r')->join(
 			'ie_transfer_stocks ts', 'ts.requestId = r.id', 'LEFT'
 		)->join(
@@ -683,9 +717,44 @@ class Report extends Backend_Controller
 			}
 		}
 
-		$transferStocks = $transferStocks->group_by('ts.productId')->order_by('ts.productId', 'ASC')->get()->result_array();
+		$transferStocks = $transferStocks->group_by([
+			'r.requestType',
+			'ts.productId',
+		])->order_by('ts.productId', 'ASC')->get()->result_array();
 
-		return $transferStocks;
+
+		$results = [
+			REPLENISHMENT_REQUEST => [],
+			DIRECT_TRANSER_REQUEST => []
+		];
+
+		if (!empty($transferStocks))
+		{
+			foreach($transferStocks as $row)
+			{
+				if ($row['requestType'] == REPLENISHMENT_REQUEST)
+				{
+					$results[REPLENISHMENT_REQUEST][] = $row;
+				}
+
+				if ($row['requestType'] == DIRECT_TRANSER_REQUEST)
+				{
+					$results[DIRECT_TRANSER_REQUEST][] = $row;
+				}
+			}
+
+			if (!empty($results[REPLENISHMENT_REQUEST]))
+			{
+				$results[REPLENISHMENT_REQUEST] = $this->changeArrayIndexByColumnValue($results[REPLENISHMENT_REQUEST], 'productCode');
+			}
+
+			if (!empty($results[DIRECT_TRANSER_REQUEST]))
+			{
+				$results[DIRECT_TRANSER_REQUEST] = $this->changeArrayIndexByColumnValue($results[DIRECT_TRANSER_REQUEST], 'productCode');
+			}
+		}
+
+		return $results;
 	}
 
 	private function getClosingWithPurchaseStocks($startDate, $endDate, $categoryIds, $previousDay = false)
