@@ -671,7 +671,7 @@ class Report extends Backend_Controller
 			$transferStockCondition['r.userIdFrom'] = $this->loggedInUserId;
 		}
 
-		$transferStockCondition['ts.openingStockNumber'] = $this->openingStockNumber;
+		// $transferStockCondition['ts.openingStockNumber'] = $this->openingStockNumber;
 		$transferStockCondition['r.status'] = STATUS_RECEIVED;
 		$transferStockCondition['r.completedOn IS NOT NULL'] = NULL;
 		// $transferStockCondition['ts.productId NOT IN (SELECT productId FROM ie_opening_stocks WHERE openingStockNumber = ' . $this->openingStockNumber .')'] = NULL;
