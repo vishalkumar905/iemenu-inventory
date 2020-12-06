@@ -35,6 +35,7 @@ class Requests extends Backend_Controller
 
         $data['showDisptachBtn'] = 0;
         $data['showReceiveBtn'] = 0;
+        $data['showRejectBtn'] = 0;
 
         $flashMessage = $flashMessageType = '';
         if ($requestData['status'] == STATUS_ACCEPTED)
@@ -57,9 +58,10 @@ class Requests extends Backend_Controller
         {
             $data['showReceiveBtn'] = 1;
         }
-        else if ($requestData['status'] == STATUS_PENDING && $requestData['userIdFrom'] == $this->loggedInUserId && $requestData['requestType'] == DIRECT_TRANSER_REQUEST)
+        else if ($requestData['status'] == STATUS_PENDING && $requestData['userIdFrom'] != $this->loggedInUserId && $requestData['requestType'] == DIRECT_TRANSER_REQUEST)
         {
             $data['showReceiveBtn'] = 1;
+            $data['showRejectBtn'] = 1;
         }
 
         $data['viewFile'] = 'backend/requests/view';

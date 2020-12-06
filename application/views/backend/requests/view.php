@@ -30,11 +30,14 @@
 							<div class="col-md-12">
 								<?php if ($showDisptachBtn) {?>
 									<button type="button" name="Dispatch" value="<?=STATUS_DISPATCHED?>" class="btn btn-warning btn-fill acceptRequest">Dispatch<div class="ripple-container"></div></button>
-									<button type="button" name="Reject" value="<?=STATUS_REJECTED?>" class="btn btn-danger btn-fill acceptRequest">Reject<div class="ripple-container"></div></button>
 								<?php } ?>
 								
 								<?php if ($showReceiveBtn) {?>
 									<button type="button" name="Received" value="<?=STATUS_RECEIVED?>" class="btn btn-success btn-fill acceptRequest">Received<div class="ripple-container"></div></button>
+								<?php } ?>
+
+								<?php if ($showDisptachBtn || $showRejectBtn) {?>
+									<button type="button" name="Reject" value="<?=STATUS_REJECTED?>" class="btn btn-danger btn-fill acceptRequest">Reject<div class="ripple-container"></div></button>
 								<?php } ?>
 							</div>
 						</div>
