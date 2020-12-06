@@ -48,12 +48,16 @@ class Requests extends Backend_Controller
             $flashMessageType = 'danger';
         }
 
-        if ($requestData['status'] == STATUS_PENDING && $requestData['userIdFrom'] !== $this->loggedInUserId)
+        if ($requestData['status'] == STATUS_PENDING && $requestData['userIdFrom'] !== $this->loggedInUserId && $requestData['requestType'] == REPLENISHMENT_REQUEST)
         {
             $data['showDisptachBtn'] = 1;
         }
 
         if ($requestData['status'] == STATUS_DISPATCHED && $requestData['userIdFrom'] == $this->loggedInUserId)
+        {
+            $data['showReceiveBtn'] = 1;
+        }
+        else if ($requestData['status'] == STATUS_PENDING && $requestData['userIdFrom'] == $this->loggedInUserId && $requestData['requestType'] == DIRECT_TRANSER_REQUEST)
         {
             $data['showReceiveBtn'] = 1;
         }
