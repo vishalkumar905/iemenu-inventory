@@ -153,7 +153,7 @@ class Report extends Backend_Controller
 			{
 				$openingStockProductIds[$openingStock['productId']] = $openingStock['productId'];
 
-				$results[] = $this->getItemInventoryStock($openingStock, 'purchase', $combinedStocks);
+				$results[] = $this->getItemInventoryStock($openingStock, 'opening', $combinedStocks);
 			}
 		}
 
@@ -213,10 +213,12 @@ class Report extends Backend_Controller
 		$data['productCode'] = $inventoryStock['productCode'];
 		$data['productQuantity'] = $inventoryStock['productQuantity'];
 		
-		$data['openingInventoryQty'] = $inventoryStock['productQuantity'];
-		$data['openingInventoryAmt'] = $inventoryStock['productUnitPrice'];
-
-
+		if ($stockType == 'opening')
+		{
+			$data['openingInventoryQty'] = $inventoryStock['productQuantity'];
+			$data['openingInventoryAmt'] = $inventoryStock['productUnitPrice'];
+		}
+		
 		$directTransferInStocks =  $tranferStocksInWithProduct[DIRECT_TRANSER_REQUEST];
 		$replenishmentTransferInStocks =  $tranferStocksInWithProduct[REPLENISHMENT_REQUEST];
 		
