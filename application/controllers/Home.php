@@ -153,7 +153,7 @@ class Home extends CI_Controller
 
 		if (ENVIRONMENT == 'production' && strpos('iemenu.in', $referrer) == false)
 		{
-			redirect(base_url());
+			// redirect(base_url());
 		}
 
 		$token = str_replace(['-plus-', '-slash-'], ['+', '/'], $this->input->get('token'));
