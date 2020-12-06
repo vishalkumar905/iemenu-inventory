@@ -112,7 +112,13 @@ class Report extends Backend_Controller
 		$openingStocks = $this->getOpeningStocks($startDate, $endDate, $categoryIds);
 		$closingStocks = $this->getClosingWithPurchaseStocks($startDate, $endDate, $categoryIds);
 		$purchaseStocks = $this->getPurchaseStocks($startDate, $endDate, $categoryIds);
+		
 		$wastageStocks = $this->getWastageStocks($startDate, $endDate, $categoryIds);
+		$previousWastageStocks = $this->getWastageStocks($startDate, $endDate, $categoryIds, true);
+
+		$wastageStocksWithProduct = $this->changeArrayIndexByColumnValue($wastageStocks, 'productId');
+		$previousWastageStocksWithProduct = $this->changeArrayIndexByColumnValue($previousWastageStocks, 'productId');
+
 		
 		$previousClosingStocks = $this->getClosingWithPurchaseStocks($startDate, $endDate, $categoryIds, true);
 		$previousPurchaseStocks = $this->getPurchaseStocks($startDate, $endDate, $categoryIds, true);
@@ -135,6 +141,8 @@ class Report extends Backend_Controller
 			'tranferStocksOutWithProduct' => $tranferStocksOut,
 			'previousTranferStocksInWithProduct' => $previousTranferStocksIn,
 			'previousTranferStocksOutWithProduct' => $previousTranferStocksOut,
+			'wastageStocksWithProduct' => $wastageStocksWithProduct,
+			'previousWastageStocksWithProduct' => $previousWastageStocksWithProduct,
 		];
 
 		$openingStockProductIds = [];
@@ -192,6 +200,8 @@ class Report extends Backend_Controller
 		$tranferStocksOutWithProduct = $combinedStocks['tranferStocksOutWithProduct'];
 		$previousTranferStocksInWithProduct = $combinedStocks['previousTranferStocksInWithProduct'];
 		$previousTranferStocksOutWithProduct = $combinedStocks['previousTranferStocksOutWithProduct'];
+		$wastageStocksWithProduct = $combinedStocks['wastageStocksWithProduct'];
+		$previousWastageStocksWithProduct = $combinedStocks['previousWastageStocksWithProduct'];
 		
 		$data = $sampleArray;
 	
@@ -231,6 +241,11 @@ class Report extends Backend_Controller
 		if (!empty($replenishmentTransferOutStocks[$productCode]))
 		{
 			$data['transferQtyIn'] = $data['transferQtyIn'] + $replenishmentTransferOutStocks[$productCode]['productQuantity'];
+		}
+
+		if (!empty($wastageStocksWithProduct[$productId]))
+		{
+			$data['wastageInventoryQty'] = $wastageStocksWithProduct[$productId]['productQuantity'];
 		}
 
 		// if (!empty($this->siBaseUnits) && !is_null($inventoryStock['siUnitParentId']) && isset($this->siBaseUnits[$inventoryStock['siUnitParentId']]))
@@ -289,6 +304,12 @@ class Report extends Backend_Controller
 
 		$data['openingInventoryQty'] = ($data['openingInventoryQty'] + $previousStockInQty) - $previousStockOutQty;
 
+		if (!empty($previousWastageStocksWithProduct[$productId]))
+		{
+			$data['openingInventoryQty'] = $data['openingInventoryQty'] - $previousWastageStocksWithProduct[$productId]['productQuantity'];
+		}
+
+
 		// Check do we have any purchase stock in the specified date range
 		if (isset($purchaseStocksWithProduct[$productId]))
 		{
@@ -307,7 +328,7 @@ class Report extends Backend_Controller
 			$data['closingInventoryAmt'] = $closingInventoryData['productUnitPrice'];
 		}
 
-		$data['currentInventoryQty'] = (floatval($data['openingInventoryQty']) + floatval($data['purchaseInventoryQty']) + $data['transferQtyIn']) - $data['transferQtyOut'];
+		$data['currentInventoryQty'] = (floatval($data['openingInventoryQty']) + floatval($data['purchaseInventoryQty']) + $data['transferQtyIn']) - $data['transferQtyOut'] - $data['wastageInventoryQty'];
 		$data['currentInventoryAmt'] = floatval($data['openingInventoryAmt']) + floatval($data['purchaseInventoryAmt']);
 
 		if ($data['closingInventoryQty'] > 0)
