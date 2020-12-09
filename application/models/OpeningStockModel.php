@@ -241,12 +241,19 @@ class OpeningStockModel extends CI_Model
 		return $results;
 	}
 
-	public function getCurrentOpeningStockNumber()
+	public function getCurrentOpeningStockNumber(int $userId = null): int
 	{	
 		$select = ['MAX(openingStockNumber) as openingStockNumber'];
 		$condition = [
 			'userId' => $this->loggedInUserId
 		];
+
+		if ($userId > 0)
+		{
+			$condition = [
+				'userId' => $userId
+			];	
+		}
 
 		$query = $this->getWhereCustom($select, $condition)->result_array();
 

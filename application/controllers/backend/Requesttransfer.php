@@ -89,7 +89,8 @@ class Requesttransfer extends Backend_Controller
 						$requestData['userIdFrom'] = $this->loggedInUserId;
 						$requestData['userIdTo'] = $outlet;
 						$requestData['requestType'] = $requestTransferType;
-						$requestData['openingStockNumber'] = $openingStockNumber;
+						$requestData['userIdFromOpeningStockNumber'] = $openingStockNumber;
+						$requestData['userIdToOpeningStockNumber'] = $this->openingstock->getCurrentOpeningStockNumber($outlet);
 						$requestData['indentRequestNumber'] = $indentRequestNumber;
 		
 						$requestId = $this->request->insert($requestData);

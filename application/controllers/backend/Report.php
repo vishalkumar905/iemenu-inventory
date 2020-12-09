@@ -226,7 +226,7 @@ class Report extends Backend_Controller
 		
 		$directTransferOutStocks =  $tranferStocksOutWithProduct[DIRECT_TRANSER_REQUEST];
 		$replenishmentTransferOutStocks =  $tranferStocksOutWithProduct[REPLENISHMENT_REQUEST];
-	
+
 		if (!empty($directTransferInStocks[$productCode]))
 		{
 			$data['transferQtyIn'] = $directTransferInStocks[$productCode]['productQuantityConversion'];
@@ -682,10 +682,12 @@ class Report extends Backend_Controller
 		if ($type == 'in')
 		{
 			$transferStockCondition['r.userIdTo'] = $this->loggedInUserId;
+			$transferStockCondition['r.userIdToOpeningStockNumber'] = $this->openingStockNumber;
 		}
 		else if ($type == 'out')
 		{
 			$transferStockCondition['r.userIdFrom'] = $this->loggedInUserId;
+			$transferStockCondition['r.userIdFromOpeningStockNumber'] = $this->openingStockNumber;
 		}
 
 		// $transferStockCondition['ts.openingStockNumber'] = $this->openingStockNumber;
