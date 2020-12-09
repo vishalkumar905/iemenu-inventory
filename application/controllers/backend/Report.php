@@ -365,9 +365,9 @@ class Report extends Backend_Controller
 			$data['openingInventoryQty'] = $previousClosingStockData['productQuantityConversion'];
 			$data['openingInventoryAmt'] = $previousClosingStockData['productUnitPrice'];
 			
-			if (!empty($previousClosingStockData['purchaseProductQuantity']))
+			if (!empty($previousClosingStockData['purchaseProductQuantityConversion']))
 			{
-				$data['openingInventoryQty'] += $previousClosingStockData['purchaseProductQuantity'];
+				$data['openingInventoryQty'] += $previousClosingStockData['purchaseProductQuantityConversion'];
 			}
 		}
 		else if (isset($previousPurchaseStockWithProduct[$productId]))
@@ -831,6 +831,7 @@ class Report extends Backend_Controller
 			'cs1.productId',
 			'cs1.openingStockNumber',
 			'cs1.productQuantity',
+			'cs1.productQuantityConversion',
 			'cs1.closingStockNumber',
 			'cs1.productSiUnitId',
 			'cs1.productUnitPrice',
