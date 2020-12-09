@@ -15,9 +15,13 @@ class SIUnitModel extends CI_Model
 		return $this->tableName;
 	}
 	
-	public function get($orderBy)
+	public function get($orderBy = null)
 	{
-		$this->db->order_by($orderBy);
+		if (!empty($orderBy))
+		{
+			$this->db->order_by($orderBy);
+		}
+
 		$query=$this->db->get($this->tableName);
 		return $query;
 	}

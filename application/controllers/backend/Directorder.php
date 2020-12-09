@@ -53,15 +53,24 @@ class Directorder extends Backend_Controller
 		if (!empty($productData))
 		{
 			$insertData = [];
+			$siUnits = $this->changeArrayIndexByColumnValue($this->siunit->get()->result_array(), 'id');
+
 			foreach($productData as $productId => $row)
 			{
 				if ($row['qty'] > 0 && $row['unitPrice'] > 0)
 				{
+					$productQtyConversion = 0;
+					if (isset($siUnits[$row['unit']]))
+					{
+						$productQtyConversion = $siUnits[$row['unit']]['conversion'] * $row['qty'];
+					}
+
 					$insertData[] = [
 						'productId' => $productId,
 						'productSiUnitId' => $row['unit'],
 						'productUnitPrice' => $row['unitPrice'],
 						'productQuantity' => $row['qty'],
+						'productQuantityConversion' => $productQtyConversion,
 						'productSubtotal' => $row['qty'] * $row['unitPrice'],
 						'comment' => $row['comment'],
 						'openingStockNumber' => $this->getLastOpeningStockNumber(),

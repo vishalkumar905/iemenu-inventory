@@ -60,7 +60,7 @@ class Report extends Backend_Controller
 
 		$isSuccess = false;
 		$message = 'No reports available';
-		$response = [];
+		$response = ['data' => []];
 
 		try
 		{
@@ -77,12 +77,13 @@ class Report extends Backend_Controller
 			{
 				$timestamp['startDateTimestamp'] = $startDateTimestamp;
 				$timestamp['endDateTimestamp'] = $endDateTimestamp;
-				$response = $this->customQuery($timestamp, $categoryIds);
+				$results = $this->customQuery($timestamp, $categoryIds);
 
-				if (!empty($response))
+				if (!empty($results))
 				{
 					$message = 'Data found';
 					$isSuccess = true;
+					$response['data'] = $results;
 				}
 			}
 		}
@@ -91,7 +92,6 @@ class Report extends Backend_Controller
 			$message = $exception->getMessage();
 		}
 
-		$response['data'] = $response;
 		$response['startDate'] = $startDate;
 		$response['endDate'] = $endDate;
 
@@ -211,11 +211,13 @@ class Report extends Backend_Controller
 		$data['productId'] = $productId;
 		$data['productName'] = $inventoryStock['productName'];
 		$data['productCode'] = $inventoryStock['productCode'];
-		$data['productQuantity'] = $inventoryStock['productQuantity'];
-		
+		$data['productQuantityConversion'] = $inventoryStock['productQuantityConversion'];
+	
+		$productUnitConversion = floatval($inventoryStock['unitConversion']);
+	
 		if ($stockType == 'opening')
 		{
-			$data['openingInventoryQty'] = $inventoryStock['productQuantity'];
+			$data['openingInventoryQty'] = $inventoryStock['productQuantityConversion'];
 			$data['openingInventoryAmt'] = $inventoryStock['productUnitPrice'];
 		}
 		
@@ -224,32 +226,32 @@ class Report extends Backend_Controller
 		
 		$directTransferOutStocks =  $tranferStocksOutWithProduct[DIRECT_TRANSER_REQUEST];
 		$replenishmentTransferOutStocks =  $tranferStocksOutWithProduct[REPLENISHMENT_REQUEST];
-
+	
 		if (!empty($directTransferInStocks[$productCode]))
 		{
-			$data['transferQtyIn'] = $directTransferInStocks[$productCode]['productQuantity'];
+			$data['transferQtyIn'] = $directTransferInStocks[$productCode]['productQuantityConversion'];
 		}
-
+	
 		if (!empty($replenishmentTransferInStocks[$productCode]))
 		{
-			$data['transferQtyOut'] = $replenishmentTransferInStocks[$productCode]['productQuantity'];
+			$data['transferQtyOut'] = $replenishmentTransferInStocks[$productCode]['productQuantityConversion'];
 		}
-
+	
 		if (!empty($directTransferOutStocks[$productCode]))
 		{
-			$data['transferQtyOut'] = $data['transferQtyOut'] + $directTransferOutStocks[$productCode]['productQuantity'];
+			$data['transferQtyOut'] = $data['transferQtyOut'] + $directTransferOutStocks[$productCode]['productQuantityConversion'];
 		}
-
+	
 		if (!empty($replenishmentTransferOutStocks[$productCode]))
 		{
-			$data['transferQtyIn'] = $data['transferQtyIn'] + $replenishmentTransferOutStocks[$productCode]['productQuantity'];
+			$data['transferQtyIn'] = $data['transferQtyIn'] + $replenishmentTransferOutStocks[$productCode]['productQuantityConversion'];
 		}
-
+	
 		if (!empty($wastageStocksWithProduct[$productId]))
 		{
-			$data['wastageInventoryQty'] = $wastageStocksWithProduct[$productId]['productQuantity'];
+			$data['wastageInventoryQty'] = $wastageStocksWithProduct[$productId]['productQuantityConversion'];
 		}
-
+	
 		// if (!empty($this->siBaseUnits) && !is_null($inventoryStock['siUnitParentId']) && isset($this->siBaseUnits[$inventoryStock['siUnitParentId']]))
 		// {
 		// 		$data['averageUnit'] = $this->siBaseUnits[$inventoryStock['siUnitParentId']];
@@ -262,7 +264,7 @@ class Report extends Backend_Controller
 		if ($stockType == 'opening')
 		{
 			$openingStock = [
-				'openingInventoryQty' => $inventoryStock['productQuantity'],
+				'openingInventoryQty' => $inventoryStock['productQuantityConversion'],
 				'openingInventoryAmt' => $inventoryStock['productUnitPrice']
 			];
 		}
@@ -273,8 +275,8 @@ class Report extends Backend_Controller
 			$data['openingInventoryQty'] = $todayItemOpeningStock['openingInventoryQty'];
 			$data['openingInventoryAmt'] = $todayItemOpeningStock['openingInventoryAmt'];
 		}
-
-
+	
+	
 		$previousDirectTranferStocksIn = $previousTranferStocksInWithProduct[DIRECT_TRANSER_REQUEST];
 		$previousReplenishmentTranferStocksIn = $previousTranferStocksInWithProduct[REPLENISHMENT_REQUEST];
 		
@@ -283,41 +285,41 @@ class Report extends Backend_Controller
 		
 		$previousStockInQty = 0;
 		$previousStockOutQty = 0;
-
+	
 		if (!empty($previousDirectTranferStocksIn[$productCode]))
 		{
-			$previousStockInQty = $previousDirectTranferStocksIn[$productCode]['productQuantity'];
+			$previousStockInQty = $previousDirectTranferStocksIn[$productCode]['productQuantityConversion'];
 		}
-
+	
 		if (!empty($previousReplenishmentTranferStocksIn[$productCode]))
 		{
-			$previousStockOutQty = $previousReplenishmentTranferStocksIn[$productCode]['productQuantity'];
+			$previousStockOutQty = $previousReplenishmentTranferStocksIn[$productCode]['productQuantityConversion'];
 		}
-
+	
 		if (!empty($previousDirectTranferStocksOut[$productCode]))
 		{
-			$previousStockOutQty = $previousStockOutQty + $previousDirectTranferStocksOut[$productCode]['productQuantity'];
+			$previousStockOutQty = $previousStockOutQty + $previousDirectTranferStocksOut[$productCode]['productQuantityConversion'];
 		}
-
+	
 		if (!empty($previousReplenishmentTranferStocksOut[$productCode]))
 		{
-			$previousStockInQty = $previousStockInQty + $previousReplenishmentTranferStocksOut[$productCode]['productQuantity'];
+			$previousStockInQty = $previousStockInQty + $previousReplenishmentTranferStocksOut[$productCode]['productQuantityConversion'];
 		}
-
+	
 		$data['openingInventoryQty'] = ($data['openingInventoryQty'] + $previousStockInQty) - $previousStockOutQty;
-
+	
 		if (!empty($previousWastageStocksWithProduct[$productId]))
 		{
-			$data['openingInventoryQty'] = $data['openingInventoryQty'] - $previousWastageStocksWithProduct[$productId]['productQuantity'];
+			$data['openingInventoryQty'] = $data['openingInventoryQty'] - $previousWastageStocksWithProduct[$productId]['productQuantityConversion'];
 		}
-
-
+	
+	
 		// Check do we have any purchase stock in the specified date range
 		if (isset($purchaseStocksWithProduct[$productId]))
 		{
 			$purchaseInventoryData = $purchaseStocksWithProduct[$productId];
 	
-			$data['purchaseInventoryQty'] = $purchaseInventoryData['productQuantity'];
+			$data['purchaseInventoryQty'] = $purchaseInventoryData['productQuantityConversion'];
 			$data['purchaseInventoryAmt'] = $purchaseInventoryData['productUnitPrice'];
 		}
 		
@@ -326,18 +328,27 @@ class Report extends Backend_Controller
 		{
 			$closingInventoryData = $closingStocksWithProduct[$productId];
 	
-			$data['closingInventoryQty'] = $closingInventoryData['productQuantity'];
+			$data['closingInventoryQty'] = $closingInventoryData['productQuantityConversion'];
 			$data['closingInventoryAmt'] = $closingInventoryData['productUnitPrice'];
 		}
-
+	
 		$data['currentInventoryQty'] = (floatval($data['openingInventoryQty']) + floatval($data['purchaseInventoryQty']) + $data['transferQtyIn']) - $data['transferQtyOut'] - $data['wastageInventoryQty'];
 		$data['currentInventoryAmt'] = floatval($data['openingInventoryAmt']) + floatval($data['purchaseInventoryAmt']);
-
+	
 		if ($data['closingInventoryQty'] > 0)
 		{
 			$data['consumptionQty'] = $data['currentInventoryQty'] - $data['closingInventoryQty'];
 			$data['consumptionAmt'] = $data['currentInventoryAmt'] - $data['closingInventoryAmt'];
 		}
+	
+		$data['currentInventoryQty'] = truncateNumber($data['currentInventoryQty'] / $productUnitConversion);
+		$data['openingInventoryQty'] = truncateNumber($data['openingInventoryQty'] / $productUnitConversion);
+		$data['purchaseInventoryQty'] = truncateNumber($data['purchaseInventoryQty'] / $productUnitConversion);
+		$data['closingInventoryQty'] = truncateNumber($data['closingInventoryQty'] / $productUnitConversion);
+		$data['wastageInventoryQty'] = truncateNumber($data['wastageInventoryQty'] / $productUnitConversion);
+		$data['transferQtyIn'] = truncateNumber($data['transferQtyIn'] / $productUnitConversion);
+		$data['transferQtyOut'] = truncateNumber($data['transferQtyOut'] / $productUnitConversion);
+		$data['consumptionQty'] = truncateNumber($data['consumptionQty'] / $productUnitConversion);
 	
 		return $data;
 	}
@@ -351,7 +362,7 @@ class Report extends Backend_Controller
 		{
 			$previousClosingStockData = $previousClosingStockWithProduct[$productId];
 	
-			$data['openingInventoryQty'] = $previousClosingStockData['productQuantity'];
+			$data['openingInventoryQty'] = $previousClosingStockData['productQuantityConversion'];
 			$data['openingInventoryAmt'] = $previousClosingStockData['productUnitPrice'];
 			
 			if (!empty($previousClosingStockData['purchaseProductQuantity']))
@@ -365,13 +376,12 @@ class Report extends Backend_Controller
 	
 			$previousPurchaseStockData = $previousPurchaseStockWithProduct[$productId];
 	
-			$data['openingInventoryQty'] = (!empty($openingStock['openingInventoryQty']) ? floatval($openingStock['openingInventoryQty']) : 0) + floatval($previousPurchaseStockData['productQuantity']);
+			$data['openingInventoryQty'] = (!empty($openingStock['openingInventoryQty']) ? floatval($openingStock['openingInventoryQty']) : 0) + floatval($previousPurchaseStockData['productQuantityConversion']);
 			$data['openingInventoryAmt'] = (!empty($openingStock['openingInventoryAmt']) ? floatval($openingStock['openingInventoryAmt']) : 0) + floatval($previousPurchaseStockData['productUnitPrice']);
 		}
 	
 		return $data;
 	}
-
 	private function getClosingStocks($startDate, $endDate, $categoryIds, $previousDay = false)
 	{
 		$closingStockSubQueryCondition = [
@@ -470,9 +480,11 @@ class Report extends Backend_Controller
 		$openingStocks = $this->db->select([
 			'os.productId',
 			'os.productQuantity',
+			'os.productQuantityConversion',
 			'os.productUnitPrice',
 			'su.parentId as siUnitParentId',
 			'su.unitName',
+			'su.conversion as unitConversion',
 			'p.productName',
 			'p.productCode',
 		])->from('ie_opening_stocks os')->join(
@@ -537,6 +549,7 @@ class Report extends Backend_Controller
 
 		$purchaseStocks = $this->db->select([
 			'SUM(ps.productQuantity) AS productQuantity',
+			'SUM(ps.productQuantityConversion) AS productQuantityConversion',
 			'ps.productId',
 			'ps.openingStockNumber',
 			'ps.productUnitPrice',
@@ -544,6 +557,7 @@ class Report extends Backend_Controller
 			'ps.productTax',
 			'su.parentId as siUnitParentId',
 			'su.unitName',
+			'su.conversion as unitConversion',
 			'ps.comment',
 			'p.productName',
 			'p.productCode'
@@ -608,6 +622,7 @@ class Report extends Backend_Controller
 	
 		$wastageStocks = $this->db->select([
 			'SUM(ws.productQuantity) AS productQuantity',
+			'SUM(ws.productQuantityConversion) AS productQuantityConversion',
 			'ws.productId',
 			'ws.openingStockNumber',
 			'ws.productUnitPrice',
@@ -689,6 +704,7 @@ class Report extends Backend_Controller
 	
 		$transferStocks = $this->db->select([
 			'SUM(ts.productQuantity) AS productQuantity',
+			'SUM(ts.productQuantityConversion) AS productQuantityConversion',
 			'ts.productId',
 			'ts.openingStockNumber',
 			'ts.productUnitPrice',
@@ -811,6 +827,7 @@ class Report extends Backend_Controller
 
 		$closingStocks = $this->db->select([
 			'SUM(ps.productQuantity) AS purchaseProductQuantity',
+			'SUM(ps.productQuantityConversion) AS purchaseProductQuantityConversion',
 			'cs1.productId',
 			'cs1.openingStockNumber',
 			'cs1.productQuantity',
@@ -872,20 +889,6 @@ class Report extends Backend_Controller
 
 		return $closingStocks;
 	}
-
-	private function changeArrayIndexByColumnValue($data, $columnName): array
-	{
-		$results = [];
-		if (!empty($data) && !empty($columnName) && isset($data[0][$columnName]))
-		{
-			foreach($data as $row)
-			{
-				$results[$row[$columnName]] = $row;
-			}
-		}
-
-		return $results;
-	} 
 }
 
 ?>

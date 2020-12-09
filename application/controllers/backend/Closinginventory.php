@@ -47,15 +47,24 @@ class Closinginventory extends Backend_Controller
 		if (!empty($post))
 		{
 			$insertData = [];
+			$siUnits = $this->changeArrayIndexByColumnValue($this->siunit->get()->result_array(), 'id');
+
 			foreach($post as $productId => $row)
 			{
 				if ($row['qty'] > 0)
 				{
+					$productQtyConversion = 0;
+					if (isset($siUnits[$row['unit']]))
+					{
+						$productQtyConversion = $siUnits[$row['unit']]['conversion'] * $row['qty'];
+					}
+
 					$insertData[] = [
 						'productId' => $productId,
 						'productSiUnitId' => $row['unit'],
 						'productUnitPrice' => floatval($row['unitPrice']),
 						'productQuantity' => $row['qty'],
+						'productQuantityConversion' => $productQtyConversion,
 						'productSubtotal' => $row['qty'] * floatval($row['unitPrice']),
 						'comment' => $row['comment'],
 						'closingStockNumber' => $this->getClosingStockNumber(),

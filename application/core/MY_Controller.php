@@ -238,5 +238,19 @@
 		{
 			return [STATUS_PENDING, STATUS_RECEIVED, STATUS_ACCEPTED, STATUS_DISPATCHED, STATUS_REJECTED];
 		}
+
+		public function changeArrayIndexByColumnValue($data, $columnName): array
+		{
+			$results = [];
+			if (!empty($data) && !empty($columnName) && isset($data[0][$columnName]))
+			{
+				foreach($data as $row)
+				{
+					$results[$row[$columnName]] = $row;
+				}
+			}
+
+			return $results;
+		} 
 	}
 ?>
