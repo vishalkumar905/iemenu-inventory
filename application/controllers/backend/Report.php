@@ -341,14 +341,14 @@ class Report extends Backend_Controller
 			$data['consumptionAmt'] = $data['currentInventoryAmt'] - $data['closingInventoryAmt'];
 		}
 	
-		$data['currentInventoryQty'] = truncateNumber($data['currentInventoryQty'] / $productUnitConversion);
-		$data['openingInventoryQty'] = truncateNumber($data['openingInventoryQty'] / $productUnitConversion);
-		$data['purchaseInventoryQty'] = truncateNumber($data['purchaseInventoryQty'] / $productUnitConversion);
-		$data['closingInventoryQty'] = truncateNumber($data['closingInventoryQty'] / $productUnitConversion);
-		$data['wastageInventoryQty'] = truncateNumber($data['wastageInventoryQty'] / $productUnitConversion);
-		$data['transferQtyIn'] = truncateNumber($data['transferQtyIn'] / $productUnitConversion);
-		$data['transferQtyOut'] = truncateNumber($data['transferQtyOut'] / $productUnitConversion);
-		$data['consumptionQty'] = truncateNumber($data['consumptionQty'] / $productUnitConversion);
+		$data['currentInventoryQty'] = truncateNumber((floatval($productUnitConversion) > 0 ? $data['currentInventoryQty'] / $productUnitConversion : $data['currentInventoryQty']));
+		$data['openingInventoryQty'] = truncateNumber((floatval($productUnitConversion) > 0 ? $data['openingInventoryQty'] / $productUnitConversion : $data['openingInventoryQty']));
+		$data['purchaseInventoryQty'] = truncateNumber((floatval($productUnitConversion) > 0 ? $data['purchaseInventoryQty'] / $productUnitConversion : $data['purchaseInventoryQty']));
+		$data['closingInventoryQty'] = truncateNumber((floatval($productUnitConversion) > 0 ? $data['closingInventoryQty'] / $productUnitConversion : $data['closingInventoryQty']));
+		$data['wastageInventoryQty'] = truncateNumber((floatval($productUnitConversion) > 0 ? $data['wastageInventoryQty'] / $productUnitConversion : $data['wastageInventoryQty']));
+		$data['transferQtyIn'] = truncateNumber((floatval($productUnitConversion) > 0 ? $data['transferQtyIn'] / $productUnitConversion : $data['transferQtyIn']));
+		$data['transferQtyOut'] = truncateNumber((floatval($productUnitConversion) > 0 ? $data['transferQtyOut'] / $productUnitConversion : $data['transferQtyOut']));
+		$data['consumptionQty'] = truncateNumber((floatval($productUnitConversion) > 0 ? $data['consumptionQty'] / $productUnitConversion : $data['consumptionQty']));
 	
 		return $data;
 	}
