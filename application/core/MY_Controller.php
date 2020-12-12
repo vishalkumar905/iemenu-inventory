@@ -252,5 +252,17 @@
 
 			return $results;
 		} 
+
+		public function saveDataToCache($key, $value)
+		{
+			$this->load->driver('cache', array('adapter' => 'apc', 'backup' => 'file'));
+			$this->cache->save($key, $value, 300);
+		}
+
+		public function getDataFromCache($key)
+		{
+			$this->load->driver('cache', array('adapter' => 'apc', 'backup' => 'file'));
+			return $this->cache->get($key);
+		}
 	}
 ?>

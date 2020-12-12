@@ -64,21 +64,33 @@ class PhpExcel
 			],
 		];
 
-		$spreadsheet->getActiveSheet()->getStyle('A1:G1')->applyFromArray($styleArray);
-		
-		// auto fit column to content
-		foreach(range('A', 'G') as $columnID) {
-			$spreadsheet->getActiveSheet()->getColumnDimension($columnID)->setAutoSize(true);
+		$alphabates = range('A', 'Z');
+		$columnCount = count($data['columns']);
+		$lastActiveCellName = '';
+
+		if ($columnCount < 26)
+		{
+			$lastActiveCellName = $alphabates[$columnCount - 1];
+			$spreadsheet->getActiveSheet()->getStyle('A1:'.$lastActiveCellName.'1')->applyFromArray($styleArray);
+			$spreadsheet->getActiveSheet()->getStyle('A1:'.$lastActiveCellName.'1')->getAlignment()->setHorizontal('center');
 		}
 
-		$alphabates = range('A', 'Z');
 		$x = 1;
 
 		foreach($data['columns'] as $columnIndex => $column)
 		{
+			// auto fit column to content
+			$spreadsheet->getActiveSheet()->getColumnDimension($alphabates[$columnIndex])->setAutoSize(true);
+			
 			// set the names of header cells
 			$sheet->setCellValue(sprintf('%s%s', $alphabates[$columnIndex], $x), $column['title']);
 		}
+
+		if ($lastActiveCellName)
+		{
+			$sheet->getStyle('A:'.$lastActiveCellName)->getAlignment()->setHorizontal('center');
+		}
+
 
 		++$x;
 
@@ -91,7 +103,7 @@ class PhpExcel
 			$x++;
 		}
 
-		$filename = sprintf('products-%s', time());
+		$filename = sprintf('master-report-%s', time());
 		$extension = strtolower($data['extension']);
 
 		if ($extension == 'csv')

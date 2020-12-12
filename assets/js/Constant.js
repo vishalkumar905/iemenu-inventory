@@ -36,6 +36,8 @@ const FETCH_REQUESTS = BASE_URL + 'backend/requests/fetchRequests';
 const FETCH_REQUEST_DETAILS = BASE_URL + 'backend/requests/fetchRequestDetail';
 const SAVE_REQUEST_STATUS = BASE_URL + 'backend/requests/processRequest';
 
+const EXPORT_REPORTS = BASE_URL + 'backend/report/export';
+
 
 // API- End
 

@@ -1729,6 +1729,14 @@ IEWebsiteAdmin.MasterReport = (function() {
 		
 		$("#searchBar").keyup(_.debounce(loadProducts, 500));
 		$("#search").click(loadProducts);
+
+		$("[name='exportData']").click(function() {
+			let exportType = String($(this).val()).toLowerCase();
+			if (!_.isEmpty(EXPORT_REPORTS) && exportType == 'csv' || exportType == 'excel')
+			{
+				window.location.href = EXPORT_REPORTS + '/' + exportType;
+			}
+		});
 	};
 	
 	var loadProducts = function() {

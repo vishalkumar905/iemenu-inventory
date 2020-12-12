@@ -95,6 +95,12 @@ class Report extends Backend_Controller
 		$response['startDate'] = $startDate;
 		$response['endDate'] = $endDate;
 
+		if (!empty($response['data']))
+		{
+			$fileName = 'master_report_'.$this->loggedInUserId;
+			$this->saveDataToCache($fileName, $response);
+		}
+
 		responseJson($isSuccess, $message, $response);
 	}
 
@@ -891,6 +897,67 @@ class Report extends Backend_Controller
 		])->order_by('cs1.productId', 'ASC')->get()->result_array();
 
 		return $closingStocks;
+	}
+
+	public function export($extension)
+	{
+		if (empty($this->referrerUrl))
+		{
+			show_404();
+		}
+
+		$fileName = 'master_report_'.$this->loggedInUserId;
+		$this->load->library('PhpExcel');
+
+		$counter = 0;
+		$columns = [];
+		$results = $this->getDataFromCache($fileName);
+
+		if (!empty($results['data']))
+		{
+			foreach ($results['data'] as $key => &$result)
+			{
+				if ($key == 0)
+				{
+					$columns = [
+						['title' => 'SN', 'name' => 'sn'],
+						['title' => 'Date', 'name' => 'startDate'],
+						['title' => 'Product Code', 'name' => 'productCode'],
+						['title' => 'Product Name', 'name' => 'productName'],
+						['title' => 'Avg Unit', 'name' => 'averageUnit'],
+						['title' => 'Avg Price', 'name' => 'averagePrice'],
+						['title' => 'Opening Inventory Qty', 'name' => 'openingInventoryQty'],
+						['title' => 'Opening Inventory Amt', 'name' => 'openingInventoryAmt'],
+						['title' => 'Purchase Inventory Qty', 'name' => 'purchaseInventoryQty'],
+						['title' => 'Purchase Inventory Amt', 'name' => 'purchaseInventoryAmt'],
+						['title' => 'Wastage Inventory Qty', 'name' => 'wastageInventoryQty'],
+						['title' => 'Wastage Inventory Amt', 'name' => 'wastageInventoryAmt'],
+						['title' => 'Purchase Inventory Qty', 'name' => 'purchaseInventoryQty'],
+						['title' => 'Purchase Inventory Amt', 'name' => 'purchaseInventoryAmt'],
+						['title' => 'Transfer Stocks In Qty', 'name' => 'transferQtyIn'],
+						['title' => 'Transfer Stocks Out Qty', 'name' => 'transferQtyOut'],
+						['title' => 'Current Inventory Qty', 'name' => 'currentInventoryQty'],
+						['title' => 'Current Inventory Amt', 'name' => 'currentInventoryAmt'],
+						['title' => 'Closing Inventory Qty', 'name' => 'closingInventoryQty'],
+						['title' => 'Closing Inventory Amt', 'name' => 'closingInventoryAmt'],
+						['title' => 'Closing Inventory Date', 'name' => 'endDate'],
+						['title' => 'Consumption Qty', 'name' => 'closingInventoryQty'],
+						['title' => 'Consumption Amt', 'name' => 'closingInventoryAmt'],
+					];
+				}
+	
+				$result['sn'] = ++$counter;
+				$result['startDate'] = $results['startDate'];
+				$result['endDate'] = $results['endDate'];
+			}
+		}
+
+		$data['extension'] = $extension;
+		$data['columns'] = $columns;
+		$data['results'] = $results['data'];
+		$data['redirectUrl'] = base_url() . 'backend/products';
+
+		$this->phpexcel->export($data);
 	}
 }
 
