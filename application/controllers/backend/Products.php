@@ -438,6 +438,7 @@ class Products extends Backend_Controller
 		}
 
 		$data['extension'] = $extension;
+		$data['fileName'] = 'products_';
 		$data['columns'] = $columns;
 		$data['results'] = $results;
 		$data['redirectUrl'] = base_url() . 'backend/products';

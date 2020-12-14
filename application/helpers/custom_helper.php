@@ -111,17 +111,19 @@ if (!function_exists('convertJavascriptDateToPhpDate'))
 
 if (!function_exists('truncateNumber'))
 {
-	function truncateNumber( $number, $precision = 2) {
+	function truncateNumber( $number, $precision = 3) {
 		// Zero causes issues, and no need to truncate
-		if ( 0 == (int)$number ) {
+		if ( 0 == floatval($number) ) {
 			return $number;
 		}
+		
 		// Are we negative?
 		$negative = $number / abs($number);
 		// Cast the number to a positive to solve rounding
 		$number = abs($number);
 		// Calculate precision number for dividing / multiplying
 		$precision = pow(10, $precision);
+		
 		// Run the math, re-applying the negative value to ensure returns correctly negative / positive
 		return floor( $number * $precision ) / $precision * $negative;
 	}

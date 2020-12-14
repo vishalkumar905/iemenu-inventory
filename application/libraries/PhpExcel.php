@@ -103,7 +103,7 @@ class PhpExcel
 			$x++;
 		}
 
-		$filename = sprintf('master-report-%s', time());
+		$filename = sprintf('%s-%s', $data['fileName'], time());
 		$extension = strtolower($data['extension']);
 
 		if ($extension == 'csv')

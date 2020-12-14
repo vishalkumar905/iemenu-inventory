@@ -10,6 +10,8 @@ class Report extends Backend_Controller
 
 	public function __construct()
 	{
+
+
 		parent::__construct();
 
 		$this->exportUrl = base_url() . 'backend/products/export/';
@@ -347,15 +349,27 @@ class Report extends Backend_Controller
 			$data['consumptionAmt'] = $data['currentInventoryAmt'] - $data['closingInventoryAmt'];
 		}
 	
-		$data['currentInventoryQty'] = truncateNumber((floatval($productUnitConversion) > 0 ? $data['currentInventoryQty'] / $productUnitConversion : $data['currentInventoryQty']));
-		$data['openingInventoryQty'] = truncateNumber((floatval($productUnitConversion) > 0 ? $data['openingInventoryQty'] / $productUnitConversion : $data['openingInventoryQty']));
-		$data['purchaseInventoryQty'] = truncateNumber((floatval($productUnitConversion) > 0 ? $data['purchaseInventoryQty'] / $productUnitConversion : $data['purchaseInventoryQty']));
-		$data['closingInventoryQty'] = truncateNumber((floatval($productUnitConversion) > 0 ? $data['closingInventoryQty'] / $productUnitConversion : $data['closingInventoryQty']));
-		$data['wastageInventoryQty'] = truncateNumber((floatval($productUnitConversion) > 0 ? $data['wastageInventoryQty'] / $productUnitConversion : $data['wastageInventoryQty']));
-		$data['transferQtyIn'] = truncateNumber((floatval($productUnitConversion) > 0 ? $data['transferQtyIn'] / $productUnitConversion : $data['transferQtyIn']));
-		$data['transferQtyOut'] = truncateNumber((floatval($productUnitConversion) > 0 ? $data['transferQtyOut'] / $productUnitConversion : $data['transferQtyOut']));
-		$data['consumptionQty'] = truncateNumber((floatval($productUnitConversion) > 0 ? $data['consumptionQty'] / $productUnitConversion : $data['consumptionQty']));
+		$data['currentInventoryQty'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['currentInventoryQty'] / $productUnitConversion : $data['currentInventoryQty']));
+		$data['currentInventoryAmt'] = truncateNumber($data['currentInventoryAmt']);
+		
+		$data['openingInventoryQty'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['openingInventoryQty'] / $productUnitConversion : $data['openingInventoryQty']));
+		$data['openingInventoryAmt'] = truncateNumber($data['openingInventoryAmt']);
+		
+		$data['purchaseInventoryQty'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['purchaseInventoryQty'] / $productUnitConversion : $data['purchaseInventoryQty']));
+		$data['purchaseInventoryAmt'] = truncateNumber($data['purchaseInventoryAmt']);
 	
+		$data['closingInventoryQty'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['closingInventoryQty'] / $productUnitConversion : $data['closingInventoryQty']));
+		$data['closingInventoryAmt'] = truncateNumber($data['closingInventoryAmt']);
+		
+		$data['wastageInventoryQty'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['wastageInventoryQty'] / $productUnitConversion : $data['wastageInventoryQty']));
+		$data['wastageInventoryAmt'] = truncateNumber($data['wastageInventoryAmt']); 
+		
+		$data['transferQtyIn'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['transferQtyIn'] / $productUnitConversion : $data['transferQtyIn']));
+		$data['transferQtyOut'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['transferQtyOut'] / $productUnitConversion : $data['transferQtyOut']));
+		
+		$data['consumptionQty'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['consumptionQty'] / $productUnitConversion : $data['consumptionQty']));
+		$data['consumptionAmt'] = truncateNumber($data['consumptionAmt']); 
+
 		return $data;
 	}
 	
@@ -954,6 +968,7 @@ class Report extends Backend_Controller
 
 		$data['extension'] = $extension;
 		$data['columns'] = $columns;
+		$data['fileName'] = 'master-report';
 		$data['results'] = $results['data'];
 		$data['redirectUrl'] = base_url() . 'backend/products';
 
