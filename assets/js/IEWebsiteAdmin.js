@@ -2155,6 +2155,10 @@ IEWebsiteAdmin.RequestTransferPage = (function() {
 							window.location.reload();
 						}, 2000);
 					}
+					else
+					{
+						IEWebsite.Utils.Swal('', resp.message, 'error');
+					}
 				});
 			}
 			else

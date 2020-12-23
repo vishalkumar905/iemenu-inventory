@@ -6,6 +6,7 @@ class Home extends CI_Controller
 	{
 		parent::__construct();
 		$this->load->model('UserModel', 'user');
+		$this->load->model('IeMenuUserModel', 'iemenuuser');
 		header('Access-Control-Allow-Origin: *');
 		header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
 	}
@@ -14,6 +15,7 @@ class Home extends CI_Controller
 	{
 		if (isset($_SERVER['SERVER_NAME']) && $_SERVER['SERVER_NAME'] == 'localhost')
 		{
+			$customEmail = $this->input->get('email');
 			$email = 'test@gmail.com';
 
 			$condition = [
@@ -21,16 +23,23 @@ class Home extends CI_Controller
 			];
 			
 			$user = $this->user->getWhereCustom('*', $condition)->result_array();
+			
+			if (!empty($customEmail))
+			{
+				$user = $this->iemenuuser->getWhereCustom('*', ['email' => $customEmail])->result_array();
+			}
+
 			if (!empty($user))
 			{
 				$user = $user[0];
 				$loggedInData = [
 					'isLoggedIn' => true,
 					'loggedInUserData' => [
-						'userId' => $user['id'],
+						'userId' => $user['id'] ?? $user['rest_id'],
 						'email' => $user['email'],
-						'type' => $user['type'],
-						'name' => $user['firstName'],
+						'type' => $user['type'] ?? '',
+						'name' => $user['firstName'] ?? $user['name'],
+						'image' => base_url('assets/img/avatar.png'),
 					]
 				];
 				

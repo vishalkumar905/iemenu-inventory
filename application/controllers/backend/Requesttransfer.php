@@ -35,6 +35,12 @@ class Requesttransfer extends Backend_Controller
 		$data['indentRequestNumber'] = $this->getIndentRequestNumber();
 		$data['restaurantDropdownOptions'] = $this->iemenuuser->getRestaurantDropdownOptions();
 
+		// Remove your self from the list:
+		if (isset($data['restaurantDropdownOptions'][$this->loggedInUserId]))
+		{
+			unset($data['restaurantDropdownOptions'][$this->loggedInUserId]);
+		}
+
 		$data['flashMessage'] = $this->session->flashdata('flashMessage');
 		$data['flashMessageType'] = $this->session->flashdata('flashMessageType');
 
@@ -60,8 +66,10 @@ class Requesttransfer extends Backend_Controller
 			exit('No direct script access allowed');
 		}
 
-		$message = 'Request transfer submitted successfully.';
-		$outlet = $this->input->post('outlet');
+		$status = false;
+		$message = 'Something went wrong.';
+
+		$outlet = intval($this->input->post('outlet'));
 		$productData = $this->input->post('productData');
 		$requestTransferType = $this->input->post('requestTransferType');
 
@@ -74,50 +82,61 @@ class Requesttransfer extends Backend_Controller
 			$indentRequestNumber =  $this->getIndentRequestNumber();
 			$siUnits = $this->changeArrayIndexByColumnValue($this->siunit->get()->result_array(), 'id');
 
-			foreach($productData as $productId => $row)
-			{
-				if ($row['qty'] > 0)
-				{
-					$productQtyConversion = 0;
-					if (isset($siUnits[$row['unit']]))
-					{
-						$productQtyConversion = $siUnits[$row['unit']]['conversion'] * $row['qty'];
-					}
+			$outletOpeningStockNumber = $this->openingstock->getCurrentOpeningStockNumber($outlet);
 
-					if (empty($insertData))
+			if ($outletOpeningStockNumber > 0)
+			{
+				foreach($productData as $productId => $row)
+				{
+					if ($row['qty'] > 0)
 					{
-						$requestData['userIdFrom'] = $this->loggedInUserId;
-						$requestData['userIdTo'] = $outlet;
-						$requestData['requestType'] = $requestTransferType;
-						$requestData['userIdFromOpeningStockNumber'] = $openingStockNumber;
-						$requestData['userIdToOpeningStockNumber'] = $this->openingstock->getCurrentOpeningStockNumber($outlet);
-						$requestData['indentRequestNumber'] = $indentRequestNumber;
-		
-						$requestId = $this->request->insert($requestData);
+						$productQtyConversion = 0;
+						if (isset($siUnits[$row['unit']]))
+						{
+							$productQtyConversion = $siUnits[$row['unit']]['conversion'] * $row['qty'];
+						}
+	
+						if (empty($insertData))
+						{
+							$requestData['userIdFrom'] = $this->loggedInUserId;
+							$requestData['userIdTo'] = $outlet;
+							$requestData['requestType'] = $requestTransferType;
+							$requestData['userIdFromOpeningStockNumber'] = $openingStockNumber;
+							$requestData['userIdToOpeningStockNumber'] = $outletOpeningStockNumber;
+							$requestData['indentRequestNumber'] = $indentRequestNumber;
+			
+							$requestId = $this->request->insert($requestData);
+						}
+						
+						$insertData[] = [
+							'productId' => $productId,
+							'productSiUnitId' => $row['unit'],
+							'productUnitPrice' => floatval($row['unitPrice']),
+							'productQuantity' => $row['qty'],
+							'productQuantityConversion' => $productQtyConversion,
+							'productSubtotal' => $row['qty'] * floatval($row['unitPrice']),
+							'comment' => $row['comment'],
+							'openingStockNumber' => $openingStockNumber,
+							'createdOn' => time(),
+							'requestId' => $requestId
+						];
 					}
-					
-					$insertData[] = [
-						'productId' => $productId,
-						'productSiUnitId' => $row['unit'],
-						'productUnitPrice' => floatval($row['unitPrice']),
-						'productQuantity' => $row['qty'],
-						'productQuantityConversion' => $productQtyConversion,
-						'productSubtotal' => $row['qty'] * floatval($row['unitPrice']),
-						'comment' => $row['comment'],
-						'openingStockNumber' => $openingStockNumber,
-						'createdOn' => time(),
-						'requestId' => $requestId
-					];
+				}
+	
+				if (!empty($insertData))
+				{
+					$this->transferstock->insertBatch($insertData);
+					$status = true;
+					$message = 'Request transfer submitted successfully.';
 				}
 			}
-
-			if (!empty($insertData))
+			else
 			{
-				$this->transferstock->insertBatch($insertData);
+				$message = "The outlet that you have selected does not have any opening stock.";
 			}
 		}
 
-		responseJson(true, $message, []);
+		responseJson($status, $message, []);
 	}
 
 	public function fetchProducts()

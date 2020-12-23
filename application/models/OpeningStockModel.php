@@ -259,7 +259,7 @@ class OpeningStockModel extends CI_Model
 
 		if (!empty($query))
 		{
-			return $query[0]['openingStockNumber'];
+			return intval($query[0]['openingStockNumber']);
 		}
 
 		return 0;
