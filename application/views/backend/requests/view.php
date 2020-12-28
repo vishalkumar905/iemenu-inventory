@@ -14,7 +14,9 @@
 								<th>Product Code</th>
 								<th>Product Name</th>
 								<th>Unit</th>
-								<th>Qty</th>
+								<th>Requested Qty</th>
+								<th>Dispatched Qty</th>
+								<th>Received Qty</th>
 								<th>Comment</th>
 							</tr>
 						</thead>

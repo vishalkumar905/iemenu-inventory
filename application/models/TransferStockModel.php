@@ -80,11 +80,18 @@ class TransferStockModel extends CI_Model
 		}
 	}
 	
-	public function update($id, $data)
+	public function update($id, $data, $preventColumns = null)
 	{
 		$data['updatedOn'] = time();
+		
+		foreach($data as $column => $value)
+		{
+			$escape = isset($preventColumns[$column]) ? false : true;
+			$this->db->set($column, $value, false);
+		}
+
 		$this->db->where($this->primaryKey, $id);
-		$this->db->update($this->tableName, $data);
+		$this->db->update($this->tableName);
 		return true;
 	}
 

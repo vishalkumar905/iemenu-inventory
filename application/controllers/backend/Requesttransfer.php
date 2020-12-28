@@ -107,8 +107,9 @@ class Requesttransfer extends Backend_Controller
 			
 							$requestId = $this->request->insert($requestData);
 						}
-						
-						$insertData[] = [
+
+
+						$transferStock = [
 							'productId' => $productId,
 							'productSiUnitId' => $row['unit'],
 							'productUnitPrice' => floatval($row['unitPrice']),
@@ -119,7 +120,18 @@ class Requesttransfer extends Backend_Controller
 							'openingStockNumber' => $openingStockNumber,
 							'createdOn' => time(),
 							'requestId' => $requestId
-						];
+						]; 
+						
+						if ($requestTransferType == REPLENISHMENT_REQUEST)
+						{
+							$transferStock['requestedQty'] = $row['qty'];
+						}
+						else if ($requestTransferType == DIRECT_TRANSER_REQUEST)
+						{
+							$transferStock['dispatchedQty'] = $row['qty'];
+						}
+
+						$insertData[] = $transferStock;
 					}
 				}
 	

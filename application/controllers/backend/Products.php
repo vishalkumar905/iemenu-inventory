@@ -513,7 +513,7 @@ class Products extends Backend_Controller
 							$categoryNames = array_map('strtolower', $extractDataFromExcel['Category']);
 							$whereIn = ['field' => 'LCASE(categoryName)', 'values' => $categoryNames];
 
-							$categories = $this->category->getWhereCustom(['categoryName', 'id'], null, null, $whereIn)->result_array();
+							$categories = $this->category->getWhereCustom(['categoryName', 'id'], ['userId' => $this->loggedInUserId], null, $whereIn)->result_array();
 
 							if (!empty($categories))
 							{
@@ -570,7 +570,7 @@ class Products extends Backend_Controller
 								}
 							}
 	
-							if (!empty($productCode) && !empty($productName) && !empty($productType))
+							if (!empty($productCode) && !empty($productName) && !empty($productType) && $categoryId > 0)
 							{
 								$insertData = [
 									'productName' => $productName,
@@ -586,9 +586,10 @@ class Products extends Backend_Controller
 								];
 	
 								$this->product->insert($insertData);
+								
+								++$newData;
 							}
 
-							++$newData;
 						}
 
 					}

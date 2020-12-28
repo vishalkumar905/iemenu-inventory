@@ -2808,7 +2808,7 @@ IEWebsiteAdmin.ReplenishmentRequestPage = (function() {
 })();
 
 IEWebsiteAdmin.ViewRequestPage = (function() {
-	var searchBarText, pagination = {
+	var searchBarText, requestedProductData = {}, pagination = {
 		currentPage: 1,
 		totalPages: 0,
 		limit: 20,
@@ -2831,6 +2831,7 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 			
 			if (data.status == STATUS_ACCEPTED || data.status == STATUS_RECEIVED)
 			{
+				data.product = requestedProductData;
 				modalMessage = 'You have got everything.';
 			}
 			else if (data.status == STATUS_REJECTED)
@@ -2839,6 +2840,7 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 			}
 			else if (data.status == STATUS_DISPATCHED)
 			{
+				data.product = requestedProductData;
 				modalMessage = 'You have dispatched this request';
 			}
 
@@ -2949,25 +2951,78 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 	{
 		$("#viewRequestsTableBody").html('');
 
-		if (!_.isEmpty(data))
+		if (!_.isEmpty(data.products))
 		{
-			_.each(data, function(row) {
+			_.each(data.products, function(row) {
+
+				requestedProductData[row.productId] = {
+					productId: row.productId,
+					productQuantity: row.productQuantity,
+					dispatchedQty: row.dispatchedQty,
+					receivedQty: row.dispatchedQty,
+					transferStockId: row.transferStockId,
+				}
+
+				let dispatchData = row.dispatchedQty
+				if (data.showDispatchQtyField)
+				{
+					requestedProductData[row.productId].dispatchedQty = row.productQuantity; 
+					dispatchData = '<input type="number" data-type="dispatch" data-productid="'+ row.productId +'" style="width:60px" min="0" max="'+ row.productQuantity +'" value="'+ row.productQuantity +'" name="product[dispatch]['+ row.productId +']"/>';
+				}
+				
+				let receiveData = row.receivedQty
+				if (data.showReceiveQtyField)
+				{
+					receiveData = '<input type="number" data-type="receive" data-productid="'+ row.productId +'" style="width:60px" min="0" max="'+ row.dispatchedQty +'" value="'+ row.dispatchedQty +'" name="product[receive]['+ row.productId +']"/>';
+				}
 
 				let tableRow = '<tr>';
 					tableRow += '<td>'+ row.sn +'</td>';
 					tableRow += '<td>'+ row.productCode +'</td>';
 					tableRow += '<td>'+ row.productName +'</td>';
 					tableRow += '<td>'+ row.unitName +'</td>';
-					tableRow += '<td>'+ row.productQuantity +'</td>';
+					tableRow += '<td>'+ row.requestedQty +'</td>';
+					tableRow += '<td>'+ dispatchData +'</td>';
+					tableRow += '<td>'+ receiveData +'</td>';
 					tableRow += '<td>'+ row.comment +'</td>';
 					tableRow += '</tr>';
 				
 				$("#viewRequestsTableBody").append(tableRow);
 			});
+
+			$("input[name^='product[dispatch]']").change(updateProductQuantity);
+			$("input[name^='product[receive]']").change(updateProductQuantity);
 		}
 		else
 		{
 			$("#viewRequestsTableBody").append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
+		}
+	};
+
+	var updateProductQuantity = function() 
+	{
+		let productId = Number($(this).attr('data-productid'));
+		let inputType = $(this).attr('data-type');
+		let maxQty = parseFloat($(this).attr('max'));
+		let qty = parseFloat($(this).val());
+
+		if (!isNaN(productId) && productId > 0)
+		{
+			if (qty > maxQty)
+			{
+				$("input[name^='product[dispatch]["+ productId +"]']").val(maxQty);
+				$("input[name^='product[receive]["+ productId +"]']").val(maxQty);
+				return false;
+			}
+
+			if (inputType == 'dispatch')
+			{
+				requestedProductData[productId].dispatchedQty = qty;
+			}
+			else if (inputType == 'receive')
+			{
+				requestedProductData[productId].receivedQty = qty;
+			}
 		}
 	};
 

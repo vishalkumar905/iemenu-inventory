@@ -183,7 +183,12 @@ class RequestModel extends CI_Model
 			'su.unitName',
 			'ts.productId',
 			'ts.productQuantity',
+			'ts.requestedQty',
+			'ts.receivedQty',
+			'ts.disputeQty',
+			'ts.dispatchedQty',
 			'ts.comment',
+			'ts.id as transferStockId'
 		];
 
 		$condition = [

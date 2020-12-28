@@ -13,6 +13,7 @@ class Requests extends Backend_Controller
 		$this->load->model('RequestModel', 'request');
 		$this->load->model('ProductModel', 'product');
         $this->load->model('IeMenuUserModel', 'iemenuuser');
+        $this->load->model('TransferStockModel', 'transferstock');
 
         $this->pageTitle = 'Requests';
         
@@ -29,8 +30,7 @@ class Requests extends Backend_Controller
         $requestData = $this->request->getWhere($requestId)->row_array();
         if (empty($requestData))
         {
-            $redirectUrl = !empty($this->referrerUrl) ? $this->referrerUrl : base_url('backend/requesttransfer/manage');
-            redirect($redirectUrl);
+            redirect(base_url('backend/requesttransfer/manage'));
         }
 
         $data['showDisptachBtn'] = 0;
@@ -93,19 +93,16 @@ class Requests extends Backend_Controller
 
         if ($requestId > 0)
         {
-            $status = $this->input->post('status');
+            $requestStatus = $this->input->post('status');
             $requestStatuses = $this->getAllRequestStatus();
 
-            if (in_array($status, $requestStatuses))
+            if (in_array($requestStatus, $requestStatuses))
             {
-                $update = [
-                    'status' => $status
-                ];
-    
-                $status = true; 
-                if ($update['status'] > STATUS_PENDING)
+                if ($requestStatus > STATUS_PENDING)
                 {
-                    if ($update['status'] == STATUS_RECEIVED)
+                    $update['status'] = $requestStatus;
+
+                    if ($requestStatus == STATUS_RECEIVED)
                     {
                         $update['completedOn'] = time();
                     }
@@ -113,6 +110,42 @@ class Requests extends Backend_Controller
                     $this->request->update($requestId, $update);
                     $status = true;
                     $message = 'Request submitted.'; 
+                }
+
+                $products = $this->input->post('product');
+                if ($requestStatus == STATUS_DISPATCHED && !empty($products))
+                {
+                    foreach($products as $productInfo)
+                    {
+                        if (!empty($productInfo['transferStockId']))
+                        {
+                            $transferStockUpdateData['dispatchedQty'] = $productInfo['dispatchedQty'];
+                            $this->transferstock->update($productInfo['transferStockId'], $transferStockUpdateData);
+                        }
+                    }
+                }
+                
+                if ($requestStatus == STATUS_RECEIVED && !empty($products))
+                {
+                    foreach($products as $productInfo)
+                    {
+                        if (!empty($productInfo['transferStockId']))
+                        { 
+                            $transferStockUpdateData['receivedQty'] = $productInfo['receivedQty'];
+                            $transferStockUpdateData['productQuantityConversion'] = '(productQuantityConversion / productQuantity) * ' . $productInfo['receivedQty'];
+                            $transferStockUpdateData['productQuantity'] = $productInfo['receivedQty'];
+
+                            $disputeQty = $productInfo['dispatchedQty'] - $productInfo['receivedQty'];
+                            if ($disputeQty > 0)
+                            {
+                                $transferStockUpdateData['disputeQty'] = $disputeQty;
+                            }
+ 
+                            $this->transferstock->update($productInfo['transferStockId'], $transferStockUpdateData, ['productQuantityConversion']);
+
+                            log_message('error', $this->db->last_query());
+                        }
+                    }
                 }
             }
         }
@@ -136,6 +169,29 @@ class Requests extends Backend_Controller
             $limit = $this->input->get('limit') ?? 10;
             $page = $this->input->get('page') ?? 1;
             $offset = $limit * ($page - 1);
+
+            $showDispatchQtyField = $showReceiveQtyField = false;
+            $getRequest = $this->request->getWhere($requestId)->row_array();
+            
+            if (!empty($getRequest))
+            {
+                if ($getRequest['requestType'] == REPLENISHMENT_REQUEST)
+                {
+                    if ($getRequest['userIdTo'] == $this->loggedInUserId && $getRequest['status'] == STATUS_PENDING)
+                    {
+                        $showDispatchQtyField = true; 
+                    }
+
+                    if ($getRequest['userIdFrom'] == $this->loggedInUserId && $getRequest['status'] == STATUS_DISPATCHED)
+                    {
+                        $showReceiveQtyField = true;
+                    }
+                }
+                else if ($getRequest['requestType'] == DIRECT_TRANSER_REQUEST && $getRequest['userIdTo'] == $this->loggedInUserId && $getRequest['status'] == STATUS_PENDING)
+                {
+                    $showReceiveQtyField = true;
+                }
+            }
     
             $requestDetails = $this->request->getRequestDetails($requestId, $limit, $offset);
             $requestDetailsCount = $this->request->getRequestDetailsCount($requestId);
@@ -152,9 +208,15 @@ class Requests extends Backend_Controller
             foreach ($requestDetails as &$row)
             {
                 $row['sn'] = ++$counter;
+                $row['productQuantity'] = floatval($row['productQuantity']);
+                $row['requestedQty'] = floatval($row['requestedQty']);
+                $row['receivedQty'] = floatval($row['receivedQty']);
+                $row['dispatchedQty'] = floatval($row['dispatchedQty']);
             }
 
-            $responseJsonData['data'] = $requestDetails;
+            $responseJsonData['data']['showDispatchQtyField'] = $showDispatchQtyField;
+            $responseJsonData['data']['showReceiveQtyField'] = $showReceiveQtyField;
+            $responseJsonData['data']['products'] = $requestDetails;
         }
 
         responseJson(true, null, $responseJsonData);
