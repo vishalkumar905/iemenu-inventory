@@ -142,8 +142,6 @@ class Requests extends Backend_Controller
                             }
  
                             $this->transferstock->update($productInfo['transferStockId'], $transferStockUpdateData, ['productQuantityConversion']);
-
-                            log_message('error', $this->db->last_query());
                         }
                     }
                 }
