@@ -2386,7 +2386,12 @@ IEWebsiteAdmin.ManageRequestTransferPage = (function() {
 		currentPage: 1,
 		totalPages: 0,
 		limit: 20,
+	}, disputePagination = {
+		currentPage: 1,
+		totalPages: 0,
+		limit: 20,
 	}; 
+
 	var init = function()
 	{
 		if ($("#manageRequestTransferPageContainer").length <= 0)
@@ -2403,6 +2408,54 @@ IEWebsiteAdmin.ManageRequestTransferPage = (function() {
 
 		loadProducts('Incomming');
 		loadProducts('Outgoing');
+		loadDisputeRequests();
+	}
+
+	var loadDisputeRequests = function()
+	{
+		$("#manageDisputeTableBody").html('');
+		
+		let params = {
+			page: disputePagination.currentPage,
+			limit: Number(disputePagination.limit),
+		};
+
+		IEWebsite.Utils.ShowLoadingScreen();
+		IEWebsite.Utils.AjaxPost(FETCH_DISPUTE_REQUESTS, params, function(resp) {
+			IEWebsite.Utils.HideLoadingScreen();
+
+			if (resp.status)
+			{
+				$("#disputePagination").html(IEWebsiteAdmin.CustomPagination.Init(resp.response.pagination));
+
+				disputePagination.totalPages = resp.response.pagination.totalPages;
+
+				_.each(resp.response.data, function(row) {
+
+					let tableRow = '<tr>';
+						tableRow += '<td>'+ row.sn +'</td>';
+						tableRow += '<td>'+ row.transferFrom +'</td>';
+						tableRow += '<td>'+ row.transferTo +'</td>';
+						tableRow += '<td>'+ row.requestType +'</td>';
+						tableRow += '<td>'+ row.createdOn +'</td>';
+						tableRow += '<td>'+ row.action +'</td>';
+						tableRow += '</tr>';
+
+						$("#manageDisputeTableBody").append(tableRow);
+				});
+
+
+				$("[id^=paginate-]").click(function() {
+					let page = Number($(this).attr('page'));
+
+					if (page > 0)
+					{
+						disputePagination.currentPage = page;
+						loadDisputeRequests();
+					}
+				});
+			}
+		});
 	}
 
 	var loadProducts = function(type = null) {
@@ -2499,7 +2552,7 @@ IEWebsiteAdmin.ManageRequestTransferPage = (function() {
 			_.each(data, function(row) {
 
 				let tableRow = '<tr>';
-					tableRow += '<td>'+ row.indentRequestNumber +'</td>';
+					tableRow += '<td>'+ row.sn +'</td>';
 					tableRow += '<td>'+ row.transferFrom +'</td>';
 					tableRow += '<td>'+ row.transferTo +'</td>';
 					tableRow += '<td>'+ row.requestType +'</td>';
@@ -3010,8 +3063,8 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 		{
 			if (qty > maxQty)
 			{
-				$("input[name^='product[dispatch]["+ productId +"]']").val(maxQty);
-				$("input[name^='product[receive]["+ productId +"]']").val(maxQty);
+				$("input[name='product[dispatch]["+ productId +"]']").val(maxQty);
+				$("input[name='product[receive]["+ productId +"]']").val(maxQty);
 				return false;
 			}
 
@@ -3025,6 +3078,183 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 			}
 		}
 	};
+
+	return {
+		Init: init
+	}
+})();
+
+IEWebsiteAdmin.ManageDisputeRequestPage = (function() {
+	var disputeProductData = {}, pagination = {
+		currentPage: 1,
+		totalPages: 0,
+		limit: 20,
+	}, 
+	isDispatcher, isReceiver,
+	manageDisputeRequestTableBody = $("#manageDisputeRequestTableBody"), 
+	requestId = IEWebsite.Uri.Segment(4);
+
+	var init = function() {
+		if ($("#manageDisputeRequestPageContainer").length <= 0)
+		{
+			return;
+		};
+
+		loadProducts();
+	};
+
+	var loadProducts = function() {
+		let apiUrl = FETCH_DISPUTE_REQUEST_PRODUCTS + '/' + requestId;
+
+		manageDisputeRequestTableBody.html('');
+
+		IEWebsite.Utils.ShowLoadingScreen();
+		IEWebsite.Utils.AjaxGet(apiUrl, null, function(resp) {
+			IEWebsite.Utils.HideLoadingScreen();
+			if (resp.status)
+			{
+				showTableData(resp.response.data);
+			}
+		});
+	};
+
+	var showTableData = function(data) 
+	{
+		isReceiver = data.isReceiver;
+		isDispatcher = data.isDispatcher;
+		
+		if (isDispatcher)
+		{
+			$("#actionPerformedBy").html(": For Dispatcher");
+		}
+
+		if (isReceiver)
+		{
+			$("#actionPerformedBy").html(": For Receiver");
+		}
+
+
+		if (!_.isEmpty(data.products))
+		{
+			_.each(data.products, function(row) {
+				disputeProductData[row.productId] = {
+					productId : row.productId,
+					receiverMessage : '',
+					dispatcherMessage : '',
+					transferStockId: row.transferStockId,
+				};
+				
+				let tableRow = '<tr>';
+					tableRow += '<td>'+ row.sn +'</td>';
+					tableRow += '<td>'+ row.productCode +'</td>';
+					tableRow += '<td>'+ row.productName +'</td>';
+					tableRow += '<td>'+ row.unitName +'</td>';
+					tableRow += '<td>'+ row.requestedQty +'</td>';
+					tableRow += '<td>'+ row.dispatchedQty +'</td>';
+					tableRow += '<td>'+ row.receivedQty +'</td>';
+					tableRow += '<td>'+ row.disputeQty +'</td>';
+					tableRow += '<td id="dispatcherMessage-'+ row.productId +'">'+ row.dispatcherMessage +'</td>';
+					tableRow += '<td id="receiverMessage-'+ row.productId +'">'+ row.receiverMessage +'</td>';
+					tableRow += '<td style="white-space: nowrap">'+ row.action +'</td>';
+					tableRow += '</tr>';
+				
+				manageDisputeRequestTableBody.append(tableRow);
+			});
+
+			$("input[name^='product[comment]']").keyup(updateComment);
+			$("span[id^='acceptDispute-']").click(changeStatus);
+			$("span[id^='rejectDispute-']").click(changeStatus);
+		}
+		else
+		{
+			manageDisputeRequestTableBody.append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
+		}
+	};
+
+	var updateComment = function()
+	{
+		let productId = parseInt($(this).attr('productid'));
+		
+		if (!isNaN(productId) && productId > 0)
+		{
+			if (isDispatcher)
+			{
+				disputeProductData[productId].dispatcherMessage = String($(this).val());
+			}
+
+			if (isReceiver)
+			{
+				disputeProductData[productId].receiverMessage = String($(this).val());
+			}
+
+			$("input[name^='product[comment]["+ productId +"]']").removeClass('redBorder');
+		}
+	};
+
+	var changeStatus = function()
+	{
+		let statusType = $(this).attr('data-type');
+		let statusValue = parseInt($(this).attr('value'));
+		let productId = parseInt($(this).attr('productid'));
+
+		if (productId > 0 && (statusType == 'accept' || statusType == 'reject') && statusValue > 0)
+		{
+			let dispatcherMessage = disputeProductData[productId].dispatcherMessage;
+			let receiverMessage = disputeProductData[productId].receiverMessage;
+
+			if ((isDispatcher && dispatcherMessage == '') || (isReceiver && receiverMessage == ''))
+			{
+				$("input[name^='product[comment]["+ productId +"]']").addClass('redBorder');
+				return false;
+			}
+
+			let acceptedHtml = '<span class="btn btn-xs mt-0 mb-0 btn-success">Accepted</span>';
+			let rejectedHtml = '<span class="btn btn-xs mt-0 mb-0 btn-danger">Rejected</span>';
+
+			postData = {
+				productId,
+				isReceiver,
+				isDispatcher,
+				status: statusValue,
+				disputeData: disputeProductData[productId],
+			};
+
+			if (statusType == 'accept')
+			{
+				$(this).parent().html(acceptedHtml);
+			}
+			else if (statusType == 'reject')
+			{
+				$(this).parent().html(rejectedHtml);
+			}
+			else
+			{
+				// Something went wrong
+				alert('Something went wrong');
+				return false;
+			}
+
+			if (isDispatcher)
+			{
+				$("#dispatcherMessage-" + productId).html(dispatcherMessage);
+			}
+
+			if (isReceiver)
+			{
+				$("#receiverMessage-" + productId).html(receiverMessage);
+			}
+
+			saveDisputeMessageAndStatus(postData);
+		}
+	}
+
+	var saveDisputeMessageAndStatus = function(postData)
+	{
+		IEWebsite.Utils.ShowLoadingScreen();
+		IEWebsite.Utils.AjaxPost(SAVE_DISPUTE_STATUS, postData, function(resp) {
+			IEWebsite.Utils.HideLoadingScreen();
+		});
+	}
 
 	return {
 		Init: init
@@ -3125,4 +3355,5 @@ $(document).ready(function(){
 	IEWebsiteAdmin.RequestTransferPage.Init();
 	IEWebsiteAdmin.ManageRequestTransferPage.Init();
 	IEWebsiteAdmin.ViewRequestPage.Init();
+	IEWebsiteAdmin.ManageDisputeRequestPage.Init();
 });

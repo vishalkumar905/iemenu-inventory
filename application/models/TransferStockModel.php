@@ -84,10 +84,17 @@ class TransferStockModel extends CI_Model
 	{
 		$data['updatedOn'] = time();
 		
+		
 		foreach($data as $column => $value)
 		{
-			$escape = isset($preventColumns[$column]) ? false : true;
-			$this->db->set($column, $value, false);
+			$escape = true;
+			
+			if (!empty($preventColumns) && in_array($column, $preventColumns))
+			{
+				$escape = false;
+			}
+			
+			$this->db->set($column, $value, $escape);
 		}
 
 		$this->db->where($this->primaryKey, $id);

@@ -35,6 +35,9 @@ const SAVE_REPLENISMENT_REQUEST_PRODUCTS = BASE_URL + 'backend/replenishmentrequ
 const FETCH_REQUESTS = BASE_URL + 'backend/requests/fetchRequests';
 const FETCH_REQUEST_DETAILS = BASE_URL + 'backend/requests/fetchRequestDetail';
 const SAVE_REQUEST_STATUS = BASE_URL + 'backend/requests/processRequest';
+const FETCH_DISPUTE_REQUESTS = BASE_URL + 'backend/requests/fetchDisputeRequests';
+const FETCH_DISPUTE_REQUEST_PRODUCTS = BASE_URL + 'backend/requests/fetchDisputeRequestProducts';
+const SAVE_DISPUTE_STATUS = BASE_URL + 'backend/requests/saveDisputeMessageAndStatus';
 
 const EXPORT_REPORTS = BASE_URL + 'backend/report/export';
 
@@ -54,3 +57,9 @@ const STATUS_ACCEPTED = 1;
 const STATUS_RECEIVED = 1;
 const STATUS_REJECTED = 2;
 const STATUS_DISPATCHED = 3;
+
+const DISPATCHER_STATUS_ACCEPT = 1;
+const DISPATCHER_STATUS_REJECT = 2;
+
+const RECEIVER_STATUS_ACCEPT = 1;
+const RECEIVER_STATUS_REJECT = 2;

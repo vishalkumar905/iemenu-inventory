@@ -173,7 +173,41 @@ class RequestModel extends CI_Model
 		return $query;
 	}
 
+	public function getDisputeRequestProducts(int $requestId): array
+	{
+		$columns = [
+			'p.productCode',
+			'p.productName',
+			'su.unitName',
+			'ts.productId',
+			'ts.productQuantity',
+			'ts.requestedQty',
+			'ts.receivedQty',
+			'ts.disputeQty',
+			'ts.dispatchedQty',
+			'ts.comment',
+			'ts.dispatcherStatus',
+			'ts.receiverStatus',
+			'ts.dispatcherMessage',
+			'ts.receiverMessage',
+			'ts.id as transferStockId'
+		];
 
+		$condition = [
+			'ts.requestId' => $requestId,
+			'ts.disputeQty IS NOT NULL' => NULL,
+		];
+
+		$transferStockQuery = $this->db->select($columns)->from(
+			'ie_transfer_stocks ts'
+		)->join(
+			'ie_products p', 'p.id = ts.productId', 'INNER'
+		)->join(
+			'ie_si_units su', 'su.id = ts.productSiUnitId', 'INNER'
+		)->where($condition);
+
+		return $transferStockQuery->get()->result_array();
+	}
 
 	public function getRequestDetails(int $requestId, int $limit = null, int $offset = null): array
 	{
@@ -226,6 +260,48 @@ class RequestModel extends CI_Model
 		)->where($condition);
 
 		return $transferStockQuery->get()->result_array();
+	}
+
+	public function getDisputeRequests(int $limit, int $offset)
+	{
+		$disputeQuery = $this->getDisputeRequestQuery();
+
+		return $disputeQuery->select([
+			'r.userIdFrom',
+			'r.userIdTo',
+			'r.requestType',
+			'r.status',
+			'r.createdOn',
+			'r.id as requestId',
+		])->limit($limit, $offset)->get()->result_array();
+	}
+
+	public function getDisputeRequestQuery()
+	{
+		return $this->db->from(
+			'ie_requests r'
+		)->join(
+			'ie_transfer_stocks ts', 'ts.requestId = r.id', 'left'
+		)->where([
+			'ts.disputeQty IS NOT NULL' => NULL,
+			'r.status' => STATUS_RECEIVED,
+			sprintf('(r.userIdFrom = %s OR r.userIdTo = %s)', $this->loggedInUserId, $this->loggedInUserId) => NULL,
+		])->group_by('r.id');
+
+		// If you only want to show only to dispatcher use this case 
+		// sprintf("CASE WHEN r.requestType = %s THEN r.userIdFrom = %s WHEN r.requestType = %s THEN r.userIdTo = %s  ELSE r.userIdTo = 0 END", DIRECT_TRANSER_REQUEST, $this->loggedInUserId, REPLENISHMENT_REQUEST, $this->loggedInUserId), null, false
+	}
+	
+	public function getDisputeRequestsCount(): int
+	{
+		$disputeQuery = $this->getDisputeRequestQuery()->select('COUNT(r.id) as totalCount')->get()->row_array();
+
+		if (!empty($disputeQuery))
+		{
+			return $disputeQuery['totalCount'] ?? 0;
+		}
+
+		return 0;
 	}
 }
 

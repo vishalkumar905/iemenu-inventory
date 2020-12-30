@@ -1,5 +1,5 @@
 <div class="row" id="viewRequestsPageContainer">
-    <div class="col-md-12" id="viewRequestsContainer">
+    <div class="col-md-12">
 		<?=showAlertMessage($flashMessage, $flashMessageType)?>
         <div class="card mt-0">
 			<div class="card-header">

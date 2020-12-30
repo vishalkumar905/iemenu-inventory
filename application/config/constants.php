@@ -147,3 +147,9 @@ define('RECEIVER', 2);
 
 define('OUTGOING', 1);
 define('INCOMMING', 2);
+
+define('DISPATCHER_STATUS_ACCEPT', 1);
+define('DISPATCHER_STATUS_REJECT', 2);
+
+define('RECEIVER_STATUS_ACCEPT', 1);
+define('RECEIVER_STATUS_REJECT', 2);
