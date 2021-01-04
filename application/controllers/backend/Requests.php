@@ -113,7 +113,55 @@ class Requests extends Backend_Controller
 			$requestStatuses = $this->getAllRequestStatus();
 
 			if (in_array($requestStatus, $requestStatuses))
-			{
+			{		
+				$products = $this->input->post('product');
+				$isDispatcher = $this->input->post('isDispatcher') == 'true' ? 1 : 0;
+				$isReceiver = $this->input->post('isReceiver') == 'true' ? 1 : 0;
+
+				if ($requestStatus == STATUS_DISPATCHED && !empty($products))
+				{
+					foreach($products as $productInfo)
+					{
+						if (!empty($productInfo['transferStockId']))
+						{
+							$transferStockUpdateData['dispatchedQty'] = $productInfo['dispatchedQty'];
+							
+							if (!empty($productInfo['comment']) && $isDispatcher)
+							{
+								$transferStockUpdateData['dispatcherMessage'] = $productInfo['comment'];
+							}
+
+							$this->transferstock->update($productInfo['transferStockId'], $transferStockUpdateData);
+						}
+					}
+				}
+
+				if ($requestStatus == STATUS_RECEIVED && !empty($products))
+				{
+					foreach($products as $productInfo)
+					{
+						if (!empty($productInfo['transferStockId']))
+						{ 
+							$transferStockUpdateData['receivedQty'] = $productInfo['receivedQty'];
+							$transferStockUpdateData['productQuantityConversion'] = '(productQuantityConversion / productQuantity) * ' . $productInfo['receivedQty'];
+							$transferStockUpdateData['productQuantity'] = $productInfo['receivedQty'];
+
+							if (!empty($productInfo['comment']) && $isReceiver)
+							{
+								$transferStockUpdateData['receiverMessage'] = $productInfo['comment'];
+							}
+
+							$disputeQty = $productInfo['dispatchedQty'] - $productInfo['receivedQty'];
+							if ($disputeQty > 0)
+							{
+								$transferStockUpdateData['disputeQty'] = $disputeQty;
+							}
+ 
+							$this->transferstock->update($productInfo['transferStockId'], $transferStockUpdateData, ['receiverCommentConversion']);
+						}
+					}
+				}
+
 				if ($requestStatus > STATUS_PENDING)
 				{
 					$update['status'] = $requestStatus;
@@ -126,40 +174,6 @@ class Requests extends Backend_Controller
 					$this->request->update($requestId, $update);
 					$status = true;
 					$message = 'Request submitted.'; 
-				}
-
-				$products = $this->input->post('product');
-				if ($requestStatus == STATUS_DISPATCHED && !empty($products))
-				{
-					foreach($products as $productInfo)
-					{
-						if (!empty($productInfo['transferStockId']))
-						{
-							$transferStockUpdateData['dispatchedQty'] = $productInfo['dispatchedQty'];
-							$this->transferstock->update($productInfo['transferStockId'], $transferStockUpdateData);
-						}
-					}
-				}
-				
-				if ($requestStatus == STATUS_RECEIVED && !empty($products))
-				{
-					foreach($products as $productInfo)
-					{
-						if (!empty($productInfo['transferStockId']))
-						{ 
-							$transferStockUpdateData['receivedQty'] = $productInfo['receivedQty'];
-							$transferStockUpdateData['productQuantityConversion'] = '(productQuantityConversion / productQuantity) * ' . $productInfo['receivedQty'];
-							$transferStockUpdateData['productQuantity'] = $productInfo['receivedQty'];
-
-							$disputeQty = $productInfo['dispatchedQty'] - $productInfo['receivedQty'];
-							if ($disputeQty > 0)
-							{
-								$transferStockUpdateData['disputeQty'] = $disputeQty;
-							}
- 
-							$this->transferstock->update($productInfo['transferStockId'], $transferStockUpdateData, ['productQuantityConversion']);
-						}
-					}
 				}
 			}
 		}
@@ -187,6 +201,11 @@ class Requests extends Backend_Controller
 			$showDispatchQtyField = $showReceiveQtyField = false;
 			$getRequest = $this->request->getWhere($requestId)->row_array();
 			
+			$getDisptacherAndReceiverInfo = $this->getDisptacherAndReceiver($getRequest);
+
+			$isReceiver = $getDisptacherAndReceiverInfo['isReceiver'];
+			$isDispatcher = $getDisptacherAndReceiverInfo['isDispatcher'];
+
 			if (!empty($getRequest))
 			{
 				if ($getRequest['requestType'] == REPLENISHMENT_REQUEST)
@@ -226,10 +245,25 @@ class Requests extends Backend_Controller
 				$row['requestedQty'] = floatval($row['requestedQty']);
 				$row['receivedQty'] = floatval($row['receivedQty']);
 				$row['dispatchedQty'] = floatval($row['dispatchedQty']);
+
+				if ($isDispatcher && !empty($row['dispatcherMessage']))
+				{
+					$row['comment'] = $row['dispatcherMessage'];
+				}
+				else if ($isReceiver && !empty($row['receiverMessage']))
+				{
+					$row['comment'] = $row['receiverMessage'];
+				}
+				else if ($getRequest['status'] != STATUS_RECEIVED)
+				{
+					$row['comment'] = sprintf('<input type="text" data-productid="%s" name="product[comment][%s]" value="" />', $row['productId'], $row['productId']);
+				}
 			}
 
 			$responseJsonData['data']['showDispatchQtyField'] = $showDispatchQtyField;
 			$responseJsonData['data']['showReceiveQtyField'] = $showReceiveQtyField;
+			$responseJsonData['data']['isReceiver'] = $isReceiver;
+			$responseJsonData['data']['isDispatcher'] = $isDispatcher;
 			$responseJsonData['data']['products'] = $requestDetails;
 		}
 
@@ -457,10 +491,17 @@ class Requests extends Backend_Controller
 					{
 						if (is_null($row['receiverStatus']))
 						{
-							$acceptStatus = RECEIVER_STATUS_ACCEPT;
-							$rejectStatus = RECEIVER_STATUS_REJECT;
-
-							$showAcceptRejectBtn = true;
+							if ($row['dispatcherStatus'] == DISPATCHER_STATUS_ACCEPT)
+							{
+								$action = '<span class="btn btn-xs mt-0 mb-0 btn-rose">No Action Required</span>';
+							}
+							else
+							{
+								$acceptStatus = RECEIVER_STATUS_ACCEPT;
+								$rejectStatus = RECEIVER_STATUS_REJECT;
+	
+								$showAcceptRejectBtn = true;
+							}
 						}
 						else
 						{
@@ -515,7 +556,7 @@ class Requests extends Backend_Controller
 		$isDispatcher = $this->input->post('isDispatcher') == 'true' ? 1 : 0;
 		$isReceiver = $this->input->post('isReceiver') == 'true' ? 1 : 0;
 
-		if (!empty($disputeData) && ($status == 1 || $status == 2))
+		if (!empty($disputeData) && ($status == STATUS_ACCEPTED || $status == STATUS_REJECTED))
 		{
 			$updateData = [];
 
@@ -528,12 +569,59 @@ class Requests extends Backend_Controller
 			{
 				$updateData['receiverMessage'] = $disputeData['receiverMessage'];
 				$updateData['receiverStatus'] = $status;
+				
+				$donotAddQuotes = [];
+
+				if ($status == STATUS_ACCEPTED)
+				{
+					$updateData['productQuantity'] = 'receivedQty + disputeQty';
+					$updateData['receivedQty'] = 'receivedQty + disputeQty';
+					$updateData['disputeQty'] = NULL;
+
+					$donotAddQuotes = ['productQuantity', 'receivedQty'];
+				}
 			}
 
-			$this->transferstock->update($disputeData['transferStockId'], $updateData);
+			$this->transferstock->update($disputeData['transferStockId'], $updateData, $donotAddQuotes);
 		}
 
 		responseJson(true, null, []);
+	}
+
+	private function getDisptacherAndReceiver($getRequest) 
+	{
+		$isDispatcher = $isReceiver = false;
+
+		if (!empty($getRequest))
+		{
+			if ($getRequest['requestType'] == DIRECT_TRANSER_REQUEST)
+			{
+				if ($getRequest['userIdFrom'] == $this->loggedInUserId)
+				{
+					$isDispatcher = true;
+				}
+				else if ($getRequest['userIdTo'] == $this->loggedInUserId)
+				{
+					$isReceiver = true;
+				}
+			}
+			else if ($getRequest['requestType'] == REPLENISHMENT_REQUEST)
+			{
+				if ($getRequest['userIdFrom'] == $this->loggedInUserId)
+				{
+					$isReceiver = true;
+				}
+				else if ($getRequest['userIdTo'] == $this->loggedInUserId)
+				{
+					$isDispatcher = true;
+				}
+			}
+		}
+
+		return [
+			'isDispatcher' => $isDispatcher,
+			'isReceiver' => $isReceiver,
+		];
 	}
 }
 

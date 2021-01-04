@@ -217,6 +217,8 @@ class RequestModel extends CI_Model
 			'su.unitName',
 			'ts.productId',
 			'ts.productQuantity',
+			'ts.receiverMessage',
+			'ts.dispatcherMessage',
 			'ts.requestedQty',
 			'ts.receivedQty',
 			'ts.disputeQty',
@@ -286,7 +288,7 @@ class RequestModel extends CI_Model
 			'ts.disputeQty IS NOT NULL' => NULL,
 			'r.status' => STATUS_RECEIVED,
 			sprintf('(r.userIdFrom = %s OR r.userIdTo = %s)', $this->loggedInUserId, $this->loggedInUserId) => NULL,
-		])->group_by('r.id');
+		])->group_by('r.id')->order_by('r.createdOn', 'desc');
 
 		// If you only want to show only to dispatcher use this case 
 		// sprintf("CASE WHEN r.requestType = %s THEN r.userIdFrom = %s WHEN r.requestType = %s THEN r.userIdTo = %s  ELSE r.userIdTo = 0 END", DIRECT_TRANSER_REQUEST, $this->loggedInUserId, REPLENISHMENT_REQUEST, $this->loggedInUserId), null, false

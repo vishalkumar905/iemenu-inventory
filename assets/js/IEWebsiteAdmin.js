@@ -2872,7 +2872,7 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 		currentPage: 1,
 		totalPages: 0,
 		limit: 20,
-	}, requestId = IEWebsite.Uri.Segment(4);
+	}, isReceiver, isDispatcher, requestId = IEWebsite.Uri.Segment(4);
 
 	var init = function() {
 		if ($("#viewRequestsPageContainer").length <= 0)
@@ -2884,6 +2884,13 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 
 		$(".acceptRequest").click(function() {
 			
+			let isError = highlightInputField();
+			if (isError)
+			{
+				alert('Please add comment for lesser quantity products.');
+				return false;
+			}
+
 			let modalMessage = '';
 			let data = {
 				status: $(this).val()
@@ -2904,10 +2911,13 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 				modalMessage = 'You have dispatched this request';
 			}
 
+			data.isDispatcher = isDispatcher;
+			data.isReceiver = isReceiver;
+
 			if (!_.isEmpty(data))
 			{
 				swal({
-					title: 'Are you sure?',
+					title: 'Are you sure ?',
 					text: modalMessage,
 					type: 'warning',
 					showCancelButton: true,
@@ -3011,6 +3021,9 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 	{
 		$("#viewRequestsTableBody").html('');
 
+		isReceiver = data.isReceiver;
+		isDispatcher = data.isDispatcher;
+
 		if (!_.isEmpty(data.products))
 		{
 			_.each(data.products, function(row) {
@@ -3021,6 +3034,7 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 					dispatchedQty: row.dispatchedQty,
 					receivedQty: row.dispatchedQty,
 					transferStockId: row.transferStockId,
+					comment: '',
 				}
 
 				let dispatchData = row.dispatchedQty
@@ -3052,6 +3066,7 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 
 			$("input[name^='product[dispatch]']").change(updateProductQuantity);
 			$("input[name^='product[receive]']").change(updateProductQuantity);
+			$("input[name^='product[comment]']").keyup(updateProductComment);
 		}
 		else
 		{
@@ -3083,7 +3098,63 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 			{
 				requestedProductData[productId].receivedQty = qty;
 			}
+
+			highlightInputField(productId);
 		}
+	};
+
+	var updateProductComment = function() 
+	{
+		let productId = Number($(this).attr('data-productid'));
+		let comment = $.trim($(this).val());
+
+		if (!isNaN(productId) && productId > 0)
+		{
+			requestedProductData[productId].comment = comment;
+			highlightInputField(productId);
+		}
+	};
+
+	var checkQtyDifference = function(productId = null)
+	{
+		if (!_.isEmpty(requestedProductData[productId]))
+		{
+			if ((requestedProductData[productId].dispatchedQty > requestedProductData[productId].receivedQty) && requestedProductData[productId].comment == '')
+			{
+				return requestedProductData[productId];
+			}
+		}
+		else if (!_.isEmpty(requestedProductData))
+		{
+			for (index in requestedProductData)
+			{
+				if ((requestedProductData[index].dispatchedQty > requestedProductData[index].receivedQty) && requestedProductData[index].comment == '')
+				{
+					return requestedProductData[index];
+				}
+			}
+		}
+
+
+		return {};
+	};
+
+	var highlightInputField = function(productId = null) 
+	{
+		let hasError = false;
+		let getDifference = checkQtyDifference(productId);
+		
+		if (!_.isEmpty(getDifference))
+		{
+			hasError = true;
+			$("input[name='product[comment]["+ getDifference.productId +"]']").addClass('redBorder');
+		}
+		else if (productId)
+		{
+			$("input[name='product[comment]["+ productId +"]']").removeClass('redBorder');
+		}
+
+		return hasError;
 	};
 
 	return {
@@ -3146,8 +3217,8 @@ IEWebsiteAdmin.ManageDisputeRequestPage = (function() {
 			_.each(data.products, function(row) {
 				disputeProductData[row.productId] = {
 					productId : row.productId,
-					receiverMessage : '',
-					dispatcherMessage : '',
+					receiverMessage : row.receiverMessage,
+					dispatcherMessage : row.dispatcherMessage,
 					transferStockId: row.transferStockId,
 				};
 				
