@@ -2437,19 +2437,26 @@ IEWebsiteAdmin.ManageRequestTransferPage = (function() {
 
 				disputePagination.totalPages = resp.response.pagination.totalPages;
 
-				_.each(resp.response.data, function(row) {
-
-					let tableRow = '<tr>';
-						tableRow += '<td>'+ row.sn +'</td>';
-						tableRow += '<td>'+ row.transferFrom +'</td>';
-						tableRow += '<td>'+ row.transferTo +'</td>';
-						tableRow += '<td>'+ row.requestType +'</td>';
-						tableRow += '<td>'+ row.createdOn +'</td>';
-						tableRow += '<td>'+ row.action +'</td>';
-						tableRow += '</tr>';
-
-						$("#manageDisputeTableBody").append(tableRow);
-				});
+				if (!_.isEmpty(resp.response.data))
+				{
+					_.each(resp.response.data, function(row) {
+	
+						let tableRow = '<tr>';
+							tableRow += '<td>'+ row.sn +'</td>';
+							tableRow += '<td>'+ row.transferFrom +'</td>';
+							tableRow += '<td>'+ row.transferTo +'</td>';
+							tableRow += '<td>'+ row.requestType +'</td>';
+							tableRow += '<td>'+ row.createdOn +'</td>';
+							tableRow += '<td>'+ row.action +'</td>';
+							tableRow += '</tr>';
+	
+							$("#manageDisputeTableBody").append(tableRow);
+					});
+				}
+				else 
+				{
+					$("#manageDisputeTableBody").append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
+				}
 
 
 				$("[id^=paginate-]").click(function() {
