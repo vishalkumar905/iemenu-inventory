@@ -26,7 +26,6 @@
 	</div>
 </div>
 
------------------while
 
 <div class="row" id="manageRequestTransferPageContainer">
     <div class="col-md-12" id="manageRequestTransferContainer">

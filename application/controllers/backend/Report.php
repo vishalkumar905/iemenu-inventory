@@ -77,8 +77,16 @@ class Report extends Backend_Controller
 			
 			if ($this->openingStockNumber > 0)
 			{
+				$openingStockNumber = $this->getOpeningStockNumberInDateRange($startDateTimestamp, $endDateTimestamp);
+				if ($openingStockNumber > 0 && $this->openingStockNumber != $openingStockNumber)
+				{
+					$endDateTimestamp = $endDateTimestamp + (TOTAL_SECONDS_IN_ONE_DAY - 1);			
+					$this->openingStockNumber = $openingStockNumber;	
+				}
+				
 				$timestamp['startDateTimestamp'] = $startDateTimestamp;
 				$timestamp['endDateTimestamp'] = $endDateTimestamp;
+
 				$results = $this->customQuery($timestamp, $categoryIds);
 
 				if (!empty($results))
@@ -973,6 +981,21 @@ class Report extends Backend_Controller
 		$data['redirectUrl'] = base_url() . 'backend/products';
 
 		$this->phpexcel->export($data);
+	}
+
+	public function getOpeningStockNumberInDateRange(int $startDate, int $endDate): int
+	{
+		$condition = [
+			'userId' => $this->loggedInUserId,
+			sprintf("createdOn <= %s", $endDate) => NULL
+		];
+
+		$result = $this->openingstock->getWhereCustom('openingStockNumber', $condition, [
+			'field' => 'id',
+			'type' => 'desc',
+		])->row_array();
+		
+		return !empty($result) ? $result['openingStockNumber'] : 0;
 	}
 }
 

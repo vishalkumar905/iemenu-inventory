@@ -1577,12 +1577,14 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 			_.each(data, function(row) {
 				let qty = '',
 					unitPrice = '',
+					unit = '',
 					comment = '',
 					subTotal = 0;
 
 				if (directOrdersData[row.productId])
 				{
 					qty = directOrdersData[row.productId].qty,
+					unit = directOrdersData[row.productId].unit,
 					unitPrice = directOrdersData[row.productId].unitPrice,
 					comment = directOrdersData[row.productId].comment,
 					subTotal = qty * unitPrice;
@@ -1607,8 +1609,13 @@ IEWebsiteAdmin.DirectOrderPage = (function() {
 					tableRow += '<td>'+ subTotalInputHtml +'</td>';
 					tableRow += '<td>'+ commentInputHtml +'</td>';
 					tableRow += '</tr>';
-					
+				
 				$("#directOrderTableBody").append(tableRow);
+
+				if (unit)
+				{
+					$("select[name='product[unit]["+ row.productId +"]']").val(unit);
+				}
 			});
 
 			$("span[id^=removeRow-]").click(function(){
