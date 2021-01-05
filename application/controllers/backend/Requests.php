@@ -157,7 +157,7 @@ class Requests extends Backend_Controller
 								$transferStockUpdateData['disputeQty'] = $disputeQty;
 							}
  
-							$this->transferstock->update($productInfo['transferStockId'], $transferStockUpdateData, ['receiverCommentConversion']);
+							$this->transferstock->update($productInfo['transferStockId'], $transferStockUpdateData, ['productQuantityConversion']);
 						}
 					}
 				}
@@ -559,6 +559,7 @@ class Requests extends Backend_Controller
 		if (!empty($disputeData) && ($status == STATUS_ACCEPTED || $status == STATUS_REJECTED))
 		{
 			$updateData = [];
+			$donotAddQuotes = [];
 
 			if ($isDispatcher)
 			{
@@ -570,15 +571,15 @@ class Requests extends Backend_Controller
 				$updateData['receiverMessage'] = $disputeData['receiverMessage'];
 				$updateData['receiverStatus'] = $status;
 				
-				$donotAddQuotes = [];
 
 				if ($status == STATUS_ACCEPTED)
 				{
+					$updateData['productQuantityConversion'] = '(productQuantityConversion / productQuantity) * (receivedQty + disputeQty)';
 					$updateData['productQuantity'] = 'receivedQty + disputeQty';
 					$updateData['receivedQty'] = 'receivedQty + disputeQty';
 					$updateData['disputeQty'] = NULL;
 
-					$donotAddQuotes = ['productQuantity', 'receivedQty'];
+					$donotAddQuotes = ['productQuantity', 'receivedQty', 'productQuantityConversion'];
 				}
 			}
 

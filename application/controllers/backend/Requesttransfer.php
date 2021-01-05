@@ -50,7 +50,7 @@ class Requesttransfer extends Backend_Controller
 	public function manage()
 	{
 		$data['submitBtn']  = 'Save';
-		$data['headTitle']  = 'Manage Requests';
+		$data['headTitle']  = $this->pageTitle = $this->navTitle = 'Manage Requests';
 
 		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
 		$data['viewFile'] = 'backend/request-transfer/manage';
