@@ -147,7 +147,6 @@ class Report extends Backend_Controller
 		$closingStocksWithProduct = $this->changeArrayIndexByColumnValue($closingStocks, 'productId');
 		$purchaseStocksWithProduct = $this->changeArrayIndexByColumnValue($purchaseStocks, 'productId');
 
-
 		$combinedStocks = [
 			'purchaseStocksWithProduct' => $purchaseStocksWithProduct, 
 			'closingStocksWithProduct' => $closingStocksWithProduct, 
@@ -324,11 +323,11 @@ class Report extends Backend_Controller
 	
 		$data['openingInventoryQty'] = ($data['openingInventoryQty'] + $previousStockInQty) - $previousStockOutQty;
 	
-		if (!empty($previousWastageStocksWithProduct[$productId]))
+		// If we have closing then don't subtract the wastage
+		if (empty($previousClosingStockWithProduct) && !empty($previousWastageStocksWithProduct[$productId]))
 		{
 			$data['openingInventoryQty'] = $data['openingInventoryQty'] - $previousWastageStocksWithProduct[$productId]['productQuantityConversion'];
 		}
-	
 	
 		// Check do we have any purchase stock in the specified date range
 		if (isset($purchaseStocksWithProduct[$productId]))
