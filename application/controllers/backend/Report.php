@@ -178,7 +178,20 @@ class Report extends Backend_Controller
 			{
 				if (!isset($openingStockProductIds[$purchaseStock['productId']]))
 				{
+					$openingStockProductIds[$purchaseStock['productId']] = $purchaseStock['productId'];
 					$results[] = $this->getItemInventoryStock($purchaseStock, 'purchase', $combinedStocks);
+				}
+			}
+		}
+
+		if (!empty($previousPurchaseStocks))
+		{
+			foreach($previousPurchaseStocks as $previousPurchaseStock)
+			{
+				if (!isset($openingStockProductIds[$previousPurchaseStock['productId']]))
+				{
+					$openingStockProductIds[$previousPurchaseStock['productId']] = $previousPurchaseStock['productId'];
+					$results[] = $this->getItemInventoryStock($previousPurchaseStock, 'purchase', $combinedStocks);
 				}
 			}
 		}
