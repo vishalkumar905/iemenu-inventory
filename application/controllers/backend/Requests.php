@@ -124,6 +124,7 @@ class Requests extends Backend_Controller
 					{
 						if (!empty($productInfo['transferStockId']))
 						{
+							$transferStockUpdateData = [];
 							$transferStockUpdateData['dispatchedQty'] = $productInfo['dispatchedQty'];
 							
 							if (!empty($productInfo['comment']) && $isDispatcher)
@@ -142,6 +143,7 @@ class Requests extends Backend_Controller
 					{
 						if (!empty($productInfo['transferStockId']))
 						{ 
+							$transferStockUpdateData = [];
 							$transferStockUpdateData['receivedQty'] = $productInfo['receivedQty'];
 							$transferStockUpdateData['productQuantityConversion'] = '(productQuantityConversion / productQuantity) * ' . $productInfo['receivedQty'];
 							$transferStockUpdateData['productQuantity'] = $productInfo['receivedQty'];

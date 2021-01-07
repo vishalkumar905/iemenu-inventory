@@ -3039,6 +3039,7 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 					productId: row.productId,
 					productQuantity: row.productQuantity,
 					dispatchedQty: row.dispatchedQty,
+					requestedQty: row.requestedQty,
 					receivedQty: row.dispatchedQty,
 					transferStockId: row.transferStockId,
 					comment: '',
@@ -3126,7 +3127,12 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 	{
 		if (!_.isEmpty(requestedProductData[productId]))
 		{
-			if ((requestedProductData[productId].dispatchedQty > requestedProductData[productId].receivedQty) && requestedProductData[productId].comment == '')
+			if (isReceiver && (requestedProductData[productId].dispatchedQty > requestedProductData[productId].receivedQty) && requestedProductData[productId].comment == '')
+			{
+				return requestedProductData[productId];
+			}
+
+			if (isDispatcher && (requestedProductData[productId].dispatchedQty < requestedProductData[productId].requestedQty) && requestedProductData[productId].comment == '')
 			{
 				return requestedProductData[productId];
 			}
@@ -3135,7 +3141,12 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 		{
 			for (index in requestedProductData)
 			{
-				if ((requestedProductData[index].dispatchedQty > requestedProductData[index].receivedQty) && requestedProductData[index].comment == '')
+				if (isReceiver && (requestedProductData[index].dispatchedQty > requestedProductData[index].receivedQty) && requestedProductData[index].comment == '')
+				{
+					return requestedProductData[index];
+				}
+
+				if (isDispatcher && (requestedProductData[index].dispatchedQty < requestedProductData[index].requestedQty) && requestedProductData[index].comment == '')
 				{
 					return requestedProductData[index];
 				}
@@ -3151,6 +3162,8 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 		let hasError = false;
 		let getDifference = checkQtyDifference(productId);
 		
+		console.log(getDifference);
+
 		if (!_.isEmpty(getDifference))
 		{
 			hasError = true;
