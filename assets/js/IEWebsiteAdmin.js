@@ -1872,25 +1872,28 @@ IEWebsiteAdmin.OpeningInventoryReport = (function() {
 
 		$("[name='exportData']").click(function() {
 			let exportType = String($(this).val()).toLowerCase();
-			if (!_.isEmpty(EXPORT_REPORTS) && exportType == 'csv' || exportType == 'excel')
+			if (!_.isEmpty(EXPORT_OPENING_STOCK_REPORT) && exportType == 'csv' || exportType == 'excel')
 			{
-				window.location.href = EXPORT_REPORTS + '/' + exportType;
+				window.location.href = EXPORT_OPENING_STOCK_REPORT + '/' + exportType;
 			}
 		});
+
+		loadProducts();
 	};
 	
 	var loadProducts = function() {
 		let search = $("#searchBar").val();
 		let startDate = $("#startDate").val();
-		let endDate = $("#endDate").val();
+		let openingStockNumber = $("#openingStockNumber").val();
 		let category = $("#category").val();
 
-		if (startDate && category)
+		if (true)
 		{
 			let postData = {
-				startDate,
+				// startDate,
 				category,
-				search
+				search,
+				openingStockNumber
 			};
 
 			IEWebsite.Utils.ShowLoadingScreen();
@@ -1907,6 +1910,7 @@ IEWebsiteAdmin.OpeningInventoryReport = (function() {
 				}
 				else
 				{
+					pageTableBodySelector.html('<tr align="center"><td colspan="10">No Records Found</td></tr>');
 					IEWebsite.Utils.Notification(resp.message);
 				}
 			});
@@ -1939,6 +1943,7 @@ IEWebsiteAdmin.OpeningInventoryReport = (function() {
 			'<td>' + row.productQuantity + '</td>' +
 			'<td>' + row.productUnitPrice + '</td>' +
 			'<td>' + row.comment + '</td>' +
+			'<td>' + row.createdOn + '</td>' +
 		'<tr>';
 
 		pageTableBodySelector.append(tableRow);

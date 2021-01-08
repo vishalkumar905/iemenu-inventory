@@ -38,17 +38,55 @@ class OpeningStockModel extends CI_Model
 		return $query;
 	}
 	
-	public function getWhereCustom($columns = '*', $condition, $orderBy = null)
+	public function getWhereCustom($columns = '*', $condition = null, $orderBy = null, $whereIn = null, $like = null, $limit = null, $offset = null, $groupBy = null)
 	{
 		$this->db->select($columns);
+
 		if (!empty($condition))
 		{
 			$this->db->where($condition);
 		}
 		
+		if (!empty($whereIn['field']) && !empty($whereIn['values']))
+		{
+			$this->db->where_in($whereIn['field'], $whereIn['values']);
+		}
+		
+		if (!empty($like['fields']) && !empty($like['search']) && !empty($like['side']) && is_array($like['fields']))
+		{
+			foreach ($like['fields'] as $key => $field)
+			{
+				if ($key == 0) 
+				{
+					$this->db->group_start();
+					$this->db->like($field, $like['search'], $like['side']);
+				}
+				else
+				{
+					$this->db->or_like($field, $like['search'], $like['side']);
+				}
+
+				
+				if (($key + 1) == count($like['fields']))
+				{
+					$this->db->group_end();
+				}
+			}
+		}
+
 		if (!empty($orderBy['field']) && !empty($orderBy['type']))
 		{
 			$this->db->order_by($orderBy['field'], $orderBy['type']);
+		}
+
+		if (!empty($groupBy))
+		{
+			$this->db->group_by($groupBy);
+		}
+
+		if ($limit > 0 && $offset >= 0)
+		{
+			$this->db->limit($limit, $offset);
 		}
 
 		$query = $this->db->get($this->tableName);
@@ -140,12 +178,17 @@ class OpeningStockModel extends CI_Model
 		return $query;
 	}
 
-	public function getOpeningStockProducts(string $date, array $categoryIds): array
+	public function getOpeningStockProducts(int $openingStockNumber, string $date, array $categoryIds): array
 	{
 		$openingStockCondition = [
 			'os.userId' => $this->loggedInUserId,
-			'FROM_UNIXTIME(os.createdOn, "%Y-%m-%d") = ' => $date
+			'os.openingStockNumber' => $openingStockNumber,
 		];
+
+		if (!empty($date))
+		{
+			$openingStockCondition['FROM_UNIXTIME(os.createdOn, "%Y-%m-%d") = '] = $date;
+		}
 
 		$openingStocks = $this->db->select([
 			'os.productId',
@@ -201,6 +244,27 @@ class OpeningStockModel extends CI_Model
 		$openingStocks = $openingStocks->group_by('os.productId')->order_by('os.productId', 'ASC')->get()->result_array();
 
 		return $openingStocks;
+	}
+
+	public function getOpeningStocksDropdown(): array
+	{
+		$orderBy = ['feild' => 'id', 'type' => 'desc'];
+		$condition = [
+			'userId' => $this->loggedInUserId
+		];
+
+		$result = $this->getWhereCustom('*', $condition, $orderBy, null, null, null, null, 'openingStockNumber')->result_array();
+		$dropdownOptions[''] = 'Please select OS';
+
+		if (!empty($result))
+		{
+			foreach($result as $row)
+			{
+				$dropdownOptions[$row['openingStockNumber']] = sprintf('OS-%s', $row['openingStockNumber']);
+			}
+		}
+
+		return $dropdownOptions;
 	}
 
 	public function getCurrentOpeningStockNumber(int $userId = null): int

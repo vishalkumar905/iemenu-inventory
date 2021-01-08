@@ -14,7 +14,7 @@ class Openinginventory extends Backend_Controller
 	{
 		parent::__construct();
 
-		$this->exportUrl = base_url() . 'backend/reports/openinginventory/';
+		$this->exportUrl = base_url() . 'backend/reports/openinginventory/export';
 		$this->exportFileName = 'opening-inventory-report';
 		$this->exportRedirectUrl = base_url() . 'backend/reports/openinginventory/';
 
@@ -37,6 +37,8 @@ class Openinginventory extends Backend_Controller
 	public function index()
 	{
 		$this->navTitle = $this->pageTitle = 'Opening Inventory Report';
+
+		$data['dropdownOpeningStocks'] = $this->openingstock->getOpeningStocksDropdown();
 		$data['viewFile'] = 'backend/opening-inventory-report/index';
 		$data['dropdownSubCategories'] = $this->category->getAllDropdownSubCategories(['userId' => $this->loggedInUserId]);
 		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/moment.min.js', 'assets/js/bootstrap-datetimepicker.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
@@ -48,6 +50,7 @@ class Openinginventory extends Backend_Controller
 	{
 		$startDate = $this->input->post('startDate');
 		$category = $this->input->post('category');
+		$openingStockNumber = intval($this->input->post('openingStockNumber'));
 
 		$categoryIds = [];
 		if (!empty($category) && is_array($category))
@@ -67,8 +70,8 @@ class Openinginventory extends Backend_Controller
 
 		try
 		{
-			$date = convertJavascriptDateToPhpDate($startDate, '/');
-			$response['data'] = $this->openingstock->getOpeningStockProducts($date, $categoryIds);
+			$date = !empty($startDate) ? convertJavascriptDateToPhpDate($startDate, '/') : '';
+			$response['data'] = $this->openingstock->getOpeningStockProducts($openingStockNumber, $date, $categoryIds);
 			
 			if (!empty($response['data']))
 			{
@@ -121,19 +124,18 @@ class Openinginventory extends Backend_Controller
 				if ($key == 0)
 				{
 					$columns = [
-						['title' => 'SN', 'name' => 'sn'],
+						['title' => 'S.No', 'name' => 'sn'],
 						['title' => 'Opening Stock Number', 'name' => 'openingStockNumber'],
 						['title' => 'Product Code', 'name' => 'productCode'],
 						['title' => 'Product Name', 'name' => 'productName'],
-						['title' => 'Unit Name', 'name' => 'unitName'],
-						['title' => 'Product Unit', 'name' => 'productUnit'],
+						['title' => 'Unit', 'name' => 'unitName'],
+						['title' => 'Quantity', 'name' => 'productQuantity'],
+						['title' => 'Unit Price ', 'name' => 'productUnitPrice'],
 						['title' => 'Date', 'name' => 'createdOn'],
 					];
 				}
 	
 				$result['sn'] = ++$counter;
-				$result['startDate'] = $results['startDate'];
-				$result['endDate'] = $results['endDate'];
 			}
 		}
 

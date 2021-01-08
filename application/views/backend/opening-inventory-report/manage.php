@@ -35,6 +35,7 @@
 								<th width="10%">Qty</th>
 								<th>Unit Price</th>
 								<th>Comment</th>
+								<th>Date</th>
 							</tr>
 						</thead>
 						<tbody id="openingInventoryReportTableBody">

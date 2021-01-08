@@ -41,6 +41,7 @@ const FETCH_DISPUTE_REQUEST_PRODUCTS = BASE_URL + 'backend/requests/fetchDispute
 const SAVE_DISPUTE_STATUS = BASE_URL + 'backend/requests/saveDisputeMessageAndStatus';
 
 const EXPORT_REPORTS = BASE_URL + 'backend/report/export';
+const EXPORT_OPENING_STOCK_REPORT = BASE_URL + 'backend/reports/openinginventory/export';
 
 
 // API- End

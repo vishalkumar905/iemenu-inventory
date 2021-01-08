@@ -4,6 +4,23 @@
 			<div class="card-content">
 
 				<div class="row">
+					<label class="col-md-2 label-on-left">Opening Stocks*</label>
+					<div class="col-sm-10">
+						<div class="form-group label-floating mt-0">
+							<label class="control-label"></label>
+							<?=form_dropdown('', $dropdownOpeningStocks, '', [
+								'class' => 'selectpicker', 
+								'id' => 'openingStockNumber',
+								'data-style' => 'select-with-transition select-box-horizontal', 
+								'data-live-search' => 'true',
+							])?>
+							<?=form_error('openingStockNumber');?>
+						</div>
+					</div>
+				</div>
+
+				<?php /* ?>
+				<div class="row">
 					<label class="col-md-2 label-on-left">Date*</label>
 					<div class="col-sm-10">
 						<div class="form-group label-floating">
@@ -13,6 +30,8 @@
 						</div>
 					</div>
 				</div>
+				<?php */ ?>
+
 
 				<div class="row">
 					<label class="col-md-2 label-on-left">Categories</label>
