@@ -19,10 +19,10 @@ class Products extends Backend_Controller
 
 		$this->disableUpdateField = [
 			'productType' => true, 
-			// 'subCategory' => true, 
-			// 'baseUnit' => true,
-			// 'category' => true,
-			// 'siUnit' => true,
+			'subCategory' => true, 
+			'baseUnit' => true,
+			'category' => true,
+			'siUnit' => true,
 		]; 
 
 		if (empty($this->baseUnits))

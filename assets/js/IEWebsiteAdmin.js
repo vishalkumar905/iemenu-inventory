@@ -1829,6 +1829,126 @@ IEWebsiteAdmin.MasterReport = (function() {
 	}
 })();
 
+IEWebsiteAdmin.OpeningInventoryReport = (function() {
+    var pageTableBodySelector = $("#openingInventoryReportTableBody");
+
+	var init = function()
+	{
+		if ($("#openingInventoryReportPageContainer").length == 0)
+		{
+			return;
+		}
+
+		let datetimePickeObj = {
+			format: 'DD/MM/YYYY',
+			icons: {
+				time: "fa fa-clock-o",
+				date: "fa fa-calendar",
+				up: "fa fa-chevron-up",
+				down: "fa fa-chevron-down",
+				previous: 'fa fa-chevron-left',
+				next: 'fa fa-chevron-right',
+				today: 'fa fa-screenshot',
+				clear: 'fa fa-trash',
+				close: 'fa fa-remove',
+				inline: true
+			}
+		}
+
+		$('#startDate').datetimepicker({
+			...datetimePickeObj,
+			maxDate: new Date(),
+			defaultDate: new Date()
+		});
+		
+		$('#endDate').datetimepicker({
+			...datetimePickeObj,
+			maxDate: new Date(),
+			defaultDate: new Date()
+		});
+		
+		$("#searchBar").keyup(_.debounce(loadProducts, 500));
+		$("#search").click(loadProducts);
+
+		$("[name='exportData']").click(function() {
+			let exportType = String($(this).val()).toLowerCase();
+			if (!_.isEmpty(EXPORT_REPORTS) && exportType == 'csv' || exportType == 'excel')
+			{
+				window.location.href = EXPORT_REPORTS + '/' + exportType;
+			}
+		});
+	};
+	
+	var loadProducts = function() {
+		let search = $("#searchBar").val();
+		let startDate = $("#startDate").val();
+		let endDate = $("#endDate").val();
+		let category = $("#category").val();
+
+		if (startDate && category)
+		{
+			let postData = {
+				startDate,
+				category,
+				search
+			};
+
+			IEWebsite.Utils.ShowLoadingScreen();
+			IEWebsite.Utils.AjaxPost(FETCH_OPENING_INVENTORY_REPORT, postData, function(resp) {
+				IEWebsite.Utils.HideLoadingScreen();
+				pageTableBodySelector.html('');
+
+				if (resp.status)
+				{	
+					if (!_.isEmpty(resp.response))
+					{
+						showTableData(resp.response);
+					}
+				}
+				else
+				{
+					IEWebsite.Utils.Notification(resp.message);
+				}
+			});
+		}
+	}
+
+	var showTableData = function(response)
+	{
+		if (!_.isEmpty(response.data))
+		{
+			_.each(response.data, function(row) {
+				showTableRow(row, response.startDate, response.endDate);
+			});
+		}
+	}
+
+	var showTableRow = function(row, startDate, endDate)
+	{
+		if (_.isEmpty(row))
+		{
+			return ;
+		}
+
+		let tableRow = '<tr>'+
+			'<td>' + row.sn + '</td>' +
+			'<td>' + row.openingStockNumber + '</td>' +
+			'<td>' + row.productCode + '</td>' +
+			'<td>' + row.productName + '</td>' +
+			'<td>' + row.unitName + '</td>' +
+			'<td>' + row.productQuantity + '</td>' +
+			'<td>' + row.productUnitPrice + '</td>' +
+			'<td>' + row.comment + '</td>' +
+		'<tr>';
+
+		pageTableBodySelector.append(tableRow);
+	}
+
+	return {
+		Init: init
+	}
+})();
+
 IEWebsiteAdmin.DirectTransferPage = (function() {
 	var searchBoxEnabled = false;
 	var pagination = {
@@ -3454,4 +3574,5 @@ $(document).ready(function(){
 	IEWebsiteAdmin.ManageRequestTransferPage.Init();
 	IEWebsiteAdmin.ViewRequestPage.Init();
 	IEWebsiteAdmin.ManageDisputeRequestPage.Init();
+	IEWebsiteAdmin.OpeningInventoryReport.Init();
 });

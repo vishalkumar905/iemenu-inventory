@@ -140,105 +140,67 @@ class OpeningStockModel extends CI_Model
 		return $query;
 	}
 
-	public function getProducts($limit, $offset)
+	public function getOpeningStockProducts(string $date, array $categoryIds): array
 	{
-		$this->getDatatableQuery();
-		$this->db->limit($limit, $offset);
-		$query = $this->db->get();
-		return $query;
-	}
+		$openingStockCondition = [
+			'os.userId' => $this->loggedInUserId,
+			'FROM_UNIXTIME(os.createdOn, "%Y-%m-%d") = ' => $date
+		];
 
-	public function getAllProductsCount()
-	{
-		$this->getDatatableQuery();
-		$query = $this->db->get();
-		return $query->num_rows();
-	}
+		$openingStocks = $this->db->select([
+			'os.productId',
+			'os.productQuantity',
+			'os.createdOn',
+			'os.openingStockNumber',
+			'os.comment',
+			'os.productUnitPrice',
+			'su.parentId as siUnitParentId',
+			'su.unitName',
+			'p.productName',
+			'p.productCode',
+		])->from('ie_opening_stocks os')->join(
+			'ie_products p', 'p.id = os.productId', 'inner'
+		)->join(
+			'ie_si_units su', 'su.id = os.productSiUnitId', 'inner'
+		)->where($openingStockCondition);
 
-	public function getDatatableQuery()
-    {
-		$searchText = $this->input->post('search');
-		$orderBy = $this->input->post('order');
-		
-		$this->columnSearch = ['p.productName' => 'productName', 'v.vendorName' => 'vendorName', 'v.vendorCode' => 'vendorCode'];
-		$i = 0;
 
-		if (!empty($searchText['value']))
+		if (!empty($categoryIds))
 		{
-			foreach ($this->columnSearch as $itemKey => $itemValue) // loop column 
+			$openingStocks->where_in('p.categoryId', $categoryIds);
+		}
+
+		$like = [
+			'fields' => ['p.productName', 'p.productCode'],
+			'search' => $this->input->post('search'),
+			'side' => 'both'
+		];
+		
+		if (!empty($like['fields']) && !empty($like['search']) && !empty($like['side']) && is_array($like['fields']))
+		{
+			foreach ($like['fields'] as $key => $field)
 			{
-				if($i === 0)
+				if ($key == 0) 
 				{
-					$this->db->group_start();
-					$this->db->like($itemKey, $searchText['value']);
+					$openingStocks->group_start();
+					$openingStocks->like($field, $like['search'], $like['side']);
 				}
 				else
 				{
-					$this->db->or_like($itemKey, $searchText['value']);
+					$openingStocks->or_like($field, $like['search'], $like['side']);
 				}
-	
-				if(count($this->columnSearch) - 1 == $i)
+
+				
+				if (($key + 1) == count($like['fields']))
 				{
-					$this->db->group_end(); //close bracket
+					$openingStocks->group_end();
 				}
-
-				$i++;
-			}	
+			}
 		}
 
-		$this->db->order_by('vp.id', 'desc');
-		// Not Need
-        // if(!empty($orderBy))
-        // {
-        //     $this->db->order_by($this->column_order[$_POST['order']['0']['column']], $_POST['order']['0']['dir']);
-		// }
-        // else if(isset($this->order))
-        // {
-        //     $order = $this->order;
-        //     $this->db->order_by(key($order), $order[key($order)]);
-        // }
-	}
+		$openingStocks = $openingStocks->group_by('os.productId')->order_by('os.productId', 'ASC')->get()->result_array();
 
-	public function getVendorProducts($limit, $offset)
-	{
-		$this->getDatatableQuery();
-		$columns = ['vp.id as vendorProductId', 'p.productName', 'v.vendorName', 'v.vendorCode', 'vp.createdOn'];
-		$this->db->select($columns);
-		$this->getVendorProductsQuery();
-		$this->db->limit($limit, $offset);
-		$query = $this->db->get();
-		return $query;
-	}
-
-	private function getVendorProductsQuery()
-	{
-		$this->db->from('ie_vendor_products vp');
-		$this->db->join('ie_vendors v', 'vp.vendorId = v.id', 'LEFT');
-		$this->db->join('ie_products p', 'p.id = vp.productId', 'LEFT');
-	}
-
-
-	public function getAllVendorProductsCount(): int
-	{
-		$this->getDatatableQuery();
-		$this->getVendorProductsQuery();
-		$query = $this->db->get();
-		return $query->num_rows();	
-	}
-
-	public function getVendorProductForMapping($vendorId, $column = '*', $condition = null)
-	{
-		$this->db->select($column);
-		$this->db->from('ie_products p');
-		$this->db->join('ie_vendor_products vp', sprintf('vp.productId = p.id AND vp.vendorId = %s', $vendorId), 'LEFT');
-	
-		if (!empty($condition))
-		{
-			$this->db->where($condition);
-		}
-
-		$results = $this->db->get();
-		return $results;
+		return $openingStocks;
 	}
 
 	public function getCurrentOpeningStockNumber(int $userId = null): int

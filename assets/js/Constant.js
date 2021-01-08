@@ -19,6 +19,7 @@ const SAVE_DIRECT_ORDER_PRODUCTS = BASE_URL + 'backend/directorder/save';
 const FETCH_VENDOR_ASSIGNED_PRODUCT_CATEGORIES = BASE_URL + 'backend/categories/fetchVendorAssignedProductCategories';
 
 const FETCH_MASTER_REPORT = BASE_URL + 'backend/report/fetchMaster';
+const FETCH_OPENING_INVENTORY_REPORT = BASE_URL + 'backend/reports/openinginventory/fetchReport';
 
 const FETCH_WASTAGE_INVETORY_PRODUCTS = BASE_URL + 'backend/wastageinventory/fetchProducts';
 const SAVE_WASTAGE_INVETORY_PRODUCTS = BASE_URL + 'backend/wastageinventory/save';
