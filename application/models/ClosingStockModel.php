@@ -255,6 +255,95 @@ class ClosingStockModel extends CI_Model
 			return 1;
 		}
 	}
+
+	public function getClosingStockProducts(int $closingStockNumber, string $date, array $categoryIds): array
+	{
+		$closingStockCondition = [
+			'cs.userId' => $this->loggedInUserId,
+			'cs.closingStockNumber' => $closingStockNumber,
+		];
+
+		if (!empty($date))
+		{
+			$closingStockCondition['FROM_UNIXTIME(cs.createdOn, "%Y-%m-%d") = '] = $date;
+		}
+
+		$closingStocks = $this->db->select([
+			'cs.productId',
+			'cs.productQuantity',
+			'cs.createdOn',
+			'cs.closingStockNumber',
+			'cs.comment',
+			'cs.productUnitPrice',
+			'su.parentId as siUnitParentId',
+			'su.unitName',
+			'p.productName',
+			'p.productCode',
+		])->from('ie_closing_stocks cs')->join(
+			'ie_products p', 'p.id = cs.productId', 'inner'
+		)->join(
+			'ie_si_units su', 'su.id = cs.productSiUnitId', 'inner'
+		)->where($closingStockCondition);
+
+
+		if (!empty($categoryIds))
+		{
+			$closingStocks->where_in('p.categoryId', $categoryIds);
+		}
+
+		$like = [
+			'fields' => ['p.productName', 'p.productCode'],
+			'search' => $this->input->post('search'),
+			'side' => 'both'
+		];
+		
+		if (!empty($like['fields']) && !empty($like['search']) && !empty($like['side']) && is_array($like['fields']))
+		{
+			foreach ($like['fields'] as $key => $field)
+			{
+				if ($key == 0) 
+				{
+					$closingStocks->group_start();
+					$closingStocks->like($field, $like['search'], $like['side']);
+				}
+				else
+				{
+					$closingStocks->or_like($field, $like['search'], $like['side']);
+				}
+
+				
+				if (($key + 1) == count($like['fields']))
+				{
+					$closingStocks->group_end();
+				}
+			}
+		}
+
+		$closingStocks = $closingStocks->group_by('cs.productId')->order_by('cs.productId', 'ASC')->get()->result_array();
+
+		return $closingStocks;
+	}
+
+	public function getClosingStocksDropdown(): array
+	{
+		$orderBy = ['feild' => 'id', 'type' => 'desc'];
+		$condition = [
+			'userId' => $this->loggedInUserId
+		];
+
+		$result = $this->getWhereCustom('*', $condition, $orderBy, null, null, null, null, 'closingStockNumber')->result_array();
+		$dropdownOptions[''] = 'Please select CS';
+
+		if (!empty($result))
+		{
+			foreach($result as $row)
+			{
+				$dropdownOptions[$row['closingStockNumber']] = sprintf('CS-%s', $row['closingStockNumber']);
+			}
+		}
+
+		return $dropdownOptions;
+	}
 }
 
 ?>
