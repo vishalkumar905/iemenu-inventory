@@ -4,11 +4,11 @@
 			<div class="card-content">
 
 				<div class="row">
-					<label class="col-md-2 label-on-left">Purchase Stocks*</label>
+					<label class="col-md-2 label-on-left">GRM Numbers*</label>
 					<div class="col-sm-10">
 						<div class="form-group label-floating mt-0">
 							<label class="control-label"></label>
-							<?=form_dropdown('', $dropdownPurchaseStocks, '', [
+							<?=form_dropdown('', $dropdownGrnNumbers, '', [
 								'class' => 'selectpicker', 
 								'id' => 'grnNumber',
 								'data-style' => 'select-with-transition select-box-horizontal', 

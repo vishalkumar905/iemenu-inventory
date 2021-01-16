@@ -27,7 +27,7 @@ class Directorder extends Backend_Controller
 	{
 		$this->navTitle = $this->pageTitle = 'Direct Order Report';
 
-		$data['dropdownPurchaseStocks'] = $this->purchasestock->getPurchaseStocksDropdown();
+		$data['dropdownGrnNumbers'] = $this->purchasestock->getGrnNumberDropdown();
 		$data['viewFile'] = 'backend/direct-order-report/index';
 		$data['dropdownSubCategories'] = $this->category->getAllDropdownSubCategories(['userId' => $this->loggedInUserId]);
 		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/moment.min.js', 'assets/js/bootstrap-datetimepicker.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
@@ -39,7 +39,7 @@ class Directorder extends Backend_Controller
 	{
 		$startDate = $this->input->post('startDate');
 		$category = $this->input->post('category');
-		$closingStockNumber = intval($this->input->post('closingStockNumber'));
+		$grnNumber = intval($this->input->post('grnNumber'));
 
 		$categoryIds = [];
 		if (!empty($category) && is_array($category))
@@ -60,7 +60,7 @@ class Directorder extends Backend_Controller
 		try
 		{
 			$date = !empty($startDate) ? convertJavascriptDateToPhpDate($startDate, '/') : '';
-			$response['data'] = $this->purchasestock->getPurchaseStockProducts($closingStockNumber, $date, $categoryIds);
+			$response['data'] = $this->purchasestock->getPurchaseStockProducts($grnNumber, $date, $categoryIds);
 			
 			if (!empty($response['data']))
 			{
@@ -69,7 +69,9 @@ class Directorder extends Backend_Controller
 				foreach ($response['data'] as &$row)
 				{
 					$row['sn'] = ++$counter;
+					$row['vendorNameWithCode'] = sprintf('%s (<b>%s</b>)', $row['vendorName'], $row['vendorCode']);
 					$row['createdOn'] = Date('Y-m-d h:i A', $row['createdOn']);
+					$row['billDate'] = Date('Y-m-d', $row['billDate']);
 					$row['productQuantity'] = floatval($row['productQuantity']);
 					$row['productUnitPrice'] = floatval($row['productUnitPrice']);
 				}
@@ -114,7 +116,12 @@ class Directorder extends Backend_Controller
 				{
 					$columns = [
 						['title' => 'S.No', 'name' => 'sn'],
-						['title' => 'Closing Stock Number', 'name' => 'closingStockNumber'],
+						['title' => 'Vendor Name', 'name' => 'vendorName'],
+						['title' => 'Vendor Code', 'name' => 'vendorCode'],
+						['title' => 'Bill Number', 'name' => 'billNumber'],
+						['title' => 'Bill Date', 'name' => 'billDate'],
+						['title' => 'GRN Number', 'name' => 'grnNumber'],
+						['title' => 'Opening Stock Number', 'name' => 'openingStockNumber'],
 						['title' => 'Product Code', 'name' => 'productCode'],
 						['title' => 'Product Name', 'name' => 'productName'],
 						['title' => 'Unit', 'name' => 'unitName'],

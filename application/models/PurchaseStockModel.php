@@ -300,6 +300,102 @@ class PurchaseStockModel extends CI_Model
 
 		return $totalCount;
 	}
+
+	public function getPurchaseStockProducts(int $grnNumber, string $date, array $categoryIds): array
+	{
+		$purchaseStockCondition = [
+			'ps.userId' => $this->loggedInUserId,
+			'ps.grnNumber' => $grnNumber,
+		];
+	
+		if (!empty($date))
+		{
+			$purchaseStockCondition['FROM_UNIXTIME(ps.createdOn, "%Y-%m-%d") = '] = $date;
+		}
+	
+		$purchaseStocks = $this->db->select([
+			'ps.productId',
+			'ps.productQuantity',
+			'ps.createdOn',
+			'ps.grnNumber',
+			'ps.openingStockNumber',
+			'ps.comment',
+			'ps.billNumber',
+			'ps.billDate',
+			'ps.productUnitPrice',
+			'su.parentId as siUnitParentId',
+			'su.unitName',
+			'p.productName',
+			'p.productCode',
+			'v.vendorCode',
+			'v.vendorName',
+		])->from('ie_purchase_stocks ps')->join(
+			'ie_products p', 'p.id = ps.productId', 'inner'
+		)->join(
+			'ie_vendors v', 'v.id = ps.vendorId', 'inner'
+		)->join(
+			'ie_si_units su', 'su.id = ps.productSiUnitId', 'inner'
+		)->where($purchaseStockCondition);
+	
+	
+		if (!empty($categoryIds))
+		{
+			$purchaseStocks->where_in('p.categoryId', $categoryIds);
+		}
+	
+		$like = [
+			'fields' => ['p.productName', 'p.productCode'],
+			'search' => $this->input->post('search'),
+			'side' => 'both'
+		];
+		
+		if (!empty($like['fields']) && !empty($like['search']) && !empty($like['side']) && is_array($like['fields']))
+		{
+			foreach ($like['fields'] as $key => $field)
+			{
+				if ($key == 0) 
+				{
+					$purchaseStocks->group_start();
+					$purchaseStocks->like($field, $like['search'], $like['side']);
+				}
+				else
+				{
+					$purchaseStocks->or_like($field, $like['search'], $like['side']);
+				}
+	
+				
+				if (($key + 1) == count($like['fields']))
+				{
+					$purchaseStocks->group_end();
+				}
+			}
+		}
+	
+		$purchaseStocks = $purchaseStocks->group_by('ps.productId')->order_by('ps.productId', 'ASC')->get()->result_array();
+	
+		return $purchaseStocks;
+	}
+	
+	public function getGrnNumberDropdown(): array
+	{
+		$orderBy = ['feild' => 'id', 'type' => 'desc'];
+		$condition = [
+			'userId' => $this->loggedInUserId
+		];
+
+		$result = $this->getWhereCustom('*', $condition, $orderBy, null, null, null, null, 'grnNumber')->result_array();
+		$dropdownOptions[''] = 'Please select GRN';
+
+		if (!empty($result))
+		{
+			foreach($result as $row)
+			{
+				$dropdownOptions[$row['grnNumber']] = sprintf('GRN-%s', $row['grnNumber']);
+			}
+		}
+
+		return $dropdownOptions;
+	}
 }
 
 ?>

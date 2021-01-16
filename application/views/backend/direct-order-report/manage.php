@@ -26,8 +26,11 @@
 				<div class="table-responsive">
 					<table class="table table-bordered custom-table" cellspacing="0" width="100%" style="width:100%">
 						<thead class="text-primary">
-							<tr>
+							<tr class="th-nowwrap">
 								<th>S.N0</th>
+								<th>Vendor Name</th>
+								<th>Bill Number</th>
+								<th>Bill Date</th>
 								<th>OS</th>
 								<th>Product Code</th>
 								<th>Product Name</th>
