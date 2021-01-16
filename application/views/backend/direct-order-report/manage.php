@@ -1,4 +1,4 @@
-<div class="col-md-12" id="manageClosingInventoryReportContainer">
+<div class="col-md-12" id="manageDirectOrderReportContainer">
 	<div class="card mt-0">
 		<div class="card-content">
 
@@ -22,7 +22,7 @@
 				</div>
 			</div>
 
-			<form id="closingInventoryReportForm" method="POST">
+			<form id="directOrderReportForm" method="POST">
 				<div class="table-responsive">
 					<table class="table table-bordered custom-table" cellspacing="0" width="100%" style="width:100%">
 						<thead class="text-primary">
@@ -33,11 +33,12 @@
 								<th>Product Name</th>
 								<th>Unit</th>
 								<th width="10%">Qty</th>
+								<th>Unit Price</th>
 								<th>Comment</th>
 								<th>Date</th>
 							</tr>
 						</thead>
-						<tbody id="closingInventoryReportTableBody">
+						<tbody id="directOrderReportTableBody">
 						</tbody>
 					</table>
 				</div>

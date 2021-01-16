@@ -273,6 +273,7 @@ class ClosingStockModel extends CI_Model
 			'cs.productQuantity',
 			'cs.createdOn',
 			'cs.closingStockNumber',
+			'cs.openingStockNumber',
 			'cs.comment',
 			'cs.productUnitPrice',
 			'su.parentId as siUnitParentId',

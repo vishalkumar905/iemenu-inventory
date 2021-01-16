@@ -1,6 +1,6 @@
 <?php
 
-class Closinginventory extends Backend_Controller
+class Directorder extends Backend_Controller
 {
 	public $productImageUpload = false;
 	public $exportUrl;
@@ -13,22 +13,22 @@ class Closinginventory extends Backend_Controller
 	{
 		parent::__construct();
 
-		$this->exportUrl = base_url() . 'backend/reports/closinginventory/export';
-		$this->exportFileName = 'closing-inventory-report';
-		$this->exportRedirectUrl = base_url() . 'backend/reports/closinginventory/';
+		$this->exportUrl = base_url() . 'backend/reports/directorder/export';
+		$this->exportFileName = 'direct-order-report';
+		$this->exportRedirectUrl = base_url() . 'backend/reports/directorder/';
 
 		$this->load->model('CategoryModel', 'category');
-		$this->load->model('ClosingStockModel', 'closingstock');
+		$this->load->model('PurchaseStockModel', 'purchasestock');
 		$this->load->model('ProductModel', 'product');
 		$this->load->model('SIUnitModel', 'siunit'); 
 	}
 	
 	public function index()
 	{
-		$this->navTitle = $this->pageTitle = 'Closing Inventory Report';
+		$this->navTitle = $this->pageTitle = 'Direct Order Report';
 
-		$data['dropdownClosingStocks'] = $this->closingstock->getClosingStocksDropdown();
-		$data['viewFile'] = 'backend/closing-inventory-report/index';
+		$data['dropdownPurchaseStocks'] = $this->purchasestock->getPurchaseStocksDropdown();
+		$data['viewFile'] = 'backend/direct-order-report/index';
 		$data['dropdownSubCategories'] = $this->category->getAllDropdownSubCategories(['userId' => $this->loggedInUserId]);
 		$data['footerJs'] = ['assets/js/jquery.tagsinput.js', 'assets/js/moment.min.js', 'assets/js/bootstrap-datetimepicker.js', 'assets/js/jquery.select-bootstrap.js', 'assets/js/jasny-bootstrap.min.js', 'assets/js/jquery.datatables.js', 'assets/js/material-dashboard.js'];
 
@@ -60,7 +60,7 @@ class Closinginventory extends Backend_Controller
 		try
 		{
 			$date = !empty($startDate) ? convertJavascriptDateToPhpDate($startDate, '/') : '';
-			$response['data'] = $this->closingstock->getClosingStockProducts($closingStockNumber, $date, $categoryIds);
+			$response['data'] = $this->purchasestock->getPurchaseStockProducts($closingStockNumber, $date, $categoryIds);
 			
 			if (!empty($response['data']))
 			{
@@ -114,12 +114,12 @@ class Closinginventory extends Backend_Controller
 				{
 					$columns = [
 						['title' => 'S.No', 'name' => 'sn'],
-						['title' => 'Opening Stock Number', 'name' => 'openingStockNumber'],
+						['title' => 'Closing Stock Number', 'name' => 'closingStockNumber'],
 						['title' => 'Product Code', 'name' => 'productCode'],
 						['title' => 'Product Name', 'name' => 'productName'],
 						['title' => 'Unit', 'name' => 'unitName'],
 						['title' => 'Quantity', 'name' => 'productQuantity'],
-						['title' => 'Closing Stock Number', 'name' => 'closingStockNumber'],
+						['title' => 'Unit Price ', 'name' => 'productUnitPrice'],
 						['title' => 'Date', 'name' => 'createdOn'],
 					];
 				}

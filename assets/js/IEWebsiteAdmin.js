@@ -1877,8 +1877,6 @@ IEWebsiteAdmin.OpeningInventoryReport = (function() {
 				window.location.href = EXPORT_OPENING_STOCK_REPORT + '/' + exportType;
 			}
 		});
-
-		loadProducts();
 	};
 	
 	var loadProducts = function() {
@@ -1953,6 +1951,129 @@ IEWebsiteAdmin.OpeningInventoryReport = (function() {
 		Init: init
 	}
 })();
+
+IEWebsiteAdmin.ClosingInventoryReport = (function() {
+    var pageTableBodySelector = $("#closingInventoryReportTableBody");
+
+	var init = function()
+	{
+		if ($("#closingInventoryReportPageContainer").length == 0)
+		{
+			return;
+		}
+
+		let datetimePickeObj = {
+			format: 'DD/MM/YYYY',
+			icons: {
+				time: "fa fa-clock-o",
+				date: "fa fa-calendar",
+				up: "fa fa-chevron-up",
+				down: "fa fa-chevron-down",
+				previous: 'fa fa-chevron-left',
+				next: 'fa fa-chevron-right',
+				today: 'fa fa-screenshot',
+				clear: 'fa fa-trash',
+				close: 'fa fa-remove',
+				inline: true
+			}
+		}
+
+		$('#startDate').datetimepicker({
+			...datetimePickeObj,
+			maxDate: new Date(),
+			defaultDate: new Date()
+		});
+		
+		$('#endDate').datetimepicker({
+			...datetimePickeObj,
+			maxDate: new Date(),
+			defaultDate: new Date()
+		});
+		
+		$("#searchBar").keyup(_.debounce(loadProducts, 500));
+		$("#search").click(loadProducts);
+
+		$("[name='exportData']").click(function() {
+			let exportType = String($(this).val()).toLowerCase();
+			if (!_.isEmpty(EXPORT_CLOSING_STOCK_REPORT) && exportType == 'csv' || exportType == 'excel')
+			{
+				window.location.href = EXPORT_CLOSING_STOCK_REPORT + '/' + exportType;
+			}
+		});
+	};
+	
+	var loadProducts = function() {
+		let search = $("#searchBar").val();
+		let startDate = $("#startDate").val();
+		let closingStockNumber = $("#closingStockNumber").val();
+		let category = $("#category").val();
+
+		if (true)
+		{
+			let postData = {
+				// startDate,
+				category,
+				search,
+				closingStockNumber
+			};
+
+			IEWebsite.Utils.ShowLoadingScreen();
+			IEWebsite.Utils.AjaxPost(FETCH_CLOSING_INVENTORY_REPORT, postData, function(resp) {
+				IEWebsite.Utils.HideLoadingScreen();
+				pageTableBodySelector.html('');
+
+				if (resp.status)
+				{	
+					if (!_.isEmpty(resp.response))
+					{
+						showTableData(resp.response);
+					}
+				}
+				else
+				{
+					pageTableBodySelector.html('<tr align="center"><td colspan="10">No Records Found</td></tr>');
+					IEWebsite.Utils.Notification(resp.message);
+				}
+			});
+		}
+	}
+
+	var showTableData = function(response)
+	{
+		if (!_.isEmpty(response.data))
+		{
+			_.each(response.data, function(row) {
+				showTableRow(row, response.startDate, response.endDate);
+			});
+		}
+	}
+
+	var showTableRow = function(row, startDate, endDate)
+	{
+		if (_.isEmpty(row))
+		{
+			return ;
+		}
+
+		let tableRow = '<tr>'+
+			'<td>' + row.sn + '</td>' +
+			'<td>' + row.openingStockNumber + '</td>' +
+			'<td>' + row.productCode + '</td>' +
+			'<td>' + row.productName + '</td>' +
+			'<td>' + row.unitName + '</td>' +
+			'<td>' + row.productQuantity + '</td>' +
+			'<td>' + row.comment + '</td>' +
+			'<td>' + row.createdOn + '</td>' +
+		'<tr>';
+
+		pageTableBodySelector.append(tableRow);
+	}
+
+	return {
+		Init: init
+	}
+})();
+
 
 IEWebsiteAdmin.DirectTransferPage = (function() {
 	var searchBoxEnabled = false;
@@ -3580,4 +3701,5 @@ $(document).ready(function(){
 	IEWebsiteAdmin.ViewRequestPage.Init();
 	IEWebsiteAdmin.ManageDisputeRequestPage.Init();
 	IEWebsiteAdmin.OpeningInventoryReport.Init();
+	IEWebsiteAdmin.ClosingInventoryReport.Init();
 });

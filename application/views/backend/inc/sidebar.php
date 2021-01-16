@@ -133,9 +133,10 @@
 		</a>
 		<div class="collapse" id="reportSideBar">
 			<ul class="nav">
-				<li>
-					<a href="<?=base_url()?>backend/report">Master Report</a>
-				</li>
+				<li><a href="<?=base_url()?>backend/report">Master Report</a></li>
+				<li><a href="<?=base_url()?>backend/reports/openinginventory">Opening Inventory</a></li>
+				<li><a href="<?=base_url()?>backend/reports/closinginventory">Closing Inventory</a></li>
+				<li><a href="<?=base_url()?>backend/reports/directorder">Direct Order</a></li>
 			</ul>
 		</div>
 	</li>
