@@ -240,6 +240,96 @@ class WastageStockModel extends CI_Model
 		$results = $this->db->get();
 		return $results;
 	}
+
+	public function getWastageStockProducts(int $wastageStockNumber, string $date, array $categoryIds): array
+	{
+		$wastageStockCondition = [
+			'ws.userId' => $this->loggedInUserId,
+			'ws.wastageStockNumber' => $wastageStockNumber,
+		];
+
+		if (!empty($date))
+		{
+			$wastageStockCondition['FROM_UNIXTIME(ws.createdOn, "%Y-%m-%d") = '] = $date;
+		}
+
+		$wastageStocks = $this->db->select([
+			'ws.productId',
+			'ws.productQuantity',
+			'ws.createdOn',
+			'ws.wastageStockNumber',
+			'ws.openingStockNumber',
+			'ws.comment',
+			'ws.productUnitPrice',
+			'su.parentId as siUnitParentId',
+			'su.unitName',
+			'p.productName',
+			'p.productCode',
+		])->from('ie_wastage_stocks ws')->join(
+			'ie_products p', 'p.id = ws.productId', 'inner'
+		)->join(
+			'ie_si_units su', 'su.id = ws.productSiUnitId', 'inner'
+		)->where($wastageStockCondition);
+
+
+		if (!empty($categoryIds))
+		{
+			$wastageStocks->where_in('p.categoryId', $categoryIds);
+		}
+
+		$like = [
+			'fields' => ['p.productName', 'p.productCode'],
+			'search' => $this->input->post('search'),
+			'side' => 'both'
+		];
+		
+		if (!empty($like['fields']) && !empty($like['search']) && !empty($like['side']) && is_array($like['fields']))
+		{
+			foreach ($like['fields'] as $key => $field)
+			{
+				if ($key == 0) 
+				{
+					$wastageStocks->group_start();
+					$wastageStocks->like($field, $like['search'], $like['side']);
+				}
+				else
+				{
+					$wastageStocks->or_like($field, $like['search'], $like['side']);
+				}
+
+				
+				if (($key + 1) == count($like['fields']))
+				{
+					$wastageStocks->group_end();
+				}
+			}
+		}
+
+		$wastageStocks = $wastageStocks->group_by('ws.productId')->order_by('ws.productId', 'ASC')->get()->result_array();
+
+		return $wastageStocks;
+	}
+
+	public function getWastageStocksDropdown(): array
+	{
+		$orderBy = ['feild' => 'id', 'type' => 'desc'];
+		$condition = [
+			'userId' => $this->loggedInUserId
+		];
+
+		$result = $this->getWhereCustom('*', $condition, $orderBy, null, null, null, null, 'wastageStockNumber')->result_array();
+		$dropdownOptions[''] = 'Please select WS';
+
+		if (!empty($result))
+		{
+			foreach($result as $row)
+			{
+				$dropdownOptions[$row['wastageStockNumber']] = sprintf('WS-%s', $row['wastageStockNumber']);
+			}
+		}
+
+		return $dropdownOptions;
+	}
 }
 
 ?>

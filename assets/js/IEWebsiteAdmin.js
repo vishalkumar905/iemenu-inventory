@@ -2074,12 +2074,12 @@ IEWebsiteAdmin.ClosingInventoryReport = (function() {
 	}
 })();
 
-IEWebsiteAdmin.ClosingInventoryReport = (function() {
-    var pageTableBodySelector = $("#closingInventoryReportTableBody");
+IEWebsiteAdmin.WastageInventoryReport = (function() {
+    var pageTableBodySelector = $("#wastageInventoryReportTableBody");
 
 	var init = function()
 	{
-		if ($("#closingInventoryReportPageContainer").length == 0)
+		if ($("#wastageInventoryReportPageContainer").length == 0)
 		{
 			return;
 		}
@@ -2117,9 +2117,9 @@ IEWebsiteAdmin.ClosingInventoryReport = (function() {
 
 		$("[name='exportData']").click(function() {
 			let exportType = String($(this).val()).toLowerCase();
-			if (!_.isEmpty(EXPORT_CLOSING_STOCK_REPORT) && exportType == 'csv' || exportType == 'excel')
+			if (!_.isEmpty(EXPORT_WASTAGE_INVENTORY_REPORT) && exportType == 'csv' || exportType == 'excel')
 			{
-				window.location.href = EXPORT_CLOSING_STOCK_REPORT + '/' + exportType;
+				window.location.href = EXPORT_WASTAGE_INVENTORY_REPORT + '/' + exportType;
 			}
 		});
 	};
@@ -2127,7 +2127,7 @@ IEWebsiteAdmin.ClosingInventoryReport = (function() {
 	var loadProducts = function() {
 		let search = $("#searchBar").val();
 		let startDate = $("#startDate").val();
-		let closingStockNumber = $("#closingStockNumber").val();
+		let wastageStockNumber = $("#wastageStockNumber").val();
 		let category = $("#category").val();
 
 		if (true)
@@ -2136,11 +2136,11 @@ IEWebsiteAdmin.ClosingInventoryReport = (function() {
 				// startDate,
 				category,
 				search,
-				closingStockNumber
+				wastageStockNumber
 			};
 
 			IEWebsite.Utils.ShowLoadingScreen();
-			IEWebsite.Utils.AjaxPost(FETCH_CLOSING_INVENTORY_REPORT, postData, function(resp) {
+			IEWebsite.Utils.AjaxPost(FETCH_WASTAGE_INVENTORY_REPORT, postData, function(resp) {
 				IEWebsite.Utils.HideLoadingScreen();
 				pageTableBodySelector.html('');
 
@@ -3950,5 +3950,6 @@ $(document).ready(function(){
 	IEWebsiteAdmin.ManageDisputeRequestPage.Init();
 	IEWebsiteAdmin.OpeningInventoryReport.Init();
 	IEWebsiteAdmin.ClosingInventoryReport.Init();
+	IEWebsiteAdmin.WastageInventoryReport.Init();
 	IEWebsiteAdmin.DirectOrderReport.Init();
 });

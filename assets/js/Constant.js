@@ -49,7 +49,8 @@ const EXPORT_CLOSING_STOCK_REPORT = BASE_URL + 'backend/reports/closinginventory
 const FETCH_DIRECT_ORDER_REPORT = BASE_URL + 'backend/reports/directorder/fetchReport';
 const EXPORT_DIRECT_ORDER_REPORT = BASE_URL + 'backend/reports/directorder/export';
 
-
+const FETCH_WASTAGE_INVENTORY_REPORT = BASE_URL + 'backend/reports/wastageinventory/fetchReport';
+const EXPORT_WASTAGE_INVENTORY_REPORT = BASE_URL + 'backend/reports/wastageinventory/export';
 
 
 
