@@ -264,23 +264,30 @@ class RequestModel extends CI_Model
 		return $transferStockQuery->get()->result_array();
 	}
 
-	public function getDisputeRequests(int $limit, int $offset)
+	public function getDisputeRequests(int $limit = null, int $offset = null, int $startDate = null, int $endDate = null)
 	{
-		$disputeQuery = $this->getDisputeRequestQuery();
+		$disputeQuery = $this->getDisputeRequestQuery($startDate, $endDate);
 
-		return $disputeQuery->select([
+		$disputeQuery->select([
 			'r.userIdFrom',
 			'r.userIdTo',
 			'r.requestType',
 			'r.status',
 			'r.createdOn',
 			'r.id as requestId',
-		])->limit($limit, $offset)->get()->result_array();
+		]);
+
+		if (!is_null($limit) && !is_null($offset))
+		{
+			$disputeQuery->limit($limit, $offset);
+		}
+
+		return $disputeQuery->get()->result_array();
 	}
 
-	public function getDisputeRequestQuery()
+	public function getDisputeRequestQuery(int $startDate = null, int $endDate = null)
 	{
-		return $this->db->from(
+		$query = $this->db->from(
 			'ie_requests r'
 		)->join(
 			'ie_transfer_stocks ts', 'ts.requestId = r.id', 'left'
@@ -288,15 +295,30 @@ class RequestModel extends CI_Model
 			'ts.disputeQty IS NOT NULL' => NULL,
 			'r.status' => STATUS_RECEIVED,
 			sprintf('(r.userIdFrom = %s OR r.userIdTo = %s)', $this->loggedInUserId, $this->loggedInUserId) => NULL,
-		])->group_by('r.id')->order_by('r.createdOn', 'desc');
+		]);
+
+		if ($startDate > 0 && $endDate > 0)
+		{
+			$query->where(sprintf('r.createdOn BETWEEN %s AND %s', $startDate, $endDate));
+		}
+		else if (!empty($startDate > 0))
+		{
+			$query->where(sprintf('r.createdOn >= %s', $startDate));
+		}
+		else if (!empty($endDate > 0))
+		{
+			$query->where(sprintf('r.createdOn <= %s', $endDate));
+		}
 
 		// If you only want to show only to dispatcher use this case 
 		// sprintf("CASE WHEN r.requestType = %s THEN r.userIdFrom = %s WHEN r.requestType = %s THEN r.userIdTo = %s  ELSE r.userIdTo = 0 END", DIRECT_TRANSER_REQUEST, $this->loggedInUserId, REPLENISHMENT_REQUEST, $this->loggedInUserId), null, false
+		
+		return $query->group_by('r.id')->order_by('r.createdOn', 'desc');
 	}
 	
-	public function getDisputeRequestsCount(): int
+	public function getDisputeRequestsCount(int $startDate = null, int $endDate = null): int
 	{
-		$disputeQuery = $this->getDisputeRequestQuery()->select('COUNT(r.id) as totalCount')->get()->row_array();
+		$disputeQuery = $this->getDisputeRequestQuery($startDate, $endDate)->select('COUNT(r.id) as totalCount')->get()->row_array();
 
 		if (!empty($disputeQuery))
 		{
@@ -304,6 +326,27 @@ class RequestModel extends CI_Model
 		}
 
 		return 0;
+	}
+
+	public function getRequestsDropdown(): array
+	{
+		$orderBy = ['feild' => 'id', 'type' => 'desc'];
+		$condition = [
+			'userId' => $this->loggedInUserId
+		];
+
+		$result = $this->getWhereCustom('*', $condition, $orderBy, null, null, null, null, 'indentRequestNumber')->result_array();
+		$dropdownOptions[''] = sprintf('Please select %s', REQUEST_TRANSFER_SHORT_NAME);
+
+		if (!empty($result))
+		{
+			foreach($result as $row)
+			{
+				$dropdownOptions[$row['indentRequestNumber']] = sprintf('WS-%s', $row['indentRequestNumber']);
+			}
+		}
+
+		return $dropdownOptions;
 	}
 }
 

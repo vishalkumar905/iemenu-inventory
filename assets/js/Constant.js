@@ -52,6 +52,7 @@ const EXPORT_DIRECT_ORDER_REPORT = BASE_URL + 'backend/reports/directorder/expor
 const FETCH_WASTAGE_INVENTORY_REPORT = BASE_URL + 'backend/reports/wastageinventory/fetchReport';
 const EXPORT_WASTAGE_INVENTORY_REPORT = BASE_URL + 'backend/reports/wastageinventory/export';
 
+const EXPORT_REQUEST_TRANSFER_REPORT = BASE_URL + 'backend/reports/requesttransfer/export';
 
 
 

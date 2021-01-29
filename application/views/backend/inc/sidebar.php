@@ -137,6 +137,7 @@
 				<li><a href="<?=base_url()?>backend/reports/openinginventory">Opening Inventory</a></li>
 				<li><a href="<?=base_url()?>backend/reports/closinginventory">Closing Inventory</a></li>
 				<li><a href="<?=base_url()?>backend/reports/wastageinventory">Wastage Inventory</a></li>
+				<li><a href="<?=base_url()?>backend/reports/requesttransfer">Request Transfer</a></li>
 				<li><a href="<?=base_url()?>backend/reports/directorder">Direct Order</a></li>
 			</ul>
 		</div>

@@ -277,7 +277,13 @@ class Requests extends Backend_Controller
 		if (!$this->input->is_ajax_request() && ENVIRONMENT == 'production') {
 			exit('No direct script access allowed');
 		}
-		
+
+		$startDate = $this->input->post('startDate');
+		$endDate = $this->input->post('endDate');
+
+		$startDateTimestamp = !empty($startDate) ? strtotime(convertJavascriptDateToPhpDate($startDate, '/')) : 0;
+		$endDateTimestamp = !empty($endDate) ? strtotime(convertJavascriptDateToPhpDate($endDate, '/')) + 86399 : 0;
+
 		$responseJsonData = [];
 
 		$condition = [];
@@ -289,6 +295,19 @@ class Requests extends Backend_Controller
 		else if ($type === INCOMMING)
 		{
 			$condition['userIdTo'] = $this->loggedInUserId;
+		}
+
+		if ($startDateTimestamp > 0 && $endDateTimestamp > 0)
+		{
+			$condition[sprintf('createdOn BETWEEN %s AND %s', $startDateTimestamp, $endDateTimestamp)] = null;
+		}
+		else if (!empty($startDateTimestamp > 0))
+		{
+			$condition['createdOn >= '] = $startDateTimestamp;
+		}
+		else if (!empty($endDateTimestamp > 0))
+		{
+			$condition['createdOn >= '] = $endDateTimestamp;
 		}
 
 		$limit = $this->input->post('limit') ?? 10;
@@ -337,6 +356,12 @@ class Requests extends Backend_Controller
 		if (!$this->input->is_ajax_request() && ENVIRONMENT == 'production') {
 			exit('No direct script access allowed');
 		}
+
+		$startDate = $this->input->post('startDate');
+		$endDate = $this->input->post('endDate');
+
+		$startDateTimestamp = !empty($startDate) ? strtotime(convertJavascriptDateToPhpDate($startDate, '/')) : 0;
+		$endDateTimestamp = !empty($endDate) ? strtotime(convertJavascriptDateToPhpDate($endDate, '/')) + 86399 : 0;
 		
 		$responseJsonData = [];
 
@@ -344,8 +369,8 @@ class Requests extends Backend_Controller
 		$page = $this->input->post('page') ?? 1;
 		$offset = $limit * ($page - 1);
 
-		$requests = $this->request->getDisputeRequests($limit, $offset);
-		$requestCount = $this->request->getDisputeRequestsCount();
+		$requests = $this->request->getDisputeRequests($limit, $offset, $startDateTimestamp, $endDateTimestamp);
+		$requestCount = $this->request->getDisputeRequestsCount($startDateTimestamp, $endDateTimestamp);
 
 		$responseJsonData['pagination'] = [
 			'total' => $requestCount,

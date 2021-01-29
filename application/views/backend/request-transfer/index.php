@@ -8,7 +8,7 @@
                 </div>
                 <div class="card-content">
                     <div class="row col-md-12">
-                        <span><b><?=INDENT_REQUEST_SHORT_NAME?>: </b><?=INDENT_REQUEST_SHORT_NAME?>-<?=$indentRequestNumber?><span>
+                        <span><b><?=REQUEST_TRANSFER_SHORT_NAME?>: </b><?=REQUEST_TRANSFER_SHORT_NAME?>-<?=$indentRequestNumber?><span>
                         <span class="pull-right"><b>Date: </b><?=Date('d-m-Y')?></span>
                     </div>
                     <div class="row">

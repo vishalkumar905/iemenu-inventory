@@ -3853,9 +3853,287 @@ IEWebsiteAdmin.ManageDisputeRequestPage = (function() {
 	}
 })();
 
+IEWebsiteAdmin.RequestTransferReport = (function() {
+	var currentTab, searchBarText, incommingPagination = {
+		currentPage: 1,
+		totalPages: 0,
+		limit: $("#tableDataLimit").val(),
+	}, outgoingPagination = {
+		currentPage: 1,
+		totalPages: 0,
+		limit: $("#tableDataLimit").val(),
+	}, disputePagination = {
+		currentPage: 1,
+		totalPages: 0,
+		limit: $("#tableDataLimit").val(),
+	}; 
+
+	var init = function()
+	{
+		if ($("#manageRequestTransferReportPageContainer").length <= 0)
+		{
+			return;
+		};
+
+		currentTab = $('.nav-tabs li.active > a').text();
+
+		$('.nav-tabs a').on('shown.bs.tab', function(event){
+			currentTab = $(event.target).text();         // active tab
+			// $(event.relatedTarget).text();  // previous tab
+		});
+
+		let datetimePickeObj = {
+			format: 'DD/MM/YYYY',
+			icons: {
+				time: "fa fa-clock-o",
+				date: "fa fa-calendar",
+				up: "fa fa-chevron-up",
+				down: "fa fa-chevron-down",
+				previous: 'fa fa-chevron-left',
+				next: 'fa fa-chevron-right',
+				today: 'fa fa-screenshot',
+				clear: 'fa fa-trash',
+				close: 'fa fa-remove',
+				inline: true
+			}
+		}
+
+		$('#startDate').datetimepicker({
+			...datetimePickeObj,
+			maxDate: new Date(),
+			defaultDate: new Date()
+		});
+		
+		$('#endDate').datetimepicker({
+			...datetimePickeObj,
+			maxDate: new Date(),
+			defaultDate: new Date()
+		});
+
+		$("[name='exportData']").click(function() {
+			let exportType = String($(this).val()).toLowerCase();
+			if (!_.isEmpty(EXPORT_REQUEST_TRANSFER_REPORT) && exportType == 'csv' || exportType == 'excel')
+			{
+				window.location.href = EXPORT_REQUEST_TRANSFER_REPORT + '/' + currentTab + '/' + exportType;
+			}
+		});
+
+		$("#search").click(function() {
+			loadProducts('Incomming');
+			loadProducts('Outgoing');
+			loadDisputeRequests();
+		});
+
+		$("#tableDataLimit").change(function() {
+			
+			incommingPagination.limit = Number($(this).val());
+			incommingPagination.currentPage = 1;
+			incommingPagination.totalPages  = 0;
+
+			outgoingPagination.limit = Number($(this).val());
+			outgoingPagination.currentPage = 1;
+			outgoingPagination.totalPages  = 0;
+
+			disputePagination.limit = Number($(this).val());
+			disputePagination.currentPage = 1;
+			disputePagination.totalPages  = 0;
+
+			loadProducts('Incomming');
+			loadProducts('Outgoing');
+			loadDisputeRequests();
+		});
+
+		loadProducts('Incomming');
+		loadProducts('Outgoing');
+		loadDisputeRequests();
+	}
+
+	var loadDisputeRequests = function()
+	{
+		$("#manageDisputeTableBody").html('');
+		
+		let params = {
+			page: disputePagination.currentPage,
+			limit: Number(disputePagination.limit),
+			startDate: $("#startDate").val(),
+			endDate: $("#endDate").val(),
+		};
+
+		IEWebsite.Utils.ShowLoadingScreen();
+		IEWebsite.Utils.AjaxPost(FETCH_DISPUTE_REQUESTS, params, function(resp) {
+			IEWebsite.Utils.HideLoadingScreen();
+
+			if (resp.status)
+			{
+				$("#disputePagination").html(IEWebsiteAdmin.CustomPagination.Init(resp.response.pagination));
+
+				disputePagination.totalPages = resp.response.pagination.totalPages;
+
+				if (!_.isEmpty(resp.response.data))
+				{
+					_.each(resp.response.data, function(row) {
+	
+						let tableRow = '<tr>';
+							tableRow += '<td>'+ row.sn +'</td>';
+							tableRow += '<td>'+ row.transferFrom +'</td>';
+							tableRow += '<td>'+ row.transferTo +'</td>';
+							tableRow += '<td>'+ row.requestType +'</td>';
+							tableRow += '<td>'+ row.createdOn +'</td>';
+							tableRow += '<td>'+ row.action +'</td>';
+							tableRow += '</tr>';
+	
+							$("#manageDisputeTableBody").append(tableRow);
+					});
+				}
+				else 
+				{
+					$("#manageDisputeTableBody").append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
+				}
+
+
+				$("[id^=paginate-]").click(function() {
+					let page = Number($(this).attr('page'));
+
+					if (page > 0)
+					{
+						disputePagination.currentPage = page;
+						loadDisputeRequests();
+					}
+				});
+			}
+		});
+	}
+
+	var loadProducts = function(type = null) {
+		let searchText = $.trim($("#searchBar").val());
+
+		$("#manageRequestTransferTableBody").html('');
+
+		let data = {
+			startDate: $("#startDate").val(),
+			endDate: $("#endDate").val(),
+		};
+
+		let apiUrl = FETCH_REQUESTS;
+
+		if (!type)
+		{
+			type = currentTab;
+		}
+
+		if (type == 'Incomming')
+		{
+			apiUrl += '/' + INCOMMING;
+			data.page = incommingPagination.currentPage;
+			data.limit = incommingPagination.limit;
+		}
+		else if (type == 'Outgoing')
+		{
+			apiUrl += '/' + OUTGOING;
+			data.page = outgoingPagination.currentPage;
+			data.limit = outgoingPagination.limit;
+		}
+		else 
+		{
+			throw new Exception('Invalid tab');
+		}
+
+		IEWebsite.Utils.ShowLoadingScreen();
+		IEWebsite.Utils.AjaxPost(apiUrl, data , function(resp) {
+			IEWebsite.Utils.HideLoadingScreen();
+
+			if (resp.status)
+			{
+				let paginationHtml = IEWebsiteAdmin.CustomPagination.Init(resp.response.pagination, {
+					tab: type
+				});
+
+				if (type == 'Incomming')
+				{
+					$("#incommingPagination").html(paginationHtml);
+					$("#manageIncommingRequestTransferTableBody").html('');
+				}
+				else if (type == 'Outgoing')
+				{
+					$("#outgoingPagination").html(paginationHtml);
+					$("#manageOutgoingRequestTransferTableBody").html('');
+				}
+
+				showTableData(resp.response.data, type);
+				
+				$("[id^=paginate-]").click(function() {
+					let page = Number($(this).attr('page'));
+					let tab = $(this).attr('tab');
+					
+					if (tab == 'Incomming')
+					{
+						incommingPagination.totalPages = resp.response.pagination.totalPages;
+						incommingPagination.currentPage = page;
+						loadProducts(tab);
+					}
+					else if (tab == 'Outgoing')
+					{
+						outgoingPagination.totalPages = resp.response.pagination.totalPages;
+						outgoingPagination.currentPage = page;
+						loadProducts(tab);
+					}
+				});
+			}
+		});
+	}
+
+	var showTableData = function(data, type) 
+	{
+		if (!_.isEmpty(data))
+		{
+			let action = null;
+			let limit = (type == 'Incomming' ? incommingPagination.limit : (type == 'Outgoing' ? outgoingPagination.limit : $("#tableDataLimit").val()));
+			let currentPage = (type == 'Incomming' ? incommingPagination.currentPage : (type == 'Outgoing' ? outgoingPagination.currentPage : 1));
+			let sn = (currentPage - 1) * limit;
+
+			_.each(data, function(row) {
+
+				let tableRow = '<tr>';
+					tableRow += '<td>'+ ++sn +'</td>';
+					tableRow += '<td>'+ row.transferFrom +'</td>';
+					tableRow += '<td>'+ row.transferTo +'</td>';
+					tableRow += '<td>'+ row.requestType +'</td>';
+					tableRow += '<td>'+ row.status +'</td>';
+					tableRow += '<td>'+ row.createdOn +'</td>';
+					tableRow += '<td>'+ row.action +'</td>';
+					tableRow += '</tr>';
+				
+				if (type == 'Incomming')
+				{
+					$("#manageIncommingRequestTransferTableBody").append(tableRow);
+				}
+				else if (type == 'Outgoing')
+				{
+					$("#manageOutgoingRequestTransferTableBody").append(tableRow);
+				}
+			});
+		}
+		else
+		{
+			if (type == 'Incomming')
+			{
+				$("#manageIncommingRequestTransferTableBody").append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
+			}
+			else if (type == 'Outgoing')
+			{
+				$("#manageOutgoingRequestTransferTableBody").append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
+			}
+		}
+	};
+
+	return {
+		Init: init
+	}
+})();
+
 IEWebsiteAdmin.CustomPagination = (function() {
 	
-	var init = function(pagination)
+	var init = function(pagination, attributes = null)
 	{
 		let html = '';
 
@@ -3866,7 +4144,20 @@ IEWebsiteAdmin.CustomPagination = (function() {
 			for (let index = 1; index <= totalPages; index++) 
 			{
 				let active = current == index ? 'active' : ''; 
-				html += '<li class="'+ active +'"><a id="paginate-'+ index +'" page="'+ index +'" href="javascript:void(0);">' + index + '</li>';
+				let customAttributes = '';
+
+				if (!_.isEmpty(attributes))
+				{
+					let text = [];
+					for (let attribute in attributes)
+					{   
+						text.push(String(attribute + '=' + JSON.stringify(attributes[attribute])));
+					}
+
+					customAttributes = text.join(' ');
+				}
+
+				html += '<li class="'+ active +'"><a id="paginate-'+ index +'" page="'+ index +'" href="javascript:void(0);" '+ customAttributes +'>' + index + '</li>';
 			}
 	
 			html = '<ul class="pagination pagination-info">' + html + '</ul>';
@@ -3889,6 +4180,7 @@ IEWebsiteAdmin.CommonJs = (function() {
 	
 		activateScroller()
 		activeCurrentPageSideNavigation();
+		scrollToActiveSideBarNavigation();
 	};
 
 	var activateScroller = function()
@@ -3924,6 +4216,19 @@ IEWebsiteAdmin.CommonJs = (function() {
 		});
 	};
 
+	var scrollToActiveSideBarNavigation = function()
+	{
+		let $container = $(".sidebar-wrapper");
+		let $scrollTo = $(".nav > li.active");
+
+		if ($scrollTo.length)
+		{
+			$container.animate({
+				scrollTop: $scrollTo.offset().top - $container.offset().top + $container.scrollTop()
+			});
+		}
+	};
+
 	return {
 		Init: init
 	}
@@ -3952,4 +4257,5 @@ $(document).ready(function(){
 	IEWebsiteAdmin.ClosingInventoryReport.Init();
 	IEWebsiteAdmin.WastageInventoryReport.Init();
 	IEWebsiteAdmin.DirectOrderReport.Init();
+	IEWebsiteAdmin.RequestTransferReport.Init();
 });
