@@ -3853,7 +3853,7 @@ IEWebsiteAdmin.ManageDisputeRequestPage = (function() {
 	}
 })();
 
-IEWebsiteAdmin.RequestTransferReport = (function() {
+IEWebsiteAdmin.RequestTransferReportPaginationBackup = (function() {
 	var currentTab, searchBarText, incommingPagination = {
 		currentPage: 1,
 		totalPages: 0,
@@ -4123,6 +4123,149 @@ IEWebsiteAdmin.RequestTransferReport = (function() {
 			{
 				$("#manageOutgoingRequestTransferTableBody").append('<tr><td align="center" colspan="11">No Record Found.</td></tr>');
 			}
+		}
+	};
+
+	return {
+		Init: init
+	}
+})();
+
+IEWebsiteAdmin.RequestTransferReport = (function() {
+	var currentTab, searchBarText, pagination = {
+		currentPage: 1,
+		totalPages: 0,
+		limit: $("#tableDataLimit").val(),
+	}; 
+
+	var init = function()
+	{
+		if ($("#manageRequestTransferReportPageContainer").length <= 0)
+		{
+			return;
+		};
+
+		currentTab = $('.nav-tabs li.active > a').text();
+
+		$('.nav-tabs a').on('shown.bs.tab', function(event){
+			currentTab = $(event.target).text();         // active tab
+			// $(event.relatedTarget).text();  // previous tab
+		});
+
+		let datetimePickeObj = {
+			format: 'DD/MM/YYYY',
+			icons: {
+				time: "fa fa-clock-o",
+				date: "fa fa-calendar",
+				up: "fa fa-chevron-up",
+				down: "fa fa-chevron-down",
+				previous: 'fa fa-chevron-left',
+				next: 'fa fa-chevron-right',
+				today: 'fa fa-screenshot',
+				clear: 'fa fa-trash',
+				close: 'fa fa-remove',
+				inline: true
+			}
+		}
+
+		$('#startDate').datetimepicker({
+			...datetimePickeObj,
+			maxDate: new Date(),
+			defaultDate: new Date()
+		});
+		
+		$('#endDate').datetimepicker({
+			...datetimePickeObj,
+			maxDate: new Date(),
+			defaultDate: new Date()
+		});
+
+		$("[name='exportData']").click(function() {
+			let exportType = String($(this).val()).toLowerCase();
+			if (!_.isEmpty(EXPORT_REQUEST_TRANSFER_REPORT) && exportType == 'csv' || exportType == 'excel')
+			{
+				window.location.href = EXPORT_REQUEST_TRANSFER_REPORT + '/' + exportType;
+			}
+		});
+
+		$("#search").click(loadProducts);
+
+		$("#tableDataLimit").change(function() {
+			
+			pagination.limit = Number($(this).val());
+			pagination.currentPage = 1;
+			pagination.totalPages  = 0;
+
+			loadProducts();
+		});
+
+		loadProducts();
+	}
+
+	var loadProducts = function(type = null) {
+		let searchText = $.trim($("#searchBar").val());
+
+		$("#manageRequestTransferTableBody").html('');
+
+		let data = {
+			startDate: $("#startDate").val(),
+			endDate: $("#endDate").val(),
+			page: pagination.currentPage,
+			limit: pagination.limit
+		};
+
+		IEWebsite.Utils.ShowLoadingScreen();
+		IEWebsite.Utils.AjaxPost(FETCH_REQUEST_TRANSFER_REPORT, data , function(resp) {
+			IEWebsite.Utils.HideLoadingScreen();
+
+			if (resp.status)
+			{
+				let paginationHtml = IEWebsiteAdmin.CustomPagination.Init(resp.response.pagination);
+
+				$("#manageRequestTransferTableBody").html('');
+				$("#pagination").html(paginationHtml);
+
+				showTableData(resp.response.data, type);
+				
+				$("[id^=paginate-]").click(function() {
+					let page = Number($(this).attr('page'));
+					pagination.totalPages = resp.response.pagination.totalPages;
+					pagination.currentPage = page;
+					loadProducts();
+				});
+			}
+		});
+	}
+
+	var showTableData = function(data, type) 
+	{
+		if (!_.isEmpty(data))
+		{
+			_.each(data, function(row) {
+
+				let tableRow = '<tr>';
+					tableRow += '<td>'+ row.sn +'</td>';
+					tableRow += '<td>'+ row.indentRequestNumber +'</td>';
+					tableRow += '<td>'+ row.transferFrom +'</td>';
+					tableRow += '<td>'+ row.transferTo +'</td>';
+					tableRow += '<td>'+ row.requestType +'</td>';
+					tableRow += '<td>'+ row.productCode +'</td>';
+					tableRow += '<td>'+ row.productName +'</td>';
+					tableRow += '<td>'+ row.unitName +'</td>';
+					tableRow += '<td>'+ row.productQuantity +'</td>';
+					tableRow += '<td>'+ row.requestedQty +'</td>';
+					tableRow += '<td>'+ row.dispatchedQty +'</td>';
+					tableRow += '<td>'+ row.receivedQty +'</td>';
+					tableRow += '<td>'+ row.disputeQty +'</td>';
+					tableRow += '<td>'+ row.createdOn +'</td>';
+					tableRow += '</tr>';
+				
+				$("#manageRequestTransferTableBody").append(tableRow);
+			});
+		}
+		else
+		{
+			$("#manageRequestTransferTableBody").append('<tr><td align="center" colspan="16">No Record Found.</td></tr>');
 		}
 	};
 

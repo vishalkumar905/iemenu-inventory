@@ -152,3 +152,7 @@
 .th-nowwrap th {
     white-space: nowrap;
 }
+
+table.now-wrap tr td {
+    white-space: nowrap;
+}

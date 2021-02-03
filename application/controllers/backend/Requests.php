@@ -307,7 +307,7 @@ class Requests extends Backend_Controller
 		}
 		else if (!empty($endDateTimestamp > 0))
 		{
-			$condition['createdOn >= '] = $endDateTimestamp;
+			$condition['createdOn <= '] = $endDateTimestamp;
 		}
 
 		$limit = $this->input->post('limit') ?? 10;

@@ -153,6 +153,81 @@ class TransferStockModel extends CI_Model
 		$query = $this->db->query($mysqlQuery);
 		return $query;
 	}
+
+	public function getRequestTransferProducts(int $limit, int $offset, int $startDateTimestamp = 0, int $endDateTimestamp = 0)
+	{
+		$query = $this->getRequestTransferProductsQuery($startDateTimestamp, $endDateTimestamp)->select([
+			'r.userIdFrom',
+			'r.userIdTo',
+			'r.indentRequestNumber',
+			'r.requestType',
+			'r.createdOn',
+			'r.completedOn',
+			'ts.productId',
+			'ts.productQuantity',
+			'ts.requestedQty',
+			'ts.dispatchedQty',
+			'ts.receivedQty',
+			'ts.disputeQty',
+			'su.unitName',
+			'p.productName',
+			'p.productCode',
+		]);
+		
+		if ($limit > 0)
+		{
+			$query->limit($limit, $offset);
+		}
+
+		return $query->get()->result_array();
+	}
+
+	private function getRequestTransferProductsQuery(int $startDateTimestamp = 0, int $endDateTimestamp = 0)
+	{
+		$query = $this->db->from('ie_requests r')->join(
+			'ie_transfer_stocks ts', 'ts.requestId = r.id', 'LEFT',
+		)->join(
+			'ie_products p', 'p.id = ts.productId', 'INNER',
+		)->join(
+			'ie_si_units su', 'su.id = ts.productSiUnitId', 'INNER'
+		)->where([
+			'r.completedON IS NOT NULL' => NULL, 
+			sprintf('(userIdFrom = %s OR userIdTo = %s)', $this->loggedInUserId, $this->loggedInUserId) => NULL
+		]);
+
+		$condition = [];
+		if ($startDateTimestamp > 0 && $endDateTimestamp > 0)
+		{
+			$condition[sprintf('r.createdOn BETWEEN %s AND %s', $startDateTimestamp, $endDateTimestamp)] = null;
+		}
+		else if (!empty($startDateTimestamp > 0))
+		{
+			$condition['r.createdOn >= '] = $startDateTimestamp;
+		}
+		else if (!empty($endDateTimestamp > 0))
+		{
+			$condition['r.createdOn <= '] = $endDateTimestamp;
+		}
+
+		if (!empty($condition))
+		{
+			$query->where($condition);
+		}
+
+		return $query;
+	}
+
+	public function getRequestTransferProductsCount($startDateTimestamp, $endDateTimestamp)
+	{
+		$query = $this->getRequestTransferProductsQuery($startDateTimestamp, $endDateTimestamp)->select('COUNT(r.id) as totalCount')->get()->row_array();
+		
+		if (!empty($query))
+		{
+			return $query['totalCount'] ?? 0;
+		}
+
+		return 0;
+	}
 }
 
 ?>
