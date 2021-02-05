@@ -4253,7 +4253,6 @@ IEWebsiteAdmin.RequestTransferReport = (function() {
 					tableRow += '<td>'+ row.productName +'</td>';
 					tableRow += '<td>'+ row.unitName +'</td>';
 					tableRow += '<td>'+ row.productQuantity +'</td>';
-					tableRow += '<td>'+ row.requestedQty +'</td>';
 					tableRow += '<td>'+ row.dispatchedQty +'</td>';
 					tableRow += '<td>'+ row.receivedQty +'</td>';
 					tableRow += '<td>'+ row.disputeQty +'</td>';

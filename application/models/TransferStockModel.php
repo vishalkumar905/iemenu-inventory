@@ -185,9 +185,9 @@ class TransferStockModel extends CI_Model
 	private function getRequestTransferProductsQuery(int $startDateTimestamp = 0, int $endDateTimestamp = 0)
 	{
 		$query = $this->db->from('ie_requests r')->join(
-			'ie_transfer_stocks ts', 'ts.requestId = r.id', 'LEFT',
+			'ie_transfer_stocks ts', 'ts.requestId = r.id', 'LEFT'
 		)->join(
-			'ie_products p', 'p.id = ts.productId', 'INNER',
+			'ie_products p', 'p.id = ts.productId', 'INNER'
 		)->join(
 			'ie_si_units su', 'su.id = ts.productSiUnitId', 'INNER'
 		)->where([

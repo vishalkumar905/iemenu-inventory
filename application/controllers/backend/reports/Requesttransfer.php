@@ -127,7 +127,6 @@ class Requesttransfer extends Backend_Controller
 						['title' => 'Product Code', 'name' => 'productCode'],
 						['title' => 'Product Name', 'name' => 'productName'],
 						['title' => 'Unit', 'name' => 'unitName'],
-						['title' => 'Qty', 'name' => 'productQuantity'],
 						['title' => 'Requested Qty', 'name' => 'requestedQty'],
 						['title' => 'Dispatched Qty', 'name' => 'dispatchedQty'],
 						['title' => 'Received Qty', 'name' => 'receivedQty'],
