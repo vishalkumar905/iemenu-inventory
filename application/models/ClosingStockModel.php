@@ -256,16 +256,34 @@ class ClosingStockModel extends CI_Model
 		}
 	}
 
-	public function getClosingStockProducts(int $closingStockNumber, string $date, array $categoryIds): array
+	public function getClosingStockProducts(?int $closingStockNumber, ?array $date, ?array $categoryIds): array
 	{
 		$closingStockCondition = [
 			'cs.userId' => $this->loggedInUserId,
-			'cs.closingStockNumber' => $closingStockNumber,
 		];
+
+		if ($closingStockNumber > 0)
+		{
+			$closingStockCondition['cs.closingStockNumber'] = $closingStockNumber;	
+		}
 
 		if (!empty($date))
 		{
-			$closingStockCondition['FROM_UNIXTIME(cs.createdOn, "%Y-%m-%d") = '] = $date;
+			$startDateTimestamp = $date['startDateTimestamp'] ?? 0;
+			$endDateTimestamp = $date['endDateTimestamp'] ?? 0;
+
+			if ($startDateTimestamp > 0 && $endDateTimestamp > 0)
+			{
+				$closingStockCondition[sprintf('cs.createdOn BETWEEN %s AND %s', $startDateTimestamp, $endDateTimestamp)] = null;
+			}
+			else if ($startDateTimestamp > 0)
+			{
+				$closingStockCondition['cs.createdOn >= '] = $startDateTimestamp;
+			}
+			else if ($endDateTimestamp > 0)
+			{
+				$closingStockCondition['cs.createdOn <= '] = $endDateTimestamp;
+			}
 		}
 
 		$closingStocks = $this->db->select([
@@ -320,7 +338,7 @@ class ClosingStockModel extends CI_Model
 			}
 		}
 
-		$closingStocks = $closingStocks->group_by('cs.productId')->order_by('cs.productId', 'ASC')->get()->result_array();
+		$closingStocks = $closingStocks->order_by('cs.createdOn', 'DESC')->get()->result_array();
 
 		return $closingStocks;
 	}

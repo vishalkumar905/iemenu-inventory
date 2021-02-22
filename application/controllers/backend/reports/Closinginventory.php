@@ -38,6 +38,7 @@ class Closinginventory extends Backend_Controller
 	public function fetchReport()
 	{
 		$startDate = $this->input->post('startDate');
+		$endDate = $this->input->post('endDate');
 		$category = $this->input->post('category');
 		$closingStockNumber = intval($this->input->post('closingStockNumber'));
 
@@ -59,7 +60,9 @@ class Closinginventory extends Backend_Controller
 
 		try
 		{
-			$date = !empty($startDate) ? convertJavascriptDateToPhpDate($startDate, '/') : '';
+			$date['startDateTimestamp'] = !empty($startDate) ? strtotime(convertJavascriptDateToPhpDate($startDate, '/')) : 0;
+			$date['endDateTimestamp'] = !empty($endDate) ? strtotime(convertJavascriptDateToPhpDate($endDate, '/')) + 86399 : 0;		
+			
 			$response['data'] = $this->closingstock->getClosingStockProducts($closingStockNumber, $date, $categoryIds);
 			
 			if (!empty($response['data']))
@@ -81,6 +84,7 @@ class Closinginventory extends Backend_Controller
 		}
 
 		$response['startDate'] = $startDate;
+		$response['endDate'] = $endDate;
 
 		if (!empty($response['data']))
 		{
