@@ -11,6 +11,12 @@
 			<p>Products</p>
 		</a>
 	</li>
+	<li>
+		<a href="<?=base_url()?>backend/recipemanagement">
+			<i class="material-icons">list</i>
+			<p>Recipe Management</p>
+		</a>
+	</li>
 	<?php /* ?>
 	<li>
 		<a data-toggle="collapse" href="#products">

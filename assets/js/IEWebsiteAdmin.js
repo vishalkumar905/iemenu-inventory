@@ -4313,6 +4313,107 @@ IEWebsiteAdmin.CustomPagination = (function() {
 	}
 })();
 
+IEWebsiteAdmin.ProductCreatePage = (function() {
+	var init = function()
+	{
+		if ($("#recipeManagementPageContainer").length <= 0)
+		{
+			return 0;
+		};
+
+		$("#uploadExcel").click(function() {
+			let file = $('#excelFile');
+			let errorMessage = "";
+
+			if (_.isEmpty(file[0].files) || file[0].files.length === 0)
+			{
+				errorMessage = "Please select a file to upload";	
+			}
+			
+
+			if (!_.isEmpty(errorMessage))
+			{
+				$("#excelFileErrorMsg").text(errorMessage);
+				return false;
+			}
+			else
+			{
+				IEWebsite.Utils.ShowLoadingScreen();
+
+				let url = IMPORT_RECIPES; 
+				let formData = new FormData();
+				formData.append('file', file[0].files[0]);
+				
+				$("#importExcelForm .text-danger").text('');	
+				IEWebsite.Utils.AjaxFileUpload(url, formData, function(resp) {
+					IEWebsite.Utils.HideLoadingScreen();
+					let responseMsg = resp.message;
+
+					if (resp.status)
+					{
+						file.val('');
+						IEWebsite.Utils.Swal('Success', responseMsg, 'success');
+						$('#recipeManagementData').DataTable().ajax.reload();
+					}
+					else
+					{
+						if (responseMsg.search('</p>') != -1)
+						{
+							$(responseMsg).insertAfter("#excelFileErrorMsg");
+						}
+						else
+						{
+							$("#excelFileErrorMsg").text(responseMsg);
+						}
+					}
+				});
+			}
+		});
+
+		$("[name='exportData']").click(function() {
+			let exportType = String($(this).val()).toLowerCase();
+			if (!_.isEmpty(EXPORT_RECIPES) && exportType == 'csv' || exportType == 'excel')
+			{
+				window.location.href = EXPORT_RECIPES + exportType;
+			}
+		});
+
+		$('#recipeManagementData').DataTable({
+			// "bPaginate": false,
+			// "searching": false,   // Search Box will Be Disabled
+			"processing": true,
+			"serverSide": true,
+			"ordering": false,
+			responsive: true,
+			ajax: {
+				url: FETCH_RECIPES,
+				type: "POST"
+			},
+			columns: [
+				{data: 'sn', width: "5%"},
+				{data: 'itemName'},
+				{data: 'createdOn'},
+				{data: 'action', width: "10%"},
+			],
+			// "pagingType": "full_numbers",
+			"lengthMenu": [
+				[10, 20, 50],
+				[10, 20, 50]
+			],
+			language: {
+				search: "_INPUT_",
+				searchPlaceholder: "Search records",
+			},
+		});
+		
+		IEWebsite.Utils.JqueryFormValidation('#createForm');
+	};
+	
+	return {
+		Init: init
+	}
+})();
+
 IEWebsiteAdmin.CommonJs = (function() {
 	var init = function()
 	{

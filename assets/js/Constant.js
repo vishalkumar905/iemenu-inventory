@@ -55,7 +55,9 @@ const EXPORT_WASTAGE_INVENTORY_REPORT = BASE_URL + 'backend/reports/wastageinven
 const EXPORT_REQUEST_TRANSFER_REPORT = BASE_URL + 'backend/reports/requesttransfer/export';
 const FETCH_REQUEST_TRANSFER_REPORT = BASE_URL + 'backend/reports/requesttransfer/fetchReport';
 
-
+const EXPORT_RECIPES = BASE_URL + 'backend/recipemanagement/export';
+const IMPORT_RECIPES = BASE_URL + 'backend/recipemanagement/import';
+const FETCH_RECIPES = BASE_URL + 'backend/recipemanagement/fetchRecipes';
 
 // API- End
 
