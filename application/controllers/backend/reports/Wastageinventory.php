@@ -38,6 +38,7 @@ class Wastageinventory extends Backend_Controller
 	public function fetchReport()
 	{
 		$startDate = $this->input->post('startDate');
+		$endDate = $this->input->post('endDate');
 		$category = $this->input->post('category');
 		$wastageStockNumber = intval($this->input->post('wastageStockNumber'));
 
@@ -59,8 +60,10 @@ class Wastageinventory extends Backend_Controller
 
 		try
 		{
-			$date = !empty($startDate) ? convertJavascriptDateToPhpDate($startDate, '/') : '';
-			$response['data'] = $this->wastagestock->getWastageStockProducts($wastageStockNumber, $date, $categoryIds);
+			$startDateTimestamp = !empty($startDate) ? strtotime(convertJavascriptDateToPhpDate($startDate, '/')) : 0;
+			$endDateTimestamp = !empty($endDate) ? strtotime(convertJavascriptDateToPhpDate($endDate, '/')) + 86399 : 0;
+			
+			$response['data'] = $this->wastagestock->getWastageStockProducts($wastageStockNumber, $startDateTimestamp, $endDateTimestamp, $categoryIds);
 			
 			if (!empty($response['data']))
 			{

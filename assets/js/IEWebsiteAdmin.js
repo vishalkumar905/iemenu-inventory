@@ -1882,13 +1882,15 @@ IEWebsiteAdmin.OpeningInventoryReport = (function() {
 	var loadProducts = function() {
 		let search = $("#searchBar").val();
 		let startDate = $("#startDate").val();
+		let endDate = $("#endDate").val();
 		let openingStockNumber = $("#openingStockNumber").val();
 		let category = $("#category").val();
 
 		if (true)
 		{
 			let postData = {
-				// startDate,
+				startDate,
+				endDate,
 				category,
 				search,
 				openingStockNumber
@@ -2005,13 +2007,15 @@ IEWebsiteAdmin.ClosingInventoryReport = (function() {
 	var loadProducts = function() {
 		let search = $("#searchBar").val();
 		let startDate = $("#startDate").val();
+		let endDate = $("#endDate").val();
 		let closingStockNumber = $("#closingStockNumber").val();
 		let category = $("#category").val();
 
 		if (true)
 		{
 			let postData = {
-				// startDate,
+				startDate,
+				endDate,
 				category,
 				search,
 				closingStockNumber
@@ -2127,13 +2131,15 @@ IEWebsiteAdmin.WastageInventoryReport = (function() {
 	var loadProducts = function() {
 		let search = $("#searchBar").val();
 		let startDate = $("#startDate").val();
+		let endDate = $("#endDate").val();
 		let wastageStockNumber = $("#wastageStockNumber").val();
 		let category = $("#category").val();
 
 		if (true)
 		{
 			let postData = {
-				// startDate,
+				startDate,
+				endDate,
 				category,
 				search,
 				wastageStockNumber
@@ -2249,13 +2255,15 @@ IEWebsiteAdmin.DirectOrderReport = (function() {
 	var loadProducts = function() {
 		let search = $("#searchBar").val();
 		let startDate = $("#startDate").val();
+		let endDate = $("#endDate").val();
 		let grnNumber = $("#grnNumber").val();
 		let category = $("#category").val();
 
 		if (true)
 		{
 			let postData = {
-				// startDate,
+				startDate,
+				endDate,
 				category,
 				search,
 				grnNumber

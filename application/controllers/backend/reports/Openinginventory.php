@@ -49,6 +49,7 @@ class Openinginventory extends Backend_Controller
 	public function fetchReport()
 	{
 		$startDate = $this->input->post('startDate');
+		$endDate = $this->input->post('endDate');
 		$category = $this->input->post('category');
 		$openingStockNumber = intval($this->input->post('openingStockNumber'));
 
@@ -70,8 +71,10 @@ class Openinginventory extends Backend_Controller
 
 		try
 		{
-			$date = !empty($startDate) ? convertJavascriptDateToPhpDate($startDate, '/') : '';
-			$response['data'] = $this->openingstock->getOpeningStockProducts($openingStockNumber, $date, $categoryIds);
+			$startDateTimestamp = !empty($startDate) ? strtotime(convertJavascriptDateToPhpDate($startDate, '/')) : 0;
+			$endDateTimestamp = !empty($endDate) ? strtotime(convertJavascriptDateToPhpDate($endDate, '/')) + 86399 : 0;
+			
+			$response['data'] = $this->openingstock->getOpeningStockProducts($openingStockNumber, $startDateTimestamp, $endDateTimestamp, $categoryIds);
 			
 			if (!empty($response['data']))
 			{

@@ -2,7 +2,7 @@
 	<div class="card mt-0">
 		<form id="createReportForm" class="form-horizontal" enctype="multipart/form-data">
 			<div class="card-content">
-
+				<?php /* ?>
 				<div class="row">
 					<label class="col-md-2 label-on-left">Opening Stocks*</label>
 					<div class="col-sm-10">
@@ -18,10 +18,10 @@
 						</div>
 					</div>
 				</div>
+				<?php */ ?>
 
-				<?php /* ?>
 				<div class="row">
-					<label class="col-md-2 label-on-left">Date*</label>
+					<label class="col-md-2 label-on-left">Start Date*</label>
 					<div class="col-sm-10">
 						<div class="form-group label-floating">
 							<label class="control-label"></label>
@@ -30,7 +30,17 @@
 						</div>
 					</div>
 				</div>
-				<?php */ ?>
+
+				<div class="row">
+					<label class="col-md-2 label-on-left">End Date*</label>
+					<div class="col-sm-10">
+						<div class="form-group label-floating">
+							<label class="control-label"></label>
+							<input required="true" type="text" name="endDate" id="endDate" class="form-control" value="<?=!empty(set_value('endDate')) ? set_value('endDate') :  (isset($endDate) ? $endDate : '')?>">
+							<?=form_error('endDate');?>
+						</div>
+					</div>
+				</div>
 
 
 				<div class="row">

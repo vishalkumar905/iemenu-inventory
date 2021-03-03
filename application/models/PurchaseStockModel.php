@@ -301,16 +301,28 @@ class PurchaseStockModel extends CI_Model
 		return $totalCount;
 	}
 
-	public function getPurchaseStockProducts(int $grnNumber, string $date, array $categoryIds): array
+	public function getPurchaseStockProducts(int $grnNumber, int $startDateTimestamp = null, int $endDateTimestamp = null, array $categoryIds): array
 	{
 		$purchaseStockCondition = [
 			'ps.userId' => $this->loggedInUserId,
-			'ps.grnNumber' => $grnNumber,
 		];
-	
-		if (!empty($date))
+		
+		if ($grnNumber)
 		{
-			$purchaseStockCondition['FROM_UNIXTIME(ps.createdOn, "%Y-%m-%d") = '] = $date;
+			$purchaseStockCondition['ps.grnNumber'] = $grnNumber;
+		}
+
+		if ($startDateTimestamp > 0 && $endDateTimestamp > 0)
+		{
+			$purchaseStockCondition[sprintf('ps.createdOn BETWEEN %s AND %s', $startDateTimestamp, $endDateTimestamp)] = null;
+		}
+		else if (!empty($startDateTimestamp > 0))
+		{
+			$purchaseStockCondition['ps.createdOn >= '] = $startDateTimestamp;
+		}
+		else if (!empty($endDateTimestamp > 0))
+		{
+			$purchaseStockCondition['ps.createdOn <= '] = $endDateTimestamp;
 		}
 	
 		$purchaseStocks = $this->db->select([
@@ -371,7 +383,7 @@ class PurchaseStockModel extends CI_Model
 			}
 		}
 	
-		$purchaseStocks = $purchaseStocks->group_by('ps.productId')->order_by('ps.productId', 'ASC')->get()->result_array();
+		$purchaseStocks = $purchaseStocks->order_by('p.productName', 'ASC')->get()->result_array();
 	
 		return $purchaseStocks;
 	}

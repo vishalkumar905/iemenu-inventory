@@ -3,6 +3,7 @@
 		<form id="createReportForm" class="form-horizontal" enctype="multipart/form-data">
 			<div class="card-content">
 
+				<?php /*?>
 				<div class="row">
 					<label class="col-md-2 label-on-left">Wastage Stocks*</label>
 					<div class="col-sm-10">
@@ -15,6 +16,29 @@
 								'data-live-search' => 'true',
 							])?>
 							<?=form_error('wastageStockNumber');?>
+						</div>
+					</div>
+				</div>
+				<?php */?>
+
+				<div class="row">
+					<label class="col-md-2 label-on-left">Start Date*</label>
+					<div class="col-sm-10">
+						<div class="form-group label-floating">
+							<label class="control-label"></label>
+							<input required="true" type="text" name="startDate" id="startDate" class="form-control" value="<?=!empty(set_value('startDate')) ? set_value('startDate') :  (isset($startDate) ? $startDate : '')?>">
+							<?=form_error('startDate');?>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<label class="col-md-2 label-on-left">End Date*</label>
+					<div class="col-sm-10">
+						<div class="form-group label-floating">
+							<label class="control-label"></label>
+							<input required="true" type="text" name="endDate" id="endDate" class="form-control" value="<?=!empty(set_value('endDate')) ? set_value('endDate') :  (isset($endDate) ? $endDate : '')?>">
+							<?=form_error('endDate');?>
 						</div>
 					</div>
 				</div>

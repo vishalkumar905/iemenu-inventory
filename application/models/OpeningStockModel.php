@@ -178,17 +178,30 @@ class OpeningStockModel extends CI_Model
 		return $query;
 	}
 
-	public function getOpeningStockProducts(int $openingStockNumber, string $date, array $categoryIds): array
+	public function getOpeningStockProducts(int $openingStockNumber = null, string $startDateTimestamp = null, string $endDateTimestamp = null, array $categoryIds = null): array
 	{
 		$openingStockCondition = [
 			'os.userId' => $this->loggedInUserId,
-			'os.openingStockNumber' => $openingStockNumber,
 		];
 
-		if (!empty($date))
+		if ($openingStockNumber)
 		{
-			$openingStockCondition['FROM_UNIXTIME(os.createdOn, "%Y-%m-%d") = '] = $date;
+			$openingStockCondition['os.openingStockNumber'] = $openingStockNumber;
 		}
+
+		if ($startDateTimestamp > 0 && $endDateTimestamp > 0)
+		{
+			$openingStockCondition[sprintf('os.createdOn BETWEEN %s AND %s', $startDateTimestamp, $endDateTimestamp)] = null;
+		}
+		else if (!empty($startDateTimestamp > 0))
+		{
+			$openingStockCondition['os.createdOn >= '] = $startDateTimestamp;
+		}
+		else if (!empty($endDateTimestamp > 0))
+		{
+			$openingStockCondition['os.createdOn <= '] = $endDateTimestamp;
+		}
+
 
 		$openingStocks = $this->db->select([
 			'os.productId',
@@ -241,7 +254,7 @@ class OpeningStockModel extends CI_Model
 			}
 		}
 
-		$openingStocks = $openingStocks->group_by('os.productId')->order_by('os.productId', 'ASC')->get()->result_array();
+		$openingStocks = $openingStocks->order_by('p.productName', 'ASC')->get()->result_array();
 
 		return $openingStocks;
 	}

@@ -241,16 +241,28 @@ class WastageStockModel extends CI_Model
 		return $results;
 	}
 
-	public function getWastageStockProducts(int $wastageStockNumber, string $date, array $categoryIds): array
+	public function getWastageStockProducts(int $wastageStockNumber, string $startDateTimestamp = null, string $endDateTimestamp = null, array $categoryIds): array
 	{
 		$wastageStockCondition = [
 			'ws.userId' => $this->loggedInUserId,
-			'ws.wastageStockNumber' => $wastageStockNumber,
 		];
 
-		if (!empty($date))
+		if ($wastageStockNumber)
 		{
-			$wastageStockCondition['FROM_UNIXTIME(ws.createdOn, "%Y-%m-%d") = '] = $date;
+			$wastageStockCondition['ws.wastageStockNumber'] = $wastageStockNumber;
+		}
+
+		if ($startDateTimestamp > 0 && $endDateTimestamp > 0)
+		{
+			$wastageStockCondition[sprintf('ws.createdOn BETWEEN %s AND %s', $startDateTimestamp, $endDateTimestamp)] = null;
+		}
+		else if (!empty($startDateTimestamp > 0))
+		{
+			$wastageStockCondition['ws.createdOn >= '] = $startDateTimestamp;
+		}
+		else if (!empty($endDateTimestamp > 0))
+		{
+			$wastageStockCondition['ws.createdOn <= '] = $endDateTimestamp;
 		}
 
 		$wastageStocks = $this->db->select([
@@ -305,8 +317,7 @@ class WastageStockModel extends CI_Model
 			}
 		}
 
-		$wastageStocks = $wastageStocks->group_by('ws.productId')->order_by('ws.productId', 'ASC')->get()->result_array();
-
+		$wastageStocks = $wastageStocks->order_by('p.productName', 'ASC')->get()->result_array();
 		return $wastageStocks;
 	}
 
