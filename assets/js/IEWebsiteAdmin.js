@@ -3664,8 +3664,6 @@ IEWebsiteAdmin.ViewRequestPage = (function() {
 		let hasError = false;
 		let getDifference = checkQtyDifference(productId);
 		
-		console.log(getDifference);
-
 		if (!_.isEmpty(getDifference))
 		{
 			hasError = true;
@@ -4321,7 +4319,7 @@ IEWebsiteAdmin.CustomPagination = (function() {
 	}
 })();
 
-IEWebsiteAdmin.ProductCreatePage = (function() {
+IEWebsiteAdmin.RecipeManagementPage = (function() {
 	var init = function()
 	{
 		if ($("#recipeManagementPageContainer").length <= 0)
