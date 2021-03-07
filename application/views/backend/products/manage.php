@@ -17,7 +17,7 @@
 							<th>Product Code</th>
 							<th>Product Name</th>
 							<th>Product Type</th>
-							<th></th>
+							<th>Action</th>
 						</tr>
 					</thead>
 					<tbody>

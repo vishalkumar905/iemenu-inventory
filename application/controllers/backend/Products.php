@@ -374,7 +374,7 @@ class Products extends Backend_Controller
 		$limit = $this->input->post('length') > 0 ? $this->input->post('length') : 10;
 		$offset = $this->input->post('length') > 0 ? $this->input->post('start') : 0;
 		
-		$condition = ['userId' => $this->loggedInUserId];
+		$condition = ['userId' => $this->loggedInUserId, 'isDeleted' => null];
 
 		$products = $this->product->getProducts($condition, $limit, $offset)->result_array();
 		$totalRecords =  $this->product->getAllProductsCount($condition);
@@ -389,10 +389,11 @@ class Products extends Backend_Controller
 			$product['productCode'] = $product['productCode'];
 			$product['productType'] = $this->getProductTypeName($product['productType']);
 			$product['action'] = sprintf('
-				<span class="text-right">
-					<a href="%s" class="btn btn-simple btn-info btn-icon"><i class="material-icons">edit</i></a>
+				<span class="">
+					<a href="%s" class="btn btn-success btn-round btn-fab btn-fab-mini"><i class="material-icons">edit</i></a>
+					<a id="deleteBtn-%s" class="btn btn-danger btn-round btn-fab btn-fab-mini"><i class="material-icons">delete</i></a>
 				</span>
-			', $productEditPageUrl);
+			', $productEditPageUrl, $product['id']);
 		}
 
 		if (!empty($products))
@@ -403,6 +404,26 @@ class Products extends Backend_Controller
 		}
 
 		responseJson(true, null, $results, false);
+	}
+
+	public function deleteProduct($productId)
+	{
+		$this->load->model('VendorProductModel', 'vendorproduct');
+
+		$productMapped = $this->vendorproduct->getWhereCustom("*", ['productId' => $productId , 'userId' => $this->loggedInUserId])->result_array();
+
+		$response = false;
+		$message = "Product cannot be deleted because, This product is mapped with vendor products";
+
+		if(empty($productMapped))
+		{
+			$this->product->update($productId, ['isDeleted' => 1]);
+			$response = true;
+			$message = "Deleted successfully";
+		}
+
+		
+		responseJson($response, $message, []);
 	}
 
 	public function export($extension)
