@@ -134,14 +134,18 @@ IEWebsiteAdmin.ProductCreatePage = (function() {
 			responsive: true,
 			ajax: {
 				url: FETCH_PRODUCTS,
-				type: "POST"
+				type: "POST",
+				complete: function()
+				{
+					$("a[id^=deleteBtn-]").click(deleteProduct);
+				}
 			},
 			columns: [
 				{data: 'sn', width: "5%"},
 				{data: 'productCode'},
 				{data: 'productName'},
 				{data: 'productType'},
-				{data: 'action', width: "5%"},
+				{data: 'action', width: "11%"},
 			],
 			// "pagingType": "full_numbers",
 			"lengthMenu": [
@@ -156,6 +160,35 @@ IEWebsiteAdmin.ProductCreatePage = (function() {
 		
 		IEWebsite.Utils.JqueryFormValidation('#createProductForm');
 	};
+
+	var deleteProduct = function()
+	{
+		let splittedId = $(this).attr('id').split('-');
+		let productId = splittedId[1];
+		let confirmation = confirm("Press a Sure to delete!");
+
+		if(confirmation) 
+		{
+			IEWebsite.Utils.ShowLoadingScreen();
+			IEWebsite.Utils.AjaxPost(DELETE_PRODUCTS + productId, productId, function(resp) {
+
+				IEWebsite.Utils.HideLoadingScreen();
+
+				if(resp.status)
+				{
+					$('#productsData').DataTable().ajax.reload();
+				}
+
+				IEWebsite.Utils.message(resp.message);
+
+			});
+			
+		}
+		else 
+		{
+			
+		}
+	}
 	
 	return {
 		Init: init
