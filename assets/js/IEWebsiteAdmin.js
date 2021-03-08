@@ -170,17 +170,19 @@ IEWebsiteAdmin.ProductCreatePage = (function() {
 		if(confirmation) 
 		{
 			IEWebsite.Utils.ShowLoadingScreen();
-			IEWebsite.Utils.AjaxPost(DELETE_PRODUCTS + productId, productId, function(resp) {
+			IEWebsite.Utils.AjaxPost(DELETE_PRODUCT + productId, productId, function(resp) {
 
 				IEWebsite.Utils.HideLoadingScreen();
 
 				if(resp.status)
 				{
+					IEWebsite.Utils.message(resp.message);
 					$('#productsData').DataTable().ajax.reload();
 				}
-
-				IEWebsite.Utils.message(resp.message);
-
+				else
+				{
+					IEWebsite.Utils.message(resp.message, "danger");
+				}
 			});
 			
 		}
