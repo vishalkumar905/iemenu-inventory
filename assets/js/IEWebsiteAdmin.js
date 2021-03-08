@@ -186,10 +186,6 @@ IEWebsiteAdmin.ProductCreatePage = (function() {
 			});
 			
 		}
-		else 
-		{
-			
-		}
 	}
 	
 	return {
