@@ -4428,36 +4428,56 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 
 			appendMenuItemProducts(menuItemRecipeUiCounter);
 
-			console.log(menuItemRecipeData);
+			console.log({menuItemRecipeData});
 		});
 	};
 
 	var appendMenuItemProducts = function(menuItemRecipeUiCounter) {
 		$menuItemProductSelectBox = $("#menuItemProduct-" + menuItemRecipeUiCounter);
+		$menuItemProductSiUnitSelectBox = $("#menuItemProductSiUnit-" + menuItemRecipeUiCounter);
 
 		if (restaurantProducts)
 		{
 			$menuItemProductSelectBox.append(`<option>Choose Product</option>`);
 
 			restaurantProducts.forEach(function(row) {
-				$menuItemProductSelectBox.append(`<option value="${row.id}">${row.productName}</option>`);
+				let isProductAlreadySelected = false;
+				
+				if (!_.isEmpty(menuItemRecipeData))
+				{
+					for (let menuItemRecipeId in menuItemRecipeData)
+					{	
+						if (isProductAlreadySelected == false && menuItemRecipeData[menuItemRecipeId].productId == row.id)
+						{
+							isProductAlreadySelected = true;
+						}
+					}
+				}
+
+				if (isProductAlreadySelected == false)
+				{
+					$menuItemProductSelectBox.append(`<option value="${row.id}">${row.productName}</option>`);
+				}
 			});
 		}
 
 		$menuItemProductSelectBox.selectpicker("refresh");
+		$menuItemProductSiUnitSelectBox.selectpicker("refresh");
 
 		$("button[id^=removeMenuItemRecipe-]").click(removeMenuItemRecipe);
 		$("select[id^=menuItemProduct-]").change(handleProductOnChange);
+		$("select[id^=menuItemProductSiUnit-]").change(handleProductSiUnitOnChange);
 	};
 
 	var handleProductSiUnitOnChange = function() {
 		let productSiUnitId = $(this).val();
 		let selectorId =  $(this).attr('id');
 		let menuItemRecipeUiCounter = parseInt(selectorId.replace('menuItemProductSiUnit-', ''));
-		let menuItemProductId = $("#menuItemProduct-" + menuItemRecipeUiCounter).val();
 
-		
-		
+		if (menuItemRecipeData[menuItemRecipeUiCounter])
+		{
+			menuItemRecipeData[menuItemRecipeUiCounter].productSiUnitId = productSiUnitId;
+		}
 	};
 
 	var handleProductOnChange = function() {
@@ -4465,16 +4485,20 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 		let selectorId =  $(this).attr('id');
 		let menuItemRecipeUiCounter = parseInt(selectorId.replace('menuItemProduct-', ''));
 		let productInfo = getProudctInfo(productId);
+		let productSiUnitId = $("#menuItemProductSiUnit-" + menuItemRecipeUiCounter).val();
+
 		
 		if (productInfo)
 		{
-			appendMenuItemProductSiUnits(menuItemRecipeUiCounter, productInfo.productSiUnits);
+			appendProductSiUnitsToSelectBoxDropdown(menuItemRecipeUiCounter, productInfo.productSiUnits);
 		}
 
-		menuItemRecipeData[productId] = { productId };
+		menuItemRecipeData[menuItemRecipeUiCounter] = { productId, productSiUnitId};
+
+		console.log('onChangeProductData',  menuItemRecipeData);
 	};
 
-	var appendMenuItemProductSiUnits = function(menuItemRecipeUiCounter, siUnits) {
+	var appendProductSiUnitsToSelectBoxDropdown = function(menuItemRecipeUiCounter, siUnits) {
 		$menuItemProductSiUnitSelectBox = $("#menuItemProductSiUnit-" + menuItemRecipeUiCounter);
 		$menuItemProductSiUnitSelectBox.html('');
 
@@ -4495,7 +4519,10 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 		if (menuItemRecipeId)
 		{
 			$("#menuItemRecipe-" + menuItemRecipeId).remove();
+			delete menuItemRecipeData[menuItemRecipeId];
 		}
+
+		console.log('Removed', menuItemRecipeId,  menuItemRecipeData);
 	};
 
 	var getMenuItemRecipeHtml = function(counter) {
@@ -4504,12 +4531,15 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 				<select id='menuItemProduct-${counter}' name='menuItemProduct-${counter}' class='selectpicker' data-style='select-with-transition select-box-horizontal' data-live-search='true'><select>
 			</div>
 			<div class="col-sm-4">
+				<select id="menuItemProductSiUnit-${counter}" name="menuItemProductSiUnit-${counter}" class='selectpicker' data-style='select-with-transition select-box-horizontal' data-live-search='true'></select>
+			</div>
+			<div class="col-sm-2">
 				<div class="form-group label-floating is-empty">
 					<label class="control-label">Quantity*</label>
 					<input type="text" id="menuItemProductQty-${counter}" name="menuItemProductQty-${counter}" required="true" class="form-control">
 				</div>
 			</div>
-			<div class="col-sm-4">
+			<div class="col-sm-2">
 				<button type="button" class="btn btn-danger btn-round btn-fab btn-fab-mini" menuItemRecipeId="${counter}" id="removeMenuItemRecipe-${counter}"><i class="material-icons">clear</i></button>
 			</div>
 		</div>`;
