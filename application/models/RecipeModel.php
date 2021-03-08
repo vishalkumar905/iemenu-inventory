@@ -1,10 +1,9 @@
 <?php
 
-class ProductModel extends CI_Model
+class RecipeModel extends CI_Model
 {
-	private $tableName = 'ie_products';
-	private $primaryKey = 'id';
-    private $columnSearch = array('productCode', 'productName'); //set column field database for datatable searchable 
+	private $tableName = 'ie_recipies';
+	private $primaryKey = 'recipeId';
 	
 	public function __construct()
 	{
@@ -199,71 +198,6 @@ class ProductModel extends CI_Model
 	{
 		$query = $this->db->query($mysqlQuery);
 		return $query;
-	}
-
-	public function getProducts($condition, $limit, $offset)
-	{
-		$this->getDatatableQuery();
-		if ($limit != -1)
-		{
-			$this->db->limit($limit, $offset);
-		}
-		
-		$this->db->where($condition);
-		$query=$this->db->get();
-		return $query;
-	}
-
-	public function getAllProductsCount($condition)
-	{
-		$this->getDatatableQuery();
-		$this->db->where($condition);
-		$query=$this->db->get();
-		return $query->num_rows();
-	}
-
-	public function getDatatableQuery()
-    {
-		$searchText = $this->input->post('search');
-		$orderBy = $this->input->post('order');
-        $this->db->from($this->tableName);
-		
-		$i = 0;
-
-		if (!empty($searchText['value']))
-		{
-			foreach ($this->columnSearch as $item) // loop column 
-			{
-				if($i === 0)
-				{
-					$this->db->group_start();
-					$this->db->like($item, $searchText['value']);
-				}
-				else
-				{
-					$this->db->or_like($item, $searchText['value']);
-				}
-	
-				if(count($this->columnSearch) - 1 == $i)
-				{
-					$this->db->group_end(); //close bracket
-				}
-
-				$i++;
-			}	
-		}
-
-		$this->db->order_by('id', 'desc');
-		// Not Need
-        // if(!empty($orderBy))
-        // {
-        //     $this->db->order_by($this->column_order[$_POST['order']['0']['column']], $_POST['order']['0']['dir']);
-		// }
-        // else if(isset($this->order))
-        // {
-        //     $order = $this->order;
-        //     $this->db->order_by(key($order), $order[key($order)]);
-        // }
 	}
 }
 

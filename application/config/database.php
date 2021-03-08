@@ -147,7 +147,7 @@ if (ENVIRONMENT == 'development')
 	$db['default']['hostname'] = 'localhost';
 	$db['default']['username'] = 'root';
 	$db['default']['password'] = '123456';
-	$db['default']['database'] = 'ie_inventory';	
+	$db['default']['database'] = 'live_ie_inventory';	
 	
 	$db['iemenu']['hostname'] = 'localhost';
 	$db['iemenu']['username'] = 'root';

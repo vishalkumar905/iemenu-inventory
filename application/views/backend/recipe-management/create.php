@@ -34,70 +34,28 @@
 				<div class="row">
 					<label class="col-md-2 label-on-left">Recipes*</label>
 					<div class="col-sm-10">
-						<div class="row">
+						<div class="row" id="menuItemRecipe-1">
 							<div class="col-sm-4">
-								<select id='product' name='product[]' class='selectpicker' multiple data-style='select-with-transition select-box-horizontal' data-live-search='true'>%s<select>
+								<select id="menuItemProduct-1" name="menuItemProduct-1" class='selectpicker' data-style='select-with-transition select-box-horizontal' data-live-search='true'></select>
 							</div>
 							<div class="col-sm-4">
+								<select id="menuItemProductSiUnit-1" name="menuItemProductSiUnit-1" class='selectpicker' data-style='select-with-transition select-box-horizontal' data-live-search='true'></select>
+							</div>
+							<div class="col-sm-2">
 								<div class="form-group label-floating">
 									<label class="control-label">Quantity*</label>
-									<input type="text" name="quantity" required="true" class="form-control" value="<?=!empty(set_value('quantity')) ? set_value('quantity') : (isset($quantity) ? $quantity : '') ?>">
+									<input type="text" id="menuItemProductQty-1" id="menuItemProductQty-1" required="true" class="form-control"/>
 									<?=form_error('quantity');?>
 								</div>
 							</div>
-							<div class="col-sm-4">
-								<button type="button" class="btn btn-success btn-round btn-fab btn-fab-mini"><i class="material-icons">add</i></button>
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-sm-4">
-								<select id='product' name='product[]' class='selectpicker' multiple data-style='select-with-transition select-box-horizontal' data-live-search='true'>%s<select>
-							</div>
-							<div class="col-sm-4">
-								<div class="form-group label-floating">
-									<label class="control-label">Quantity*</label>
-									<input type="text" name="quantity" required="true" class="form-control" value="<?=!empty(set_value('quantity')) ? set_value('quantity') : (isset($quantity) ? $quantity : '') ?>">
-									<?=form_error('quantity');?>
-								</div>
-							</div>
-							<div class="col-sm-4">
-								<button type="button" class="btn btn-primary btn-round btn-fab btn-fab-mini"><i class="material-icons">clear</i></button>
-							</div>
-						</div>
-						
-						<div class="row">
-							<div class="col-sm-4">
-								<select id='product' name='product[]' class='selectpicker' multiple data-style='select-with-transition select-box-horizontal' data-live-search='true'>%s<select>
-							</div>
-							<div class="col-sm-4">
-								<div class="form-group label-floating">
-									<label class="control-label">Quantity*</label>
-									<input type="text" name="quantity" required="true" class="form-control" value="<?=!empty(set_value('quantity')) ? set_value('quantity') : (isset($quantity) ? $quantity : '') ?>">
-									<?=form_error('quantity');?>
-								</div>
-							</div>
-							<div class="col-sm-4">
-								<button type="button" class="btn btn-primary btn-round btn-fab btn-fab-mini"><i class="material-icons">clear</i></button>
-							</div>
-						</div>
-						
-						<div class="row">
-							<div class="col-sm-4">
-								<select id='product' name='product[]' class='selectpicker' multiple data-style='select-with-transition select-box-horizontal' data-live-search='true'>%s<select>
-							</div>
-							<div class="col-sm-4">
-								<div class="form-group label-floating">
-									<label class="control-label">Quantity*</label>
-									<input type="text" name="quantity" required="true" class="form-control" value="<?=!empty(set_value('quantity')) ? set_value('quantity') : (isset($quantity) ? $quantity : '') ?>">
-									<?=form_error('quantity');?>
-								</div>
-							</div>
-							<div class="col-sm-4">
-								<button type="button" class="btn btn-primary btn-round btn-fab btn-fab-mini"><i class="material-icons">clear</i></button>
+							<div class="col-sm-2">
+								<button type="button" class="btn btn-success btn-round btn-fab btn-fab-mini" id="addNewMenuItemRecipe"><i class="material-icons">add</i></button>
 							</div>
 						</div>
 					</div>
 				</div>
+							
+
 
 				<div class="row mt-10">
 					<label class="col-sm-2 label-on-left"></label>
