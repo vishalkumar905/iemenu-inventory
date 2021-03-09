@@ -4320,12 +4320,17 @@ IEWebsiteAdmin.CustomPagination = (function() {
 })();
 
 IEWebsiteAdmin.RecipeManagementPage = (function() {
+	var restaurantProducts;
+	var menuItemRecipeUiCounter = 1;
+	var menuItemRecipeData = {};
 	var init = function()
 	{
 		if ($("#recipeManagementPageContainer").length <= 0)
 		{
 			return 0;
 		};
+
+		fetchRestaurantProducts();
 
 		$("#uploadExcel").click(function() {
 			let file = $('#excelFile');
@@ -4398,6 +4403,7 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 			columns: [
 				{data: 'sn', width: "5%"},
 				{data: 'itemName'},
+				{data: 'isConfigured'},
 				{data: 'createdOn'},
 				{data: 'action', width: "10%"},
 			],
@@ -4413,8 +4419,170 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 		});
 		
 		IEWebsite.Utils.JqueryFormValidation('#createForm');
+
+		$("#addNewMenuItemRecipe").click(function() {
+			let lastMenuItemRecipeUiAppendId = menuItemRecipeUiCounter;
+
+			menuItemRecipeUiCounter++;
+
+			$(getMenuItemRecipeHtml(menuItemRecipeUiCounter)).insertAfter("#menuItemRecipe-" + lastMenuItemRecipeUiAppendId);
+
+			appendMenuItemProducts(menuItemRecipeUiCounter);
+		});
+	};
+
+	var appendMenuItemProducts = function(menuItemRecipeUiCounter) {
+		$menuItemProductSelectBox = $("#menuItemProduct-" + menuItemRecipeUiCounter);
+		$menuItemProductSiUnitSelectBox = $("#menuItemProductSiUnit-" + menuItemRecipeUiCounter);
+
+		if (restaurantProducts)
+		{
+			$menuItemProductSelectBox.append(`<option>Choose Product</option>`);
+
+			restaurantProducts.forEach(function(row) {
+				let isProductAlreadySelected = false;
+				
+				if (!_.isEmpty(menuItemRecipeData))
+				{
+					for (let menuItemRecipeId in menuItemRecipeData)
+					{	
+						if (isProductAlreadySelected == false && menuItemRecipeData[menuItemRecipeId].productId == row.id)
+						{
+							isProductAlreadySelected = true;
+						}
+					}
+				}
+
+				if (isProductAlreadySelected == false)
+				{
+					$menuItemProductSelectBox.append(`<option value="${row.id}">${row.productName}</option>`);
+				}
+			});
+		}
+
+		$menuItemProductSelectBox.selectpicker("refresh");
+		$menuItemProductSiUnitSelectBox.selectpicker("refresh");
+
+		$("button[id^=removeMenuItemRecipe-]").click(removeMenuItemRecipe);
+		$("select[id^=menuItemProduct-]").change(handleProductOnChange);
+		$("input[id^=menuItemProductQty-]").keyup(handleProductQtyOnChange);
+	};
+
+	var handleProductQtyOnChange = function() {
+		let productQty = parseInt($(this).val()) || 0;
+		let selectorId =  $(this).attr('id');
+		let menuItemRecipeUiCounter = parseInt(selectorId.replace('menuItemProductQty-', ''));
+
+		if (menuItemRecipeData[menuItemRecipeUiCounter])
+		{
+			menuItemRecipeData[menuItemRecipeUiCounter].productQty = productQty;
+		}
+		else
+		{
+			menuItemRecipeData[menuItemRecipeUiCounter] = { productQty };
+		}
+	};
+
+	var handleProductSiUnitOnChange = function() {
+		let productSiUnitId = $(this).val();
+		let selectorId =  $(this).attr('id');
+		let menuItemRecipeUiCounter = parseInt(selectorId.replace('menuItemProductSiUnit-', ''));
+
+		if (menuItemRecipeData[menuItemRecipeUiCounter])
+		{
+			menuItemRecipeData[menuItemRecipeUiCounter].productSiUnitId = productSiUnitId;
+		}
+	};
+
+	var handleProductOnChange = function() {
+		let productId = $(this).val();
+		let selectorId =  $(this).attr('id');
+		let menuItemRecipeUiCounter = parseInt(selectorId.replace('menuItemProduct-', ''));
+		let productInfo = getProudctInfo(productId);
+		
+		if (productInfo)
+		{
+			appendProductSiUnitsToSelectBoxDropdown(menuItemRecipeUiCounter, productInfo.productSiUnits);
+		}
+
+		if (menuItemRecipeData[menuItemRecipeUiCounter])
+		{
+			menuItemRecipeData[menuItemRecipeUiCounter].productId = productId;
+		}
+		else
+		{
+			menuItemRecipeData[menuItemRecipeUiCounter] = { productId };
+		}
+
+		console.log('onChangeProductData',  menuItemRecipeData);
+	};
+
+	var appendProductSiUnitsToSelectBoxDropdown = function(menuItemRecipeUiCounter, siUnits) {
+		$menuItemProductSiUnitSelectBox = $("#menuItemProductSiUnit-" + menuItemRecipeUiCounter);
+		$menuItemProductSiUnitSelectBox.html('');
+
+		if (siUnits)
+		{
+			$menuItemProductSiUnitSelectBox.append(`<option>Choose Unit</option>`);
+			siUnits.forEach(function(row) {
+				$menuItemProductSiUnitSelectBox.append(`<option value="${row.id}">${row.unitName}</option>`);
+			});
+
+			$menuItemProductSiUnitSelectBox.selectpicker('refresh');
+		}
+
+		$("select[id^=menuItemProductSiUnit-]").change(handleProductSiUnitOnChange);
+	}
+
+	var removeMenuItemRecipe = function() {
+		let menuItemRecipeId = $(this).attr("menuItemRecipeId");
+		if (menuItemRecipeId)
+		{
+			$("#menuItemRecipe-" + menuItemRecipeId).remove();
+			delete menuItemRecipeData[menuItemRecipeId];
+		}
+
+		console.log('Removed', menuItemRecipeId,  menuItemRecipeData);
+	};
+
+	var getMenuItemRecipeHtml = function(counter) {
+		return `<div class="row" id="menuItemRecipe-${counter}">
+			<div class="col-sm-4">
+				<select id='menuItemProduct-${counter}' name='menuItemProduct-${counter}' class='selectpicker' data-style='select-with-transition select-box-horizontal' data-live-search='true'><select>
+			</div>
+			<div class="col-sm-4">
+				<select id="menuItemProductSiUnit-${counter}" name="menuItemProductSiUnit-${counter}" class='selectpicker' data-style='select-with-transition select-box-horizontal' data-live-search='true'></select>
+			</div>
+			<div class="col-sm-2">
+				<div class="form-group label-floating is-empty">
+					<label class="control-label">Quantity*</label>
+					<input type="text" id="menuItemProductQty-${counter}" name="menuItemProductQty-${counter}" required="true" class="form-control">
+				</div>
+			</div>
+			<div class="col-sm-2">
+				<button type="button" class="btn btn-danger btn-round btn-fab btn-fab-mini" menuItemRecipeId="${counter}" id="removeMenuItemRecipe-${counter}"><i class="material-icons">clear</i></button>
+			</div>
+		</div>`;
+	};
+
+	var fetchRestaurantProducts = function() {
+		IEWebsite.Utils.AjaxPost(FETCH_PRODUCTS, {
+			length: -1,
+			drawColumns: ['id', 'productName', 'productCode']
+		}, function(resp) {
+			if (resp.data)
+			{
+				restaurantProducts = resp.data;
+				appendMenuItemProducts(menuItemRecipeUiCounter);
+			}
+		});	
 	};
 	
+	var getProudctInfo = function(productId) {
+		let product = restaurantProducts.filter(row => row.id === productId);
+		return product.length > 0 ? product[0] : {};
+	};
+
 	return {
 		Init: init
 	}
@@ -4507,4 +4675,5 @@ $(document).ready(function(){
 	IEWebsiteAdmin.WastageInventoryReport.Init();
 	IEWebsiteAdmin.DirectOrderReport.Init();
 	IEWebsiteAdmin.RequestTransferReport.Init();
+	IEWebsiteAdmin.RecipeManagementPage.Init();
 });

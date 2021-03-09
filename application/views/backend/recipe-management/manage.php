@@ -15,6 +15,7 @@
 						<tr>
 							<th>S.No</th>
 							<th>Item Name</th>
+							<th>isConfigured</th>
 							<th>Date</th>
 							<th>Action</th>
 						</tr>

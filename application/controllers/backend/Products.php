@@ -371,15 +371,18 @@ class Products extends Backend_Controller
 	{
 		$results = ['recordsTotal' => 0, "recordsFiltered" => 0, "data" => []];
 
-		$limit = $this->input->post('length') > 0 ? $this->input->post('length') : 10;
+		$limit = $this->input->post('length') ? $this->input->post('length') : 10;
 		$offset = $this->input->post('length') > 0 ? $this->input->post('start') : 0;
-		
+
 		$condition = ['userId' => $this->loggedInUserId];
 
 		$products = $this->product->getProducts($condition, $limit, $offset)->result_array();
 		$totalRecords =  $this->product->getAllProductsCount($condition);
 
 		$counter = $offset;
+
+		$drawColumns = $this->input->post('drawColumns');
+
 		foreach($products as &$product)
 		{
 			$productEditPageUrl = base_url() . 'backend/products/index/' . $product['id'];
@@ -393,6 +396,18 @@ class Products extends Backend_Controller
 					<a href="%s" class="btn btn-simple btn-info btn-icon"><i class="material-icons">edit</i></a>
 				</span>
 			', $productEditPageUrl);
+
+			if (!empty($drawColumns))
+			{
+				foreach($drawColumns as $drawColumnName)
+				{
+					$productInfo[$drawColumnName] = $product[$drawColumnName] ?? '';
+				}
+
+				$productInfo['productSiUnits'] = $this->productSiUnits(unserialize($product['productSiUnits']));
+				
+				$product = $productInfo;
+			}
 		}
 
 		if (!empty($products))
@@ -403,6 +418,19 @@ class Products extends Backend_Controller
 		}
 
 		responseJson(true, null, $results, false);
+	}
+
+	private function productSiUnits($siUnitIds)
+	{
+		$result = [];
+		
+		if (!empty($siUnitIds))
+		{
+			$whereIn = ['field' => 'id', 'values' => $siUnitIds];
+			$result = $this->siunit->getWhereCustom(['unitName', 'id'], null, null, $whereIn)->result_array();
+		}
+
+		return $result;
 	}
 
 	public function export($extension)

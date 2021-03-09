@@ -161,17 +161,42 @@ class Recipemanagement extends Backend_Controller
     public function fetchRecipes()
     {
         $results = ['recordsTotal' => 0, "recordsFiltered" => 0, "data" => []];
+		$limit = intval($this->input->post('limit')) ? $this->input->post('limit') : 10;
+		$page = intval($this->input->post('page')) ? intval($this->input->post('page')) : 0;
+		$search = $this->input->post('search');
 
-        $results['data'][] = [
-            'sn' => 1,
-            'itemName' => 'Vanila Shake',
-            'createdOn' => Date('Y-m-d H:i A'),
-            'action' => sprintf('
-					<span href="#" class="btn btn-simple btn-info btn-icon"><i class="material-icons">edit</i></span>
-                    <span href="#" class="btn btn-simple btn-info btn-icon"><i class="material-icons">visibility</i></span>
-			
-			')
-        ];
+		$offset = $page > 0 ? $limit * ($page - 1) : 0;
+		$condition['mc.rest_id'] = $this->loggedInUserId;
+		$columns = [
+			'mi.item_id as itemId', 'mi.name as itemName'
+		];
+
+		$like = [];
+
+		if(!empty($search['value']))
+		{
+			$like['search'] = $search['value'];
+			$like['side'] = 'both';
+			$like['fields'] = ['mi.name'];
+		}
+
+		$results['data'] = $this->menuitem->getRestaurantMenuItems($columns, $condition, $like, $limit, $offset);
+		$totalRecords = $this->menuitem->getRestaurantMenuItemsCount($condition, $like);
+		
+		$results['recordsFiltered'] = $totalRecords;
+		$results['recordsTotal'] = $totalRecords;
+
+		$sn = 0;
+		foreach($results['data'] as &$result)
+		{
+			$result['sn'] = ++$sn;
+			$result['action'] = sprintf('
+				<span href="#" class="btn btn-simple btn-info btn-icon"><i class="material-icons">edit</i></span>
+				<span href="#" class="btn btn-simple btn-info btn-icon"><i class="material-icons">visibility</i></span>
+			');
+			$result['createdOn'] = Date('Y-m-d H:i A');
+			$result['isConfigured'] = '<span href="#" class="btn btn-simple btn-info btn-icon">No</span>';
+		}
 
 		responseJson(true, null, $results, false);
     }
