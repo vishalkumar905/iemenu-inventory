@@ -45,7 +45,6 @@
 								<div class="form-group label-floating">
 									<label class="control-label">Quantity*</label>
 									<input type="text" id="menuItemProductQty-1" id="menuItemProductQty-1" required="true" class="form-control"/>
-									<?=form_error('quantity');?>
 								</div>
 							</div>
 							<div class="col-sm-2">

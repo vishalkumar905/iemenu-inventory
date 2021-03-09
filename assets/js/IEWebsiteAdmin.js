@@ -4466,7 +4466,22 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 
 		$("button[id^=removeMenuItemRecipe-]").click(removeMenuItemRecipe);
 		$("select[id^=menuItemProduct-]").change(handleProductOnChange);
-		$("select[id^=menuItemProductSiUnit-]").change(handleProductSiUnitOnChange);
+		$("input[id^=menuItemProductQty-]").keyup(handleProductQtyOnChange);
+	};
+
+	var handleProductQtyOnChange = function() {
+		let productQty = parseInt($(this).val()) || 0;
+		let selectorId =  $(this).attr('id');
+		let menuItemRecipeUiCounter = parseInt(selectorId.replace('menuItemProductQty-', ''));
+
+		if (menuItemRecipeData[menuItemRecipeUiCounter])
+		{
+			menuItemRecipeData[menuItemRecipeUiCounter].productQty = productQty;
+		}
+		else
+		{
+			menuItemRecipeData[menuItemRecipeUiCounter] = { productQty };
+		}
 	};
 
 	var handleProductSiUnitOnChange = function() {
@@ -4485,15 +4500,20 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 		let selectorId =  $(this).attr('id');
 		let menuItemRecipeUiCounter = parseInt(selectorId.replace('menuItemProduct-', ''));
 		let productInfo = getProudctInfo(productId);
-		let productSiUnitId = $("#menuItemProductSiUnit-" + menuItemRecipeUiCounter).val();
-
 		
 		if (productInfo)
 		{
 			appendProductSiUnitsToSelectBoxDropdown(menuItemRecipeUiCounter, productInfo.productSiUnits);
 		}
 
-		menuItemRecipeData[menuItemRecipeUiCounter] = { productId, productSiUnitId};
+		if (menuItemRecipeData[menuItemRecipeUiCounter])
+		{
+			menuItemRecipeData[menuItemRecipeUiCounter].productId = productId;
+		}
+		else
+		{
+			menuItemRecipeData[menuItemRecipeUiCounter] = { productId };
+		}
 
 		console.log('onChangeProductData',  menuItemRecipeData);
 	};
@@ -4504,6 +4524,7 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 
 		if (siUnits)
 		{
+			$menuItemProductSiUnitSelectBox.append(`<option>Choose Unit</option>`);
 			siUnits.forEach(function(row) {
 				$menuItemProductSiUnitSelectBox.append(`<option value="${row.id}">${row.unitName}</option>`);
 			});
