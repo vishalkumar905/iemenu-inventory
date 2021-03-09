@@ -185,5 +185,54 @@ class MenuItemModel extends CI_Model
 
 		return $ddOptions;
 	}
+
+	public function getRestaurantMenuItems(array $columns, array $condition, array $like, int $limit = 10, int $offset = 0): array
+	{
+		$menuItemQuery = $this->getMenuItemsQuery($columns, $condition, $like);
+
+		if ($limit > 0 && $offset >= 0)
+		{
+			$menuItemQuery->limit($limit, $offset);
+		}
+
+		return $menuItemQuery->get()->result_array();
+	}
+
+	public function getRestaurantMenuItemsCount(array $condition, array $like) 
+	{
+		$menuItemQuery = $this->getMenuItemsQuery(['count(mi.menu_id) as totalCount'], $condition, $like)->get()->row_array();
+		return $menuItemQuery['totalCount'] ?? 0; 
+	}
+
+	private function getMenuItemsQuery(array $columns, array $condition, array $like, int $limit = 10, int $offset = 0)
+	{
+		$menuItemQuery = $this->iemenuDB->select($columns)->from('menu_category mc')->join(
+			'menu_items mi', 'mi.menu_id = mc.menu_id', 'left'
+		)->where($condition);
+
+		if (!empty($like['fields']) && !empty($like['search']) && !empty($like['side']) && is_array($like['fields']))
+		{
+			foreach ($like['fields'] as $key => $field)
+			{
+				if ($key == 0) 
+				{
+					$menuItemQuery->group_start();
+					$menuItemQuery->like($field, $like['search'], $like['side']);
+				}
+				else
+				{
+					$menuItemQuery->or_like($field, $like['search'], $like['side']);
+				}
+
+				
+				if (($key + 1) == count($like['fields']))
+				{
+					$menuItemQuery->group_end();
+				}
+			}
+		}
+
+		return $menuItemQuery;
+	}
 }
 ?>

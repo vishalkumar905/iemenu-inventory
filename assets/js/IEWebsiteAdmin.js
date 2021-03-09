@@ -4403,6 +4403,7 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 			columns: [
 				{data: 'sn', width: "5%"},
 				{data: 'itemName'},
+				{data: 'isConfigured'},
 				{data: 'createdOn'},
 				{data: 'action', width: "10%"},
 			],
@@ -4427,8 +4428,6 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 			$(getMenuItemRecipeHtml(menuItemRecipeUiCounter)).insertAfter("#menuItemRecipe-" + lastMenuItemRecipeUiAppendId);
 
 			appendMenuItemProducts(menuItemRecipeUiCounter);
-
-			console.log({menuItemRecipeData});
 		});
 	};
 
