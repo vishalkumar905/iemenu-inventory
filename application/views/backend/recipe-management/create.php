@@ -26,8 +26,21 @@
 								echo form_hidden('menuItem', $selectedMenuItem);
 							}
 
-							echo form_dropdown('menuItem', $menuItems, $selectedMenuItem, $extra);
+							echo form_dropdown('menuItem', [], $selectedMenuItem, $extra);
 							echo form_error('menuItem');
+						?>
+					</div>
+				</div>
+				<div class="row">
+					<label class="col-md-2 label-on-left">Item Qty*</label>
+					<div class="col-sm-10">
+						<?php
+							echo form_input('menuItemQty', '', [
+								'id' => 'menuItemQty',
+								'class' => 'form-control'
+							]);
+
+							echo form_error('menuItemQty');
 						?>
 					</div>
 				</div>
@@ -59,7 +72,7 @@
 				<div class="row mt-10">
 					<label class="col-sm-2 label-on-left"></label>
 					<div class="col-sm-10">
-						<button type="submit" name="submit" value="<?=$submitBtn?>"  class="btn btn-rose"><?=$submitBtn?><div class="ripple-container"></div></button>
+						<button type="submit" name="submit" value="<?=$submitBtn?>" id="saveRecipe" class="btn btn-rose"><?=$submitBtn?><div class="ripple-container"></div></button>
 						<button type="submit" name="submit" value="Cancel"  class="btn btn-primary btn-fill">Cancel<div class="ripple-container"></div></button>
 						<!-- <a href="#importExcelForm"><b>Upload Excel Sheet</b></a> -->
 					</div>
