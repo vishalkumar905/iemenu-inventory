@@ -224,6 +224,31 @@ class CategoryModel extends CI_Model
 
 		return $result;
 	}
+
+	public function duplicateCategoriesAutomaticallyForNewRestaurant(int $restaurantId)
+	{
+		$categories = $this->getWhereCustom('id', [
+			'userId' => $restaurantId
+		])->result_array();
+
+		if (empty($categories))
+		{
+			$defaultCategories = $this->getWhereCustom('*', ['userId IS NULL OR userId = 0' => NULL])->result_array();
+
+			if (!empty($defaultCategories))
+			{
+				foreach($defaultCategories as $defaultCategory)
+				{
+					unset($defaultCategory['id']);
+					
+					$defaultCategory['userId'] = $restaurantId;
+					$defaultCategory['categoryUrlTitle'] = url_title($defaultCategory['categoryName'], '-', true);
+					
+					$this->insert($defaultCategory);
+				}
+			}
+		}
+	}
 }
 
 ?>

@@ -4323,6 +4323,8 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 	var restaurantProducts;
 	var menuItemRecipeUiCounter = 1;
 	var menuItemRecipeData = {};
+	var restaurantMenuItems;
+
 	var init = function()
 	{
 		if ($("#recipeManagementPageContainer").length <= 0)
@@ -4331,6 +4333,7 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 		};
 
 		fetchRestaurantProducts();
+		fetchRestaurantMenuItems();
 
 		$("#uploadExcel").click(function() {
 			let file = $('#excelFile');
@@ -4417,6 +4420,43 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 				searchPlaceholder: "Search records",
 			},
 		});
+
+		$("#saveRecipe").click(function(e) {
+			
+			let menuItemId = parseInt($("#menuItem").val()) || 0;
+			let menuItemQty = parseFloat($("#menuItemQty").val()) || 0;
+			
+			if (menuItemId && menuItemQty && menuItemRecipeData)
+			{
+				e.preventDefault();
+				IEWebsite.Utils.ShowLoadingScreen();
+				IEWebsite.Utils.AjaxPost(SAVE_RECIPE, {
+					menuItemId, menuItemQty, menuItemRecipeData
+				}, function(resp) {
+					
+					IEWebsite.Utils.HideLoadingScreen();
+					if (!resp.status)
+					{
+						IEWebsite.Utils.Notification(resp.response.errorMessage, 'danger');
+					}
+					else if (resp.status)
+					{
+						IEWebsite.Utils.Notification(resp.message, 'success');
+						window.setTimeout(function() {
+							window.location.reload();
+						}, 500);
+					}
+				});
+			}
+		});
+
+		$("#menuItemDropdown").change(function() {
+			let menuItemId = $(this).val();
+			if (menuItemId)
+			{
+				// console.log(getMenuItem(menuItemId));
+			}
+		});
 		
 		IEWebsite.Utils.JqueryFormValidation('#createForm');
 
@@ -4429,6 +4469,34 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 
 			appendMenuItemProducts(menuItemRecipeUiCounter);
 		});
+	};
+
+	var getMenuItem = function(menuItemId) {
+		if (restaurantMenuItems && menuItemId)
+		{
+			let menuItem = restaurantMenuItems.filter((row) => row.itemId == menuItemId);
+			return !_.isEmpty(menuItem) ? menuItem[0] : {}; 
+		}
+		return {};
+	};
+
+	var fetchRestaurantMenuItems = function() {
+		IEWebsite.Utils.ShowLoadingScreen();
+		IEWebsite.Utils.AjaxGet(FETCH_MENU_ITEMS, { includeRecipeMenuItems: false }, function(resp) {
+			IEWebsite.Utils.HideLoadingScreen();
+			if (resp.status)
+			{
+				restaurantMenuItems = resp.response;
+				let $menuItemDropdown = $("#menuItem");
+
+				$menuItemDropdown.append(`<option value="">Choose Item</option>`);
+				restaurantMenuItems.forEach((row) => {
+					$menuItemDropdown.append(`<option value="${row.itemId}">${row.itemName}</option>`);
+				});
+
+				$menuItemDropdown.selectpicker('refresh');
+			}
+		});	
 	};
 
 	var appendMenuItemProducts = function(menuItemRecipeUiCounter) {

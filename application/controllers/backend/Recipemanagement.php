@@ -7,6 +7,9 @@ class Recipemanagement extends Backend_Controller
         parent::__construct();
 
         $this->load->model('MenuItemModel', 'menuitem');
+		$this->load->model('RecipeModel', 'recipe');
+
+		$this->recipe->getRestaurantRecipes();
     }
 
     public function index()
@@ -168,7 +171,7 @@ class Recipemanagement extends Backend_Controller
 		$offset = $page > 0 ? $limit * ($page - 1) : 0;
 		$condition['mc.rest_id'] = $this->loggedInUserId;
 		$columns = [
-			'mi.item_id as itemId', 'mi.name as itemName'
+			'mi.item_id as itemId', 'mi.name as itemName', 'price_desc as priceDesc'
 		];
 
 		$like = [];
@@ -200,6 +203,64 @@ class Recipemanagement extends Backend_Controller
 
 		responseJson(true, null, $results, false);
     }
+
+	public function saveRecipe()
+	{
+		$status = false;
+		$message = null;
+		$response = [];
+
+		$this->form_validation->set_rules('menuItemId', 'Item', 'required|trim|greater_than[0]');
+		$this->form_validation->set_rules('menuItemQty', 'Item Quantity', 'trim');
+		$this->form_validation->set_rules('menuItemRecipeData[]', 'Recipe', 'required|trim');
+		
+		if ($this->form_validation->run())
+		{
+
+			$menuItemRecipeData = json_decode(json_encode($this->input->post("menuItemRecipeData")), true);
+			$recipes = [];
+			if (!empty($menuItemRecipeData))
+			{
+				foreach($menuItemRecipeData as $menuItemRecipeIndex => $menuItemRecipe)
+				{
+					if (!empty($menuItemRecipe['productId']) && !empty($menuItemRecipe['productQty']))
+					{
+						$recipes[] = $menuItemRecipe;
+					}
+				}
+			}
+
+			if (!empty($menuItemRecipeData))
+			{
+				$insertData = [
+					'userId' => $this->loggedInUserId,
+					'menuItemId' => $this->input->post("menuItemId"),
+					'menuItemQuantity' => $this->input->post("menuItemQty"),
+					'menuItemRecipe' => json_encode($recipes),
+				];
+				
+				if($this->recipe->insert($insertData))
+				{
+					$status = true;
+					$message = "Recipe created successfully.";
+				}
+				else
+				{
+					$response['errorMessage'] = 'Something went wrong';
+				}
+			}
+			else
+			{
+				$response['errorMessage'] = 'Recipe is required.';
+			}
+		}
+		else
+		{
+			$response['errorMessage'] = str_replace(['The', 'field'], '', validation_errors());
+		}
+
+		responseJson($status, $message, $response);
+	}
 }
 
 ?>

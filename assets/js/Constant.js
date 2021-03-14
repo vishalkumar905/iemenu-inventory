@@ -59,6 +59,10 @@ const EXPORT_RECIPES = BASE_URL + 'backend/recipemanagement/export';
 const IMPORT_RECIPES = BASE_URL + 'backend/recipemanagement/import';
 const FETCH_RECIPES = BASE_URL + 'backend/recipemanagement/fetchRecipes';
 
+const FETCH_MENU_ITEMS = BASE_URL + 'api/menu/fetchMenuItems';
+
+const SAVE_RECIPE = BASE_URL + 'backend/recipemanagement/saveRecipe';
+
 // API- End
 
 

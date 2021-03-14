@@ -541,6 +541,8 @@ class Products extends Backend_Controller
 							$categoryNames = array_map('strtolower', $extractDataFromExcel['Category']);
 							$whereIn = ['field' => 'LCASE(categoryName)', 'values' => $categoryNames];
 
+							$this->category->duplicateCategoriesAutomaticallyForNewRestaurant($this->loggedInUserId);
+
 							$categories = $this->category->getWhereCustom(['categoryName', 'id'], ['userId' => $this->loggedInUserId], null, $whereIn)->result_array();
 
 							if (!empty($categories))

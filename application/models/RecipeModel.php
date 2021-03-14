@@ -2,7 +2,7 @@
 
 class RecipeModel extends CI_Model
 {
-	private $tableName = 'ie_recipies';
+	private $tableName = 'ie_recipes';
 	private $primaryKey = 'recipeId';
 	
 	public function __construct()
@@ -198,6 +198,21 @@ class RecipeModel extends CI_Model
 	{
 		$query = $this->db->query($mysqlQuery);
 		return $query;
+	}
+
+	public function getRestaurantRecipes()
+	{
+		$iemenuDB = $this->load->database('iemenu', TRUE);
+		$inventoryDB = $this->load->database('default', TRUE);
+		
+		$sql = sprintf("SELECT mi.item_id AS itemId, mi.name AS itemName, price_desc AS priceDesc, ir.menuItemId AS recipeMenuItemId, FROM_UNIXTIME(ir.createdOn) AS recipeCreatedOn FROM %s.menu_items mi LEFT JOIN %s.ie_recipes ir ON mi.item_id = ir.menuItemId", $iemenuDB->database, $inventoryDB->database);
+
+		$result = $this->db->query($sql);
+
+		p($result->result_array());
+
+
+		// $this->db->select('')
 	}
 }
 

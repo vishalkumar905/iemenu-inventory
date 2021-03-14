@@ -186,7 +186,7 @@ class MenuItemModel extends CI_Model
 		return $ddOptions;
 	}
 
-	public function getRestaurantMenuItems(array $columns, array $condition, array $like, int $limit = 10, int $offset = 0): array
+	public function getRestaurantMenuItems(array $columns, array $condition, array $like = null, int $limit = 10, int $offset = 0): array
 	{
 		$menuItemQuery = $this->getMenuItemsQuery($columns, $condition, $like);
 
