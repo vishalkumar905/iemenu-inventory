@@ -4323,7 +4323,7 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 	var restaurantProducts;
 	var menuItemRecipeUiCounter = 1;
 	var menuItemRecipeData = {};
-	var restaurantMenuItems;
+	var restaurantMenuItems, restaurantMenuItemRecipes;
 
 	var init = function()
 	{
@@ -4401,7 +4401,11 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 			responsive: true,
 			ajax: {
 				url: FETCH_RECIPES,
-				type: "POST"
+				type: "POST",
+				complete: function(resp) {
+					restaurantMenuItemRecipes = resp.responseJSON.data;
+					$("span[id^=viewRecipeDetail-]").click(viewRecipeDetail);
+				}
 			},
 			columns: [
 				{data: 'sn', width: "5%"},
@@ -4471,11 +4475,60 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 		});
 	};
 
+	var viewRecipeDetail = function() {
+		let menuItemId = parseInt($(this).attr("menuItemId")) || 0;
+		if (menuItemId)
+		{
+			let menuItemRecipe = getMenuItemRecipe(menuItemId);
+			let recipes = JSON.parse(menuItemRecipe.recipes.menuItemRecipe);
+			
+			let menuItemRecipeRows = '';
+
+			recipes.forEach((row) => {
+				menuItemRecipeRows += `<tr>
+					<td>${row.productName}</td>
+					<td>${row.unitName}</td>
+					<td>${row.productQty}</td>
+				</tr>`;
+			});
+
+			let menuItemRecipeTable = `<table class="table table-bordered custom-table">
+				<thead>
+					<tr>
+						<th colspan="3"><b>Item Name:</b> ${menuItemRecipe.itemName} <b>Qty:</b>  ${menuItemRecipe.recipes.menuItemQuantity}</th>
+					</tr>
+					<tr>
+						<th><b>Product Name</b></th>
+						<th><b>Unit</b></th>
+						<th><b>Qty</b></th>
+					</tr>
+				</thead>
+				<tbody>
+					${menuItemRecipeRows}
+				</tbody>
+			</table>`; 
+
+
+
+			$("#itemRecipeDetails").html(menuItemRecipeTable);
+			$("#viewItemRecipeModal").modal("show");
+		}
+	};
+
 	var getMenuItem = function(menuItemId) {
 		if (restaurantMenuItems && menuItemId)
 		{
-			let menuItem = restaurantMenuItems.filter((row) => row.itemId == menuItemId);
+			let menuItem = restaurantMenuItems.filter((row) => parseInt(row.itemId) == parseInt(menuItemId));
 			return !_.isEmpty(menuItem) ? menuItem[0] : {}; 
+		}
+		return {};
+	};
+
+	var getMenuItemRecipe = function(menuItemId) {
+		if (restaurantMenuItemRecipes && menuItemId)
+		{
+			let menuItem = restaurantMenuItemRecipes.filter((row) => parseInt(row.itemId) == parseInt(menuItemId));
+			return !_.isEmpty(menuItem) ? menuItem[0] : {};
 		}
 		return {};
 	};

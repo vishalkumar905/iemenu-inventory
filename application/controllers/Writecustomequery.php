@@ -7,6 +7,12 @@ class Writecustomequery extends CI_Controller
 
 	}
 
+	public function grantAccessToOtherUser()
+	{
+		$this->db->query("GRANT ALL PRIVILEGES ON database_name.* TO 'u159299809_inventory'@'localhost'");
+	}
+
+
 	public function webDevQueryRow($value)
 	{
 		echo form_open(current_url() . '?' .  $_SERVER['QUERY_STRING']);

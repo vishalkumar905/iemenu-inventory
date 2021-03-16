@@ -200,19 +200,42 @@ class RecipeModel extends CI_Model
 		return $query;
 	}
 
-	public function getRestaurantRecipes()
+	public function getMenuItemIdsFromRestaurantRecipes(int $restaurantId): array
 	{
-		$iemenuDB = $this->load->database('iemenu', TRUE);
-		$inventoryDB = $this->load->database('default', TRUE);
+		$recipes = $this->getWhereCustom('menuItemId', ['userId' => $restaurantId])->result_array();
 		
-		$sql = sprintf("SELECT mi.item_id AS itemId, mi.name AS itemName, price_desc AS priceDesc, ir.menuItemId AS recipeMenuItemId, FROM_UNIXTIME(ir.createdOn) AS recipeCreatedOn FROM %s.menu_items mi LEFT JOIN %s.ie_recipes ir ON mi.item_id = ir.menuItemId", $iemenuDB->database, $inventoryDB->database);
+		$results = [];
+		
+		if (!empty($recipes))
+		{
+			foreach($recipes as $recipe)
+			{
+				$results[$recipe['menuItemId']] = $recipe['menuItemId'];
+			}
+		}
 
-		$result = $this->db->query($sql);
+		return $results;
+	}
 
-		p($result->result_array());
+	public function getRestaurantRecipes(int $restaurantId): array
+	{
+		$recipes = $this->getWhereCustom([
+			'*', 
+			'JSON_EXTRACT(menuItemRecipe, "$[*].productId") AS productIds', 
+			'JSON_EXTRACT(menuItemRecipe, "$[*].productSiUnitId") AS productSiUnitIds'
+		], ['userId' => $restaurantId])->result_array();
 
+		$results = [];
+		
+		if (!empty($recipes))
+		{
+			foreach($recipes as $recipe)
+			{
+				$results[$recipe['menuItemId']] = $recipe;
+			}
+		}
 
-		// $this->db->select('')
+		return $results;
 	}
 }
 

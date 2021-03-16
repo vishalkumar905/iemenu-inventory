@@ -186,9 +186,9 @@ class MenuItemModel extends CI_Model
 		return $ddOptions;
 	}
 
-	public function getRestaurantMenuItems(array $columns, array $condition, array $like = null, int $limit = 10, int $offset = 0): array
+	public function getRestaurantMenuItems(array $columns, array $condition, array $like = null, int $limit = 10, int $offset = 0, ?array $whereIn = null): array
 	{
-		$menuItemQuery = $this->getMenuItemsQuery($columns, $condition, $like);
+		$menuItemQuery = $this->getMenuItemsQuery($columns, $condition, $like, $whereIn);
 
 		if ($limit > 0 && $offset >= 0)
 		{
@@ -198,13 +198,13 @@ class MenuItemModel extends CI_Model
 		return $menuItemQuery->get()->result_array();
 	}
 
-	public function getRestaurantMenuItemsCount(array $condition, array $like) 
+	public function getRestaurantMenuItemsCount(array $condition, array $like, ?array $whereIn) 
 	{
-		$menuItemQuery = $this->getMenuItemsQuery(['count(mi.menu_id) as totalCount'], $condition, $like)->get()->row_array();
+		$menuItemQuery = $this->getMenuItemsQuery(['count(mi.menu_id) as totalCount'], $condition, $like, $whereIn)->get()->row_array();
 		return $menuItemQuery['totalCount'] ?? 0; 
 	}
 
-	private function getMenuItemsQuery(array $columns, array $condition, array $like, int $limit = 10, int $offset = 0)
+	private function getMenuItemsQuery(array $columns, array $condition, array $like, ?array $whereIn = null)
 	{
 		$menuItemQuery = $this->iemenuDB->select($columns)->from('menu_category mc')->join(
 			'menu_items mi', 'mi.menu_id = mc.menu_id', 'left'
@@ -229,6 +229,18 @@ class MenuItemModel extends CI_Model
 				{
 					$menuItemQuery->group_end();
 				}
+			}
+		}
+
+		if (!empty($whereIn['field']) && !empty($whereIn['values']))
+		{
+			if (isset($whereIn['type']) && $whereIn['type'] == 'notin')
+			{
+				$menuItemQuery->where_not_in($whereIn['field'], $whereIn['values']);
+			}
+			else
+			{
+				$menuItemQuery->where_in($whereIn['field'], $whereIn['values']);
 			}
 		}
 

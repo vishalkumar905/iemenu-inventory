@@ -8,8 +8,8 @@ class Recipemanagement extends Backend_Controller
 
         $this->load->model('MenuItemModel', 'menuitem');
 		$this->load->model('RecipeModel', 'recipe');
-
-		$this->recipe->getRestaurantRecipes();
+		$this->load->model('ProductModel', 'product');
+		$this->load->model('SIUnitModel', 'siunit');
     }
 
     public function index()
@@ -163,12 +163,11 @@ class Recipemanagement extends Backend_Controller
 
     public function fetchRecipes()
     {
-        $results = ['recordsTotal' => 0, "recordsFiltered" => 0, "data" => []];
-		$limit = intval($this->input->post('limit')) ? $this->input->post('limit') : 10;
-		$page = intval($this->input->post('page')) ? intval($this->input->post('page')) : 0;
+		$results = ['recordsTotal' => 0, "recordsFiltered" => 0, "data" => []];
+		$limit = $this->input->post('length') ? $this->input->post('length') : 10;
+		$offset = $this->input->post('length') > 0 ? $this->input->post('start') : 0;
 		$search = $this->input->post('search');
 
-		$offset = $page > 0 ? $limit * ($page - 1) : 0;
 		$condition['mc.rest_id'] = $this->loggedInUserId;
 		$columns = [
 			'mi.item_id as itemId', 'mi.name as itemName', 'price_desc as priceDesc'
@@ -183,26 +182,91 @@ class Recipemanagement extends Backend_Controller
 			$like['fields'] = ['mi.name'];
 		}
 
-		$results['data'] = $this->menuitem->getRestaurantMenuItems($columns, $condition, $like, $limit, $offset);
-		$totalRecords = $this->menuitem->getRestaurantMenuItemsCount($condition, $like);
+		// $whereIn['field'] = 'mi.item_id';
+		// $whereIn['type'] = 'notin';
+		// $whereIn['values'] = $this->recipe->getMenuItemIdsFromRestaurantRecipes($this->loggedInUserId);
+
+		$restaurantRecipes = $this->recipe->getRestaurantRecipes($this->loggedInUserId);
+
+		$recipeProductInfo = $this->getRecipeData($restaurantRecipes);
+
+		$products = $this->changeArrayIndexByColumnValue($this->product->getWhereCustom(['id AS productId', 'productName'], ['userId' => $this->loggedInUserId], null, [
+			'field' => 'id',
+			'values' => $recipeProductInfo['productIds'],
+		])->result_array(), 'productId');
+
+		$siUnits = $this->changeArrayIndexByColumnValue($this->siunit->getWhereCustom(['id AS siUnitId', 'unitName'], [], null, [
+			'field' => 'id',
+			'values' => $recipeProductInfo['productSiUnitIds'],
+		])->result_array(), 'siUnitId');
+
+		$results['data'] = $this->menuitem->getRestaurantMenuItems($columns, $condition, $like, $limit, $offset, $whereIn = []);
+		$totalRecords = $this->menuitem->getRestaurantMenuItemsCount($condition, $like, $whereIn = []);
 		
 		$results['recordsFiltered'] = $totalRecords;
 		$results['recordsTotal'] = $totalRecords;
 
-		$sn = 0;
+		$counter = $offset;
 		foreach($results['data'] as &$result)
 		{
-			$result['sn'] = ++$sn;
+			$result['sn'] = ++$counter;
 			$result['action'] = sprintf('
-				<span href="#" class="btn btn-simple btn-info btn-icon"><i class="material-icons">edit</i></span>
-				<span href="#" class="btn btn-simple btn-info btn-icon"><i class="material-icons">visibility</i></span>
-			');
+				<span href="javascript::void()" id="viewRecipeDetail-%s" menuItemId="%s" class="btn btn-simple btn-info btn-icon"><i class="material-icons">edit</i></span>
+			', $result['itemId'], $result['itemId']);
 			$result['createdOn'] = Date('Y-m-d H:i A');
-			$result['isConfigured'] = '<span href="#" class="btn btn-simple btn-info btn-icon">No</span>';
+
+			$isConfiguredText = 'No';
+			$isConfiguredClass = 'danger';
+
+			if (isset($restaurantRecipes[$result['itemId']]))
+			{
+				$isConfiguredText = 'Yes';
+				$isConfiguredClass = 'success';
+
+				$recipes = $restaurantRecipes[$result['itemId']];
+
+				$recipes['menuItemQuantity'] = floatval($recipes['menuItemQuantity']);
+				$menuItemRecipeData = json_decode($recipes['menuItemRecipe'], true);
+				
+				if (!empty($menuItemRecipeData))
+				{
+					foreach($menuItemRecipeData as &$menuItemRecipe)
+					{
+						$menuItemRecipe['productName'] = $products[$menuItemRecipe['productId']]['productName'];
+						$menuItemRecipe['unitName'] = $siUnits[$menuItemRecipe['productSiUnitId']]['unitName'];
+					}
+				}
+
+				$recipes['menuItemRecipe'] = json_encode($menuItemRecipeData);
+
+				$result['recipes'] = $recipes;
+				$result['action'] .= sprintf('<span href="javascript::void()" id="viewRecipeDetail-%s" menuItemId="%s" class="btn btn-simple btn-info btn-icon"><i class="material-icons">visibility</i></span>', $result['itemId'], $result['itemId']);
+			}
+
+			$result['isConfigured'] = sprintf('<span class="btn btn-simple btn-%s btn-icon">%s</span>', $isConfiguredClass, $isConfiguredText);
 		}
 
 		responseJson(true, null, $results, false);
     }
+
+	private function getRecipeData(array $recipes)
+	{
+		$productIds = $productSiUnitIds = [];
+
+		if (!empty($recipes))
+		{
+			foreach($recipes as $recipe)
+			{
+				$productIds = array_merge($productIds, json_decode($recipe['productIds'], true));
+				$productSiUnitIds = array_merge($productSiUnitIds, json_decode($recipe['productSiUnitIds'], true));
+			}
+		}
+
+		return [
+			'productIds' => $productIds,
+			'productSiUnitIds' => $productSiUnitIds,
+		];
+	}
 
 	public function saveRecipe()
 	{
