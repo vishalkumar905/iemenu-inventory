@@ -18,7 +18,7 @@
 					<label class="col-sm-2 label-on-left"></label>
 					<div class="col-sm-10">
 						<button type="button" name="uploadExcel" id="uploadExcel" value="Upload"  class="btn btn-rose btn-fill">Upload<div class="ripple-container"></div></button>
-						<!-- <a href="<?=base_url() . 'backend/recipemanagement/downloadSample'?>" id="#downloadRecipeSample"><b>Download Sample Excel</b></a> -->
+						<a href="<?=base_url() . 'backend/recipemanagement/downloadSample'?>" id="#downloadRecipeSample"><b>Download Sample Excel</b></a>
 					</div>
 				</div>
 			</div>

@@ -169,6 +169,8 @@ class Recipemanagement extends Backend_Controller
 		$search = $this->input->post('search');
 
 		$condition['mc.rest_id'] = $this->loggedInUserId;
+		$condition['mi.item_id IS NOT NULL'] = NULL;
+
 		$columns = [
 			'mi.item_id as itemId', 'mi.name as itemName', 'price_desc as priceDesc'
 		];
@@ -210,10 +212,9 @@ class Recipemanagement extends Backend_Controller
 		foreach($results['data'] as &$result)
 		{
 			$result['sn'] = ++$counter;
-			$result['action'] = sprintf('
-				<span href="javascript::void()" id="viewRecipeDetail-%s" menuItemId="%s" class="btn btn-simple btn-info btn-icon"><i class="material-icons">edit</i></span>
-			', $result['itemId'], $result['itemId']);
-			$result['createdOn'] = Date('Y-m-d H:i A');
+			$result['createdOn'] = '---';
+			$result['action'] = '---';
+			$result['isRecipeConfigured'] = 0;
 
 			$isConfiguredText = 'No';
 			$isConfiguredClass = 'danger';
@@ -238,13 +239,28 @@ class Recipemanagement extends Backend_Controller
 				}
 
 				$recipes['menuItemRecipe'] = json_encode($menuItemRecipeData);
+				
+				$result['action'] = sprintf('
+					<span href="javascript::void()" id="updateRecipeDetail-%s" menuItemId="%s" class="btn btn-simple btn-info btn-icon"><i class="material-icons">edit</i></span>
+				', $result['itemId'], $result['itemId']);
 
 				$result['recipes'] = $recipes;
 				$result['action'] .= sprintf('<span href="javascript::void()" id="viewRecipeDetail-%s" menuItemId="%s" class="btn btn-simple btn-info btn-icon"><i class="material-icons">visibility</i></span>', $result['itemId'], $result['itemId']);
+				$result['createdOn'] = Date('Y-m-d H:i A', $recipes['createdOn']);
+				$result['isRecipeConfigured'] = 1;
 			}
 
 			$result['isConfigured'] = sprintf('<span class="btn btn-simple btn-%s btn-icon">%s</span>', $isConfiguredClass, $isConfiguredText);
 		}
+
+		// Order by will be fixed on fronted
+		// if (!empty($results))
+		// {
+		// 	usort($results['data'], function($a, $b) {
+		// 		return $a['isRecipeConfigured'] < $b['isRecipeConfigured']; 
+		// 	});
+		// }
+
 
 		responseJson(true, null, $results, false);
     }
@@ -324,6 +340,73 @@ class Recipemanagement extends Backend_Controller
 		}
 
 		responseJson($status, $message, $response);
+	}
+
+	public function downloadSample()
+	{
+		$this->load->library('PhpExcel');
+
+		$condition['mc.rest_id'] = $this->loggedInUserId;
+		$condition['mi.item_id IS NOT NULL'] = NULL;
+		$columns = [
+			'mi.item_id as itemId', 'mi.name as itemName', 'price_desc as priceDesc'
+		];
+
+		$totalRecipes = 20;
+
+		$data = $this->menuitem->getRestaurantMenuItems($columns, $condition);
+
+		$results = [];
+		if (!empty($data))
+		{
+			$excelColumns = [
+				['title' => 'SN', 'name' => 'sn'],
+				['title' => 'Item Id', 'name' => 'itemId'],
+				['title' => 'Item Name', 'name' => 'itemName']		
+			];
+
+			for($i = 1; $i <= $totalRecipes; $i++)
+			{
+				$excelColumns[] = [
+					'title' => 'Recipe ' . $i,
+					'name' => 'recipe' . $i,
+				];
+			}
+
+			$counter = 0;
+			foreach($data as $row)
+			{
+				$rowData = [
+					'sn' => ++$counter,
+					'itemId' => $row['itemId'],
+					'itemName' => $row['itemName'],
+				];
+
+				for($i = 1; $i <= $totalRecipes; $i++)
+				{
+					if ($counter == 1)
+					{
+						$rowData['recipe'. $i] = sprintf('P000%s-KG-1%s', $i, $i);
+					}
+					else
+					{
+						$rowData['recipe'. $i] = '';
+					}
+				}
+
+				$results[] = $rowData;
+			} 
+		}
+
+		// p($results, $excelColumns);
+
+		$data['extension'] = 'excel';
+		$data['fileName'] = 'recipe_';
+		$data['columns'] = $excelColumns;
+		$data['results'] = $results;
+		$data['redirectUrl'] = base_url() . 'backend/recipemanagement';
+
+		$this->phpexcel->export($data);
 	}
 }
 

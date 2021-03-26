@@ -186,7 +186,7 @@ class MenuItemModel extends CI_Model
 		return $ddOptions;
 	}
 
-	public function getRestaurantMenuItems(array $columns, array $condition, array $like = null, int $limit = 10, int $offset = 0, ?array $whereIn = null): array
+	public function getRestaurantMenuItems(array $columns, array $condition, array $like = null, ?int $limit = null, ?int $offset = null, ?array $whereIn = null): array
 	{
 		$menuItemQuery = $this->getMenuItemsQuery($columns, $condition, $like, $whereIn);
 
@@ -204,7 +204,7 @@ class MenuItemModel extends CI_Model
 		return $menuItemQuery['totalCount'] ?? 0; 
 	}
 
-	private function getMenuItemsQuery(array $columns, array $condition, array $like, ?array $whereIn = null)
+	private function getMenuItemsQuery(array $columns, array $condition, array $like = null, ?array $whereIn = null)
 	{
 		$menuItemQuery = $this->iemenuDB->select($columns)->from('menu_category mc')->join(
 			'menu_items mi', 'mi.menu_id = mc.menu_id', 'left'

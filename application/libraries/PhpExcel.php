@@ -29,7 +29,6 @@ class PhpExcel
 			}
 		}
 
-
 		$spreadsheet = new Spreadsheet();
 		$sheet = $spreadsheet->getActiveSheet();
 
@@ -64,11 +63,11 @@ class PhpExcel
 			],
 		];
 
-		$alphabates = range('A', 'Z');
+		$alphabates = $this->makeAlphabateRangeForExcelSheet();;
 		$columnCount = count($data['columns']);
 		$lastActiveCellName = '';
 
-		if ($columnCount < 26)
+		if ($columnCount < count($alphabates))
 		{
 			$lastActiveCellName = $alphabates[$columnCount - 1];
 			$spreadsheet->getActiveSheet()->getStyle('A1:'.$lastActiveCellName.'1')->applyFromArray($styleArray);
@@ -167,5 +166,26 @@ class PhpExcel
 		{
 			return false;
 		}
+	}
+
+	private function makeAlphabateRangeForExcelSheet()
+	{
+		$alphabates = range('A', 'Z');
+		$tempAlphabates = $alphabates;
+
+		foreach($tempAlphabates as $initialLetterIndex => $initialLetter)
+		{
+			foreach($tempAlphabates as $letter)
+			{
+				$alphabates[] = sprintf("%s%s", $initialLetter, $letter);
+			}
+
+			if ($initialLetterIndex == 1)
+			{
+				break;
+			}
+		}
+
+		return $alphabates;
 	}
 }
