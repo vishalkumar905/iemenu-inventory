@@ -2,6 +2,7 @@
 
 class Recipemanagement extends Backend_Controller
 {
+	private $totalRecipeCounter = 20;
     public function __construct()
     {
         parent::__construct();
@@ -197,7 +198,9 @@ class Recipemanagement extends Backend_Controller
 			'values' => $recipeProductInfo['productIds'],
 		])->result_array(), 'productId');
 
-		$siUnits = $this->changeArrayIndexByColumnValue($this->siunit->getWhereCustom(['id AS siUnitId', 'unitName'], [], null, [
+		$siUnits = $this->changeArrayIndexByColumnValue($this->siunit->getWhereCustom(['id AS siUnitId', 'unitName'], [
+			'userId' => $this->loggedInUserId
+		], null, [
 			'field' => 'id',
 			'values' => $recipeProductInfo['productSiUnitIds'],
 		])->result_array(), 'siUnitId');
@@ -342,6 +345,163 @@ class Recipemanagement extends Backend_Controller
 		responseJson($status, $message, $response);
 	}
 
+	public function importRecipes()
+	{
+		if (!$this->input->is_ajax_request()) {
+			exit('No direct script access allowed');
+		}
+
+		$response = [];
+		$status = true;
+		$message = null;
+		$allowedTypes = 'csv|xlsx';
+		$duplicateData = $newData = 0;
+
+		$uploadFile = $this->doUpload('file', IMPORT_FILE_UPLOAD_PATH, $allowedTypes);
+
+		if ($uploadFile['err'] == 0)
+		{
+			$filePath = sprintf('%s%s/%s', FCPATH, IMPORT_FILE_UPLOAD_PATH, $uploadFile['fileName']);
+			
+			$this->load->library('PhpExcel');
+			
+			$results = $this->phpexcel->import($filePath);
+
+			if (!empty($results) && count($results) > 2)
+			{
+
+				$products = $this->changeArrayIndexByColumnValue($this->product->getProducts([
+					'userId' => $this->loggedInUserId
+				], $limit = -1 , $offset = 0)->result_array(), 'productCode');
+
+				$columns =  ['SN', 'Item Id', 'Item Name'];
+				for($i = 1; $i <= $this->totalRecipeCounter; $i++)
+				{
+					$columns[] = sprintf('Recipe %s', $i);
+				}
+
+				$isColumnMissing = $this->phpexcel->checkIfColumnIsMissingFromExcel($columns, $results[0]);
+
+				$itemIdIndex = array_search('Item Id', $results[0]);
+				$itemNameIndex = array_search('Item Name', $results[0]);
+
+				for($i = 1; $i <= $this->totalRecipeCounter; $i++)
+				{
+					${"recipeIndex".$i} = array_search('Recipe '. $i, $results[0]);
+				}
+
+				if ($isColumnMissing === false)
+				{
+					$columnNameWithIndex = [
+						$itemIdIndex => 'Item Id',
+						$itemNameIndex => 'Item Name',
+					];
+
+					for($i = 1; $i <= $this->totalRecipeCounter; $i++)
+					{
+						$columnNameWithIndex[${"recipeIndex".$i}] = sprintf('Recipe %s', $i);
+					}
+
+					// $extractDataFromExcel = $this->extractDataFromExcel($results, $columnNameWithIndex);
+					$itemWithoutRecipes = [];
+					$siUnitNames = [];
+
+					foreach($results as $resultIndex => $result)
+					{
+						if ($resultIndex < 1)
+						{
+							continue;
+						}
+						
+						$itemId = $result[$itemIdIndex];
+						$itemName = $result[$itemNameIndex];
+
+						$insert = [
+							'itemId' => $itemId,
+							'itemName' => $itemName,
+						];
+
+						for($i = 1; $i <= $this->totalRecipeCounter; $i++)
+						{
+							$itemRecipe = $result[${"recipeIndex".$i}];
+							if (!empty($itemRecipe))
+							{
+								
+								$explodeItemRecipe = explode("-", $itemRecipe);
+
+								if (count($explodeItemRecipe) == 3)
+								{
+									// Remove duplicate recipes
+									$insert['recipes'][$itemRecipe] = $itemRecipe; 
+
+									$siUnitNames[$explodeItemRecipe[1]] = strtolower($explodeItemRecipe[1]);
+								}
+							}
+						}
+
+						if (!empty($insert['recipes']))
+						{
+							$insertData[] = $insert;
+						}
+						else
+						{
+							$itemWithoutRecipes[] = $insert;
+						}
+					}
+
+					$siUnits = $this->changeArrayIndexByColumnValue($this->siunit->getWhereCustom(['id AS siUnitId', 'unitName'], [
+						'userId' => $this->loggedInUserId
+					], null, [
+						'field' => 'LCASE(unitName)',
+						'values' => $siUnitNames,
+					])->result_array(), 'siUnitId');
+					
+					echo $this->db->last_query();
+					p($siUnits);
+				}
+				else
+				{
+					$status = false;
+					$message = 'Format is not valid... Please upload again !';
+				}
+			}
+		}
+		else
+		{
+			$status = false;
+			$message = $uploadFile['errorMessage'];
+		}
+
+		responseJson($status, $message, $response);
+	}
+
+	private function extractDataFromExcel(array $data, array $columnNameWithIndex)
+	{
+		$result = [];
+
+		if (!empty($data) && !empty($columnNameWithIndex))
+		{
+			foreach($data as $index => $row)
+			{
+				// Skip the first row
+				if ($index < 1)
+				{
+					continue;
+				}
+
+				foreach($columnNameWithIndex as $columnIndex => $columnName)
+				{	
+					$result[$columnName][] = $row[$columnIndex];
+				}
+			}
+
+
+			return $result;
+		}
+
+		return $result;
+	}
+
 	public function downloadSample()
 	{
 		$this->load->library('PhpExcel');
@@ -352,7 +512,7 @@ class Recipemanagement extends Backend_Controller
 			'mi.item_id as itemId', 'mi.name as itemName', 'price_desc as priceDesc'
 		];
 
-		$totalRecipes = 20;
+		$totalRecipes = $this->totalRecipeCounter;
 
 		$data = $this->menuitem->getRestaurantMenuItems($columns, $condition);
 

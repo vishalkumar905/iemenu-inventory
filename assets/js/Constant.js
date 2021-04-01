@@ -56,7 +56,7 @@ const EXPORT_REQUEST_TRANSFER_REPORT = BASE_URL + 'backend/reports/requesttransf
 const FETCH_REQUEST_TRANSFER_REPORT = BASE_URL + 'backend/reports/requesttransfer/fetchReport';
 
 const EXPORT_RECIPES = BASE_URL + 'backend/recipemanagement/export';
-const IMPORT_RECIPES = BASE_URL + 'backend/recipemanagement/import';
+const IMPORT_RECIPES = BASE_URL + 'backend/recipemanagement/importRecipes';
 const FETCH_RECIPES = BASE_URL + 'backend/recipemanagement/fetchRecipes';
 
 const FETCH_MENU_ITEMS = BASE_URL + 'api/menu/fetchMenuItems';

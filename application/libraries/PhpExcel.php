@@ -188,4 +188,19 @@ class PhpExcel
 
 		return $alphabates;
 	}
+
+	public function checkIfColumnIsMissingFromExcel(array $columns, array $excelSheetRowData): bool
+	{
+		$isColumnMissing = false;
+
+		foreach ($columns as $index => $columnName)
+		{
+			if (array_search($columnName, $excelSheetRowData) === false)
+			{
+				$isColumnMissing = true;
+			}
+		}
+
+		return $isColumnMissing;
+	}
 }
