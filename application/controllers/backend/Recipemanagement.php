@@ -198,9 +198,7 @@ class Recipemanagement extends Backend_Controller
 			'values' => $recipeProductInfo['productIds'],
 		])->result_array(), 'productId');
 
-		$siUnits = $this->changeArrayIndexByColumnValue($this->siunit->getWhereCustom(['id AS siUnitId', 'unitName'], [
-			'userId' => $this->loggedInUserId
-		], null, [
+		$siUnits = $this->changeArrayIndexByColumnValue($this->siunit->getWhereCustom(['id AS siUnitId', 'unitName'], null, null, [
 			'field' => 'id',
 			'values' => $recipeProductInfo['productSiUnitIds'],
 		])->result_array(), 'siUnitId');
@@ -449,9 +447,7 @@ class Recipemanagement extends Backend_Controller
 						}
 					}
 
-					$siUnits = $this->changeArrayIndexByColumnValue($this->siunit->getWhereCustom(['id AS siUnitId', 'unitName'], [
-						'userId' => $this->loggedInUserId
-					], null, [
+					$siUnits = $this->changeArrayIndexByColumnValue($this->siunit->getWhereCustom(['id AS siUnitId', 'unitName'], null, null, [
 						'field' => 'LCASE(unitName)',
 						'values' => $siUnitNames,
 					])->result_array(), 'siUnitId');
