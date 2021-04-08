@@ -4371,13 +4371,14 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 					}
 					else
 					{
+						$("#excelFileErrorMsg").html('');
 						if (responseMsg.search('</p>') != -1)
 						{
-							$(responseMsg).insertAfter("#excelFileErrorMsg");
+							$("#excelFileErrorMsg").html(responseMsg);
 						}
 						else
 						{
-							$("#excelFileErrorMsg").text(responseMsg);
+							$("#excelFileErrorMsg").html("<p class='text-danger'>" + responseMsg + "</p>");
 						}
 					}
 				});

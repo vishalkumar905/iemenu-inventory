@@ -14,6 +14,9 @@ class PhpExcel
 	public $description;
 	public $lastModifiedBy;
 	public $setProperties;
+	public $setAlignment = true;
+	public $setContentCenter = true;
+	public $setHorizontal = 'center';
 
 	public function export($data)
 	{
@@ -45,10 +48,6 @@ class PhpExcel
 			'font' => [
 				'bold' => true,
 			],
-			'alignment' => [
-				'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-				'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-			],
 			'borders' => [
 				'bottom' => [
 					'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THICK,
@@ -63,16 +62,27 @@ class PhpExcel
 			],
 		];
 
+		if ($this->setAlignment)
+		{
+			$styleArray['alignment'] = [
+				'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+				'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+			];
+		}
+
+
 		$alphabates = $this->makeAlphabateRangeForExcelSheet();;
 		$columnCount = count($data['columns']);
 		$lastActiveCellName = '';
+
 
 		if ($columnCount < count($alphabates))
 		{
 			$lastActiveCellName = $alphabates[$columnCount - 1];
 			$spreadsheet->getActiveSheet()->getStyle('A1:'.$lastActiveCellName.'1')->applyFromArray($styleArray);
-			$spreadsheet->getActiveSheet()->getStyle('A1:'.$lastActiveCellName.'1')->getAlignment()->setHorizontal('center');
+			$spreadsheet->getActiveSheet()->getStyle('A1:'.$lastActiveCellName.'1')->getAlignment()->setHorizontal($this->setHorizontal);
 		}
+
 
 		$x = 1;
 
@@ -85,9 +95,11 @@ class PhpExcel
 			$sheet->setCellValue(sprintf('%s%s', $alphabates[$columnIndex], $x), $column['title']);
 		}
 
+		
+
 		if ($lastActiveCellName)
 		{
-			$sheet->getStyle('A:'.$lastActiveCellName)->getAlignment()->setHorizontal('center');
+			$sheet->getStyle('A:'.$lastActiveCellName)->getAlignment()->setHorizontal($this->setHorizontal);
 		}
 
 

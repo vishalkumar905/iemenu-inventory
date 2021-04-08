@@ -162,7 +162,7 @@ class Recipemanagement extends Backend_Controller
 		$this->load->view($this->template, $data);
     }
 
-    public function fetchRecipes()
+    public function fetchRecipes($return = false)
     {
 		$results = ['recordsTotal' => 0, "recordsFiltered" => 0, "data" => []];
 		$limit = $this->input->post('length') ? $this->input->post('length') : 10;
@@ -262,6 +262,11 @@ class Recipemanagement extends Backend_Controller
 		// 	});
 		// }
 
+
+		if ($return)
+		{
+			return $results;
+		}
 
 		responseJson(true, null, $results, false);
     }
@@ -367,42 +372,39 @@ class Recipemanagement extends Backend_Controller
 
 			if (!empty($results) && count($results) > 2)
 			{
-
-				$products = $this->changeArrayIndexByColumnValue($this->product->getProducts([
-					'userId' => $this->loggedInUserId
-				], $limit = -1 , $offset = 0)->result_array(), 'productCode');
-
-				$columns =  ['SN', 'Item Id', 'Item Name'];
-				for($i = 1; $i <= $this->totalRecipeCounter; $i++)
-				{
-					$columns[] = sprintf('Recipe %s', $i);
-				}
+				$columns = [
+					'SN',
+					'Item Id',
+					'Item Name',	
+					'Item Qty',	
+					'Item Unit',	
+					'Stock Item',	
+					'Stock Qty',
+					'Stock Unit'
+				];
 
 				$isColumnMissing = $this->phpexcel->checkIfColumnIsMissingFromExcel($columns, $results[0]);
 
 				$itemIdIndex = array_search('Item Id', $results[0]);
 				$itemNameIndex = array_search('Item Name', $results[0]);
-
-				for($i = 1; $i <= $this->totalRecipeCounter; $i++)
-				{
-					${"recipeIndex".$i} = array_search('Recipe '. $i, $results[0]);
-				}
-
+				$itemQtyIndex = array_search('Item Qty', $results[0]);
+				$itemUnitIndex = array_search('Item Unit', $results[0]);
+				$stockItemIndex = array_search('Stock Item', $results[0]);
+				$stockQtyIndex = array_search('Stock Qty', $results[0]);
+				$stockUnitIndex = array_search('Stock Unit', $results[0]);
+								
 				if ($isColumnMissing === false)
 				{
-					$columnNameWithIndex = [
-						$itemIdIndex => 'Item Id',
-						$itemNameIndex => 'Item Name',
-					];
+					$this->load->model('ExcelImportModel', 'excelimport');
+					
+					$restaurantRecipes = $this->recipe->getRestaurantRecipes($this->loggedInUserId);
 
-					for($i = 1; $i <= $this->totalRecipeCounter; $i++)
-					{
-						$columnNameWithIndex[${"recipeIndex".$i}] = sprintf('Recipe %s', $i);
-					}
-
-					// $extractDataFromExcel = $this->extractDataFromExcel($results, $columnNameWithIndex);
-					$itemWithoutRecipes = [];
 					$siUnitNames = [];
+					$productNames = [];
+					$excelData = [];
+
+					$lastItemId = 0;
+					$lastItemInfo = [];
 
 					foreach($results as $resultIndex => $result)
 					{
@@ -413,47 +415,194 @@ class Recipemanagement extends Backend_Controller
 						
 						$itemId = $result[$itemIdIndex];
 						$itemName = $result[$itemNameIndex];
+						$itemQty = $result[$itemQtyIndex];
+						$itemUnit = $result[$itemUnitIndex];
+						$stockItem = $result[$stockItemIndex];
+						$stockQty = $result[$stockQtyIndex];
+						$stockUnit = $result[$stockUnitIndex];
 
-						$insert = [
-							'itemId' => $itemId,
-							'itemName' => $itemName,
-						];
+						$itemInfo = [];
 
-						for($i = 1; $i <= $this->totalRecipeCounter; $i++)
+						if ($itemId)
 						{
-							$itemRecipe = $result[${"recipeIndex".$i}];
-							if (!empty($itemRecipe))
+							$lastItemId = $itemId;
+
+							$itemInfo = [
+								'itemId' => $itemId,
+								'itemName' => trim($itemName),
+								'itemQty' => $itemQty,
+								'itemUnit' => trim($itemUnit),
+							];
+
+							$lastItemInfo = $itemInfo;
+						}
+
+						
+						if (!isset($restaurantRecipes[$itemId]) || !isset($restaurantRecipes[$lastItemId]))
+						{
+							if ($stockItem && $stockQty && $stockUnit)
 							{
-								
-								$explodeItemRecipe = explode("-", $itemRecipe);
-
-								if (count($explodeItemRecipe) == 3)
+								$recipe = [
+									'productName' => trim($stockItem),
+									'productQty' => $stockQty,
+									'productUnit' => trim($stockUnit),
+								];
+	
+								$siUnitNames[] = strtolower($stockQty);
+								$productNames[] = strtolower($stockItem);
+		
+								$itemData = $lastItemInfo;
+								$itemData['recipes'] = [$recipe];
+		
+								if ($itemId)
 								{
-									// Remove duplicate recipes
-									$insert['recipes'][$itemRecipe] = $itemRecipe; 
+									$excelData[$itemId] = $itemData;
+								}
+								else if (!isset($excelData[$lastItemId]))
+								{
+									$excelData[$lastItemId] = $itemData;
+								}
+								else if ($lastItemId)
+								{
+									$excelData[$lastItemId]['recipes'][] = $recipe;
+								}
+							}
+						}
+					}
 
-									$siUnitNames[$explodeItemRecipe[1]] = strtolower($explodeItemRecipe[1]);
+					if (!empty($excelData) && !empty($productNames))
+					{
+						$products = $this->changeArrayIndexByColumnValue($this->product->getWhereCustom([
+							'id',
+							'productName',
+							'productCode',
+							'productSiUnits',
+						], ['userId' => $this->loggedInUserId], null, [
+							'field' => 'LCASE(productName)',
+							'values' => $productNames,
+						])->result_array(), 'productName');	
+	
+						$siUnitIds = $this->extractSiUnitIdsFromProducts($products);
+						
+						$siUnits = $this->siunit->getWhereCustom(['id AS siUnitId', 'LCASE(unitName) As unitName'], null, null, [
+							'field' => 'id',
+							'values' => $siUnitIds,
+						])->result_array();
+
+						$siUnitsWithUnitNameIndex = $this->changeArrayIndexByColumnValue($siUnits, 'unitName');
+
+						foreach($excelData as &$excelItem)
+						{
+							$recipes = $excelItem['recipes'];
+							if (!empty($recipes))
+							{
+								foreach($excelItem['recipes'] as &$recipe)
+								{
+									$errorMessage = [];
+
+									if (isset($products[$recipe['productName']]))
+									{
+										$recipe['productId'] = $products[$recipe['productName']]['id'];
+									}
+									else
+									{
+										$errorMessage[] = 'Product is not found';
+									}
+									
+									if (isset($siUnitsWithUnitNameIndex[strtolower($recipe['productUnit'])]))
+									{
+										$productSiUnitId = $siUnitsWithUnitNameIndex[strtolower($recipe['productUnit'])]['siUnitId'];
+									
+										if (isset($products[$recipe['productName']]))
+										{
+											$productSiUnits = $products[$recipe['productName']]['productSiUnits'];
+											$unserializedSiUnits = unserialize($productSiUnits);	
+
+											if (!in_array($productSiUnitId, $unserializedSiUnits))
+											{
+												$errorMessage[] = 'Unit is not mapped with this product';
+											}
+										}
+
+										$recipe['productSiUnitId'] = $productSiUnitId;
+									}
+									else
+									{
+										$errorMessage[] = 'Unit is not found';
+									}
+
+									if (!empty($errorMessage))
+									{
+										$recipe['errorMessage'] = implode(', ', $errorMessage);
+									}
+								}
+							}
+						}
+					}
+
+
+					$insertData = [];
+					$isErrorFoundInRecipe = false;
+
+					$excelDataCopy = $excelData;
+
+					foreach($excelData as $excelDataIndex => $parsedExcelData)
+					{
+						$isErrorMessageFound = false;
+						$menuItemRecipes = $parsedExcelData['recipes'];
+
+						if (!empty($menuItemRecipes))
+						{
+							foreach($menuItemRecipes as $menuItemRecipe)
+							{
+								if (isset($menuItemRecipe['errorMessage']))
+								{
+									$isErrorMessageFound = true;
+									$isErrorFoundInRecipe = true;
+									break;
 								}
 							}
 						}
 
-						if (!empty($insert['recipes']))
+						if (!$isErrorMessageFound)
 						{
-							$insertData[] = $insert;
+							$insertData[] = [
+								'userId' => $this->loggedInUserId,
+								'menuItemId' => $parsedExcelData['itemId'],
+								'menuItemQuantity' => $parsedExcelData['itemQty'],
+								'menuItemSiUnit' => $parsedExcelData['itemUnit'],
+								'menuItemRecipe' => json_encode($menuItemRecipes),
+							];
+
+							unset($excelData[$excelDataIndex]);
 						}
-						else
-						{
-							$itemWithoutRecipes[] = $insert;
-						}
+
 					}
 
-					$siUnits = $this->changeArrayIndexByColumnValue($this->siunit->getWhereCustom(['id AS siUnitId', 'unitName'], null, null, [
-						'field' => 'LCASE(unitName)',
-						'values' => $siUnitNames,
-					])->result_array(), 'siUnitId');
+					if (!empty($insertData))
+					{						
+						foreach($insertData as $insert)
+						{
+							$this->recipe->insert($insert);
+						}
+
+						$this->excelimport->insert([
+							'userId' => $this->loggedInUserId,
+							'excelData' => json_encode($results),
+							'excelParsedData' => json_encode($excelDataCopy),
+							'importType' => IMPORT_RECIPES,
+							'isSuccess' => empty($excelData) ? 1 : 0,
+						]);
+					}
+
+					if ($isErrorFoundInRecipe)
+					{
+						$status = false;
+						$downloadRecipeErrorSheetUrl = base_url('backend/recipemanagement/downloadRecipeErrorSheet');
+						$message = sprintf('<p class="text-danger">Total %s recipes created, Error found while creating recipes.</p><a href="%s">Download Recipe Error Sheet</a>', count($insertData), $downloadRecipeErrorSheetUrl);
 					
-					echo $this->db->last_query();
-					p($siUnits);
+						$this->session->set_userdata('recipeImportErrorData', $excelData);
+					}
 				}
 				else
 				{
@@ -471,31 +620,32 @@ class Recipemanagement extends Backend_Controller
 		responseJson($status, $message, $response);
 	}
 
-	private function extractDataFromExcel(array $data, array $columnNameWithIndex)
+	private function extractSiUnitIdsFromProducts(array $products): array
 	{
-		$result = [];
+		$siUnitIds = [];
 
-		if (!empty($data) && !empty($columnNameWithIndex))
+		if (empty($products))
 		{
-			foreach($data as $index => $row)
-			{
-				// Skip the first row
-				if ($index < 1)
-				{
-					continue;
-				}
-
-				foreach($columnNameWithIndex as $columnIndex => $columnName)
-				{	
-					$result[$columnName][] = $row[$columnIndex];
-				}
-			}
-
-
-			return $result;
+			return $siUnitIds;
 		}
 
-		return $result;
+		foreach($products as $product)
+		{
+			if (!empty($product['productSiUnits']))
+			{
+				$unserializedSiUnits = unserialize($product['productSiUnits']);	
+
+				foreach($unserializedSiUnits as $siUnitId)
+				{
+					if (!in_array($siUnitId, $siUnitIds))
+					{
+						$siUnitIds[] = $siUnitId;
+					}
+				}
+			}
+		}
+
+		return $siUnitIds;
 	}
 
 	public function downloadSample()
@@ -508,8 +658,6 @@ class Recipemanagement extends Backend_Controller
 			'mi.item_id as itemId', 'mi.name as itemName', 'price_desc as priceDesc'
 		];
 
-		$totalRecipes = $this->totalRecipeCounter;
-
 		$data = $this->menuitem->getRestaurantMenuItems($columns, $condition);
 
 		$results = [];
@@ -518,16 +666,13 @@ class Recipemanagement extends Backend_Controller
 			$excelColumns = [
 				['title' => 'SN', 'name' => 'sn'],
 				['title' => 'Item Id', 'name' => 'itemId'],
-				['title' => 'Item Name', 'name' => 'itemName']		
+				['title' => 'Item Name', 'name' => 'itemName'],		
+				['title' => 'Item Qty', 'name' => 'itemQty'],		
+				['title' => 'Item Unit', 'name' => 'itemUnit'],		
+				['title' => 'Stock Item', 'name' => 'productName'],		
+				['title' => 'Stock Qty', 'name' => 'productQty'],
+				['title' => 'Stock Unit', 'name' => 'productUnit'],
 			];
-
-			for($i = 1; $i <= $totalRecipes; $i++)
-			{
-				$excelColumns[] = [
-					'title' => 'Recipe ' . $i,
-					'name' => 'recipe' . $i,
-				];
-			}
 
 			$counter = 0;
 			foreach($data as $row)
@@ -536,33 +681,183 @@ class Recipemanagement extends Backend_Controller
 					'sn' => ++$counter,
 					'itemId' => $row['itemId'],
 					'itemName' => $row['itemName'],
+					'itemQty' => 1,
+					'itemUnit' => '',
+					'productName' => '',
+					'productQty' => '',
+					'productUnit' => '',
 				];
 
-				for($i = 1; $i <= $totalRecipes; $i++)
-				{
-					if ($counter == 1)
-					{
-						$rowData['recipe'. $i] = sprintf('P000%s-KG-1%s', $i, $i);
-					}
-					else
-					{
-						$rowData['recipe'. $i] = '';
-					}
-				}
-
 				$results[] = $rowData;
+				$results[] = [
+					'sn' => '',
+					'itemId' => '',
+					'itemName' => '',
+					'itemQty' => '',
+					'itemUnit' => '',
+					'productName' => '',
+					'productQty' => '',
+					'productUnit' => '',
+				];
 			} 
 		}
 
-		// p($results, $excelColumns);
-
 		$data['extension'] = 'excel';
-		$data['fileName'] = 'recipe_';
+		$data['fileName'] = 'recipe';
 		$data['columns'] = $excelColumns;
 		$data['results'] = $results;
 		$data['redirectUrl'] = base_url() . 'backend/recipemanagement';
 
+		$this->phpexcel->setAlignment = false;
+		$this->phpexcel->setHorizontal = 'left';
+		$this->phpexcel->setContentCenter = false;
 		$this->phpexcel->export($data);
+	}
+
+	public function downloadRecipeErrorSheet()
+	{
+		$recipeImportErrorData = $this->session->userdata('recipeImportErrorData');
+
+		if (empty($recipeImportErrorData))
+		{
+			redirect(base_url('backend/recipemanagement'));
+		}
+		else
+		{
+			$this->load->library('PhpExcel');
+			
+			$excelColumns = [
+				['title' => 'SN', 'name' => 'sn'],
+				['title' => 'Item Id', 'name' => 'itemId'],
+				['title' => 'Item Name', 'name' => 'itemName'],		
+				['title' => 'Item Qty', 'name' => 'itemQty'],		
+				['title' => 'Item Unit', 'name' => 'itemUnit'],		
+				['title' => 'Stock Item', 'name' => 'productName'],		
+				['title' => 'Stock Qty', 'name' => 'productQty'],
+				['title' => 'Stock Unit', 'name' => 'productUnit'],
+				['title' => 'Error', 'name' => 'errorMessage'],
+			];
+
+			$counter = 0;
+
+			foreach($recipeImportErrorData as $data)
+			{
+				$firstRowItem = 0;
+				foreach($data['recipes'] as $row)
+				{
+					$rowData = [
+						'sn' => '',
+						'itemId' => $data['itemId'],
+						'itemName' => $data['itemName'],
+						'itemQty' => $data['itemQty'],
+						'itemUnit' => $data['itemUnit'],
+						'productName' => $row['productName'],
+						'productQty' => $row['productQty'],
+						'productUnit' => $row['productUnit']
+					];
+
+					if ($firstRowItem == 0)
+					{
+						$rowData['sn'] = ++$counter;
+					}
+
+					$rowData['errorMessage'] = isset($row['errorMessage']) ? $row['errorMessage'] : '';
+
+					$results[] = $rowData;
+
+					++$firstRowItem;
+				} 
+			}
+
+			$data['extension'] = 'excel';
+			$data['fileName'] = 'recipe-error';
+			$data['columns'] = $excelColumns;
+			$data['results'] = $results;
+			$data['redirectUrl'] = base_url() . 'backend/recipemanagement';
+	
+			$this->phpexcel->setAlignment = false;
+			$this->phpexcel->setHorizontal = 'left';
+			$this->phpexcel->setContentCenter = false;
+			$this->phpexcel->export($data);
+		}
+	}
+
+	public function exportRecipes($extension)
+	{
+		$restaurantRecipes = $this->fetchRecipes(true);
+		
+		if (empty($restaurantRecipes['data']))
+		{
+			redirect(base_url('backend/recipemanagement'));
+		}
+		else
+		{
+			$restaurantRecipes = $restaurantRecipes['data'];
+			$this->load->library('PhpExcel');
+			
+			$excelColumns = [
+				['title' => 'SN', 'name' => 'sn'],
+				['title' => 'Item Name', 'name' => 'itemName'],		
+				['title' => 'Item Qty', 'name' => 'itemQty'],		
+				['title' => 'Item Unit', 'name' => 'itemUnit'],		
+				['title' => 'Product Name', 'name' => 'productName'],		
+				['title' => 'Product Qty', 'name' => 'productQty'],
+				['title' => 'Product Unit', 'name' => 'productUnit'],
+				['title' => 'Date', 'name' => 'createdOn'],
+			];
+
+			$counter = 0;
+			$results = [];
+
+			foreach($restaurantRecipes as $data)
+			{
+				$firstRowItem = 0;
+				if ($data['isRecipeConfigured'] && !empty($data['recipes']))
+				{
+					$itemRecipe = $data['recipes'];
+					$recipes = json_decode($data['recipes']['menuItemRecipe'], true);
+
+					foreach($recipes as $row)
+					{
+						$rowData = [
+							'sn' => '',
+							'itemName' => '',
+							'itemQty' => '',
+							'itemUnit' => '',
+							'productName' => $row['productName'],
+							'productQty' => $row['productQty'],
+							'productUnit' => $row['productUnit'],
+							'createdOn' => '',
+						];
+	
+						if ($firstRowItem == 0)
+						{
+							$rowData['sn'] = ++$counter;
+							$rowData['itemName'] = $data['itemName'];
+							$rowData['itemQty'] = $itemRecipe['menuItemQuantity'];
+							$rowData['itemUnit'] = $itemRecipe['menuItemSiUnit'];
+							$rowData['createdOn'] = $data['createdOn'];
+						}
+		
+						$results[] = $rowData;
+	
+						++$firstRowItem;
+					} 
+				}
+				
+			}
+
+			$data['extension'] = $extension;
+			$data['fileName'] = 'all-recipes';
+			$data['columns'] = $excelColumns;
+			$data['results'] = $results;
+			$data['redirectUrl'] = base_url() . 'backend/recipemanagement';
+	
+			$this->phpexcel->setAlignment = false;
+			$this->phpexcel->setHorizontal = 'left';
+			$this->phpexcel->setContentCenter = false;
+			$this->phpexcel->export($data);
+		}
 	}
 }
 

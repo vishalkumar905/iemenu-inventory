@@ -10,7 +10,7 @@
 					<div class="col-sm-10">
 						<div class="form-group label-floating">
 							<input type="file" class="default" name="excelFile" id="excelFile" />
-							<p id="excelFileErrorMsg" class="text-danger"></p>
+							<div id="excelFileErrorMsg"></div>
 						</div>
 					</div>
 				</div>
