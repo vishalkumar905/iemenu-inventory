@@ -9,7 +9,7 @@
 			<div class="card-content">
 				<div class="row">
 					<div class="col-md-6">
-						<div class="form-group">
+						<div class="form-group mt-10">
 							<label class="label-control">Item Name*</label>
 							<?php
 								$extra = [
@@ -35,7 +35,7 @@
 					</div>
 
 					<div class="col-md-6">
-						<div class="form-group">
+						<div class="form-group mt-20">
 							<label class="label-control">Item Qty*</label>
 							<input type="number" min="0" name="menuItemQty" id="menuItemQty" class="form-control" required/>
 						</div>
@@ -53,7 +53,7 @@
 									<select id="menuItemProductSiUnit-1" name="menuItemProductSiUnit-1" class='selectpicker' data-style='select-with-transition select-box-horizontal' data-live-search='true'></select>
 								</div>
 								<div class="col-sm-2">
-									<div class="form-group label-floating">
+									<div class="form-group mt-0">
 										<label class="control-label">Quantity*</label>
 										<input type="text" id="menuItemProductQty-1" id="menuItemProductQty-1" required="true" class="form-control"/>
 									</div>
@@ -71,7 +71,7 @@
 				<div class="row mt-10">
 					<div class="col-sm-12">
 						<button type="submit" name="submit" value="<?=$submitBtn?>" id="saveRecipe" class="btn btn-rose"><?=$submitBtn?><div class="ripple-container"></div></button>
-						<button type="submit" name="submit" value="Cancel"  class="btn btn-primary btn-fill">Cancel<div class="ripple-container"></div></button>
+						<a href="<?=base_url('backend/recipemanagement')?>" name="submit" value="Cancel"  class="btn btn-primary btn-fill">Cancel<div class="ripple-container"></div></a>
 						<!-- <a href="#importExcelForm"><b>Upload Excel Sheet</b></a> -->
 					</div>
 				</div>

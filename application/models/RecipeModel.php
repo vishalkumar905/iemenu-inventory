@@ -217,13 +217,19 @@ class RecipeModel extends CI_Model
 		return $results;
 	}
 
-	public function getRestaurantRecipes(int $restaurantId): array
+	public function getRestaurantRecipes(int $restaurantId, int $recipeId = null): array
 	{
+		$condition = ['userId' => $restaurantId];
+		if ($recipeId > 0)
+		{
+			$condition['recipeId'] = $recipeId;
+		}
+
 		$recipes = $this->getWhereCustom([
 			'*', 
 			'JSON_EXTRACT(menuItemRecipe, "$[*].productId") AS productIds', 
 			'JSON_EXTRACT(menuItemRecipe, "$[*].productSiUnitId") AS productSiUnitIds'
-		], ['userId' => $restaurantId])->result_array();
+		], $condition)->result_array();
 
 		$results = [];
 		

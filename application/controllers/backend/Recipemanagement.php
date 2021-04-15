@@ -16,6 +16,7 @@ class Recipemanagement extends Backend_Controller
     public function index()
     {
         $updateId = $this->uri->segment(4);
+
         $this->pageTitle = $this->navTitle = 'Recipe Management';
 
         $data['headTitle']  = 'Recipe Management';
@@ -26,129 +27,12 @@ class Recipemanagement extends Backend_Controller
         if ($updateId > 0)
         {
             $data['submitBtn'] = 'Update';
+			$data['headTitle'] = 'Update Recipe';
         }
 
 		if ($submit == 'Cancel')
 		{
 			redirect(base_url().'backend/recipemanagement');
-		}
-
-		if ($submit == 'Save' || $submit == 'Update')
-		{
-			$this->form_validation->set_rules('productName', 'Product name', 'trim|required');
-			$this->form_validation->set_rules('productCode', 'Product code', 'trim|required|callback_productcode_unique');
-			$this->form_validation->set_rules('productType', 'Product type', 'trim|required');
-			// $this->form_validation->set_rules('hsnCode', 'HSN code', 'required');
-			$this->form_validation->set_rules('subCategoryName', 'Sub Category Name', 'trim');
-			$this->form_validation->set_rules('category', 'Category', 'trim|callback_category');
-			$this->form_validation->set_rules('baseUnit', 'Base Unit', 'trim|callback_baseUnit');
-			$this->form_validation->set_error_delimiters('<p class="text-danger">', '</p>');
-
-			if ($this->form_validation->run())
-			{
-				$categoryId = $this->input->post('category');
-				$subCategoryName = $this->input->post('subCategoryName');
-				$subCategory = $this->input->post('subCategory');
-
-				if ($updateId == 0 && $subCategoryName != '')
-				{
-					$categoryData['categoryName'] = $subCategoryName;
-					$categoryData['categoryUrlTitle'] = url_title($subCategoryName, '-', true);
-					$categoryData['userId'] = $this->loggedInUserId;
-
-					if ($categoryId != '')
-					{
-						$categoryData['parentId'] = $categoryId;
-					}
-
-					$categoryId = $this->category->insert($categoryData);
-				}
-				else if ($subCategory != '')
-				{
-					$categoryId = $subCategory;
-				}
-
-				$siUnit = $this->input->post('siUnit[]');
-				$siUnit = !empty($siUnit) ? array_unique($siUnit) : [];
-				$baseUnit = $this->input->post('baseUnit');
-				$baseUnit = !empty($siUnit) ? $siUnit : [$baseUnit];
-				
-				$insertData = [
-					'productName' => $this->input->post('productName'),
-					'productCode' => $this->input->post('productCode'),
-					'productType' => $this->input->post('productType'),
-					'hsnCode' => $this->input->post('hsnCode'),
-					'shelfLife' => $this->input->post('shelfLife'),
-					'productSiUnits' => serialize($baseUnit),
-					'categoryId' => $categoryId,
-					'userId' => $this->loggedInUserId,
-				];
-
-				$flashMessage = 'Something went wrong.';
-				$flashMessageType = 'danger';
-				$isUploadError = 0;
-
-				if ($this->productImageUpload)
-				{
-					$uploadImage = $this->doUpload('productImage', PRODUCT_IMAGE_UPLOAD_PATH);
-					$isUploadError = $uploadImage['err'];
-	
-					if ($updateId > 0)
-					{
-						if (isset($_FILES) && isset($_FILES['productImage']['name']) && $_FILES['productImage']['name'] !== '')
-						{
-							if ($uploadImage['err'] == 0)
-							{
-								$insertData['productImage'] = $uploadImage['fileName'];
-							}
-						}
-						else
-						{
-							$isUploadError = 0;
-						}
-					}
-				}
-
-				if ($isUploadError == 0)
-				{
-					if ($updateId > 0)
-					{
-						foreach($this->disableUpdateField as $field)
-						{
-							unset($insertData[$field]);
-						}
-
-						$this->product->update($updateId, $insertData);
-
-						$redirectUrl = base_url() . 'backend/recipemanagement';	
-						$flashMessage = 'Product details has been updated successfully';
-						$flashMessageType = 'success';
-					}
-					else if ($updateId == 0 && $isUploadError == 0)
-					{
-						$data['productImage'] = $uploadImage['fileName'];
-						if ($this->product->insert($insertData))
-						{
-							$flashMessage = 'Product has been created successfully';
-							$flashMessageType = 'success';
-						}
-	
-						$redirectUrl = base_url() . 'backend/recipemanagement';	
-					}
-
-					$flashData = [
-						'flashMessage' => $flashMessage,
-						'flashMessageType' => $flashMessageType,
-					];
-	
-					$this->session->set_flashdata($flashData);
-					redirect($redirectUrl);
-				}
-				else
-				{
-					$data['proudctImageUploadError'] = $uploadImage['errorMessage'];
-				}
-			}
 		}
 
         $data['menuItems'] = $this->menuitem->getMenuItemsDropdownOptions();
@@ -164,10 +48,12 @@ class Recipemanagement extends Backend_Controller
 
     public function fetchRecipes($return = false)
     {
+		$recipeId = $this->input->get('recipe');
 		$results = ['recordsTotal' => 0, "recordsFiltered" => 0, "data" => []];
 		$limit = $this->input->post('length') ? $this->input->post('length') : 10;
 		$offset = $this->input->post('length') > 0 ? $this->input->post('start') : 0;
 		$search = $this->input->post('search');
+		$updateRecipeUrl = base_url('backend/recipemanagement/index/');
 
 		$condition['mc.rest_id'] = $this->loggedInUserId;
 		$condition['mi.item_id IS NOT NULL'] = NULL;
@@ -189,7 +75,7 @@ class Recipemanagement extends Backend_Controller
 		// $whereIn['type'] = 'notin';
 		// $whereIn['values'] = $this->recipe->getMenuItemIdsFromRestaurantRecipes($this->loggedInUserId);
 
-		$restaurantRecipes = $this->recipe->getRestaurantRecipes($this->loggedInUserId);
+		$restaurantRecipes = $this->recipe->getRestaurantRecipes($this->loggedInUserId, $recipeId);
 
 		$recipeProductInfo = $this->getRecipeData($restaurantRecipes);
 
@@ -241,9 +127,10 @@ class Recipemanagement extends Backend_Controller
 
 				$recipes['menuItemRecipe'] = json_encode($menuItemRecipeData);
 				
+
 				$result['action'] = sprintf('
-					<span href="javascript::void()" id="updateRecipeDetail-%s" menuItemId="%s" class="btn btn-simple btn-info btn-icon"><i class="material-icons">edit</i></span>
-				', $result['itemId'], $result['itemId']);
+					<a href="%s%s" id="updateRecipeDetail-%s" menuItemId="%s" class="btn btn-simple btn-info btn-icon"><i class="material-icons">edit</i></a>
+				', $updateRecipeUrl, $recipes['recipeId'], $result['itemId'], $result['itemId']);
 
 				$result['recipes'] = $recipes;
 				$result['action'] .= sprintf('<span href="javascript::void()" id="viewRecipeDetail-%s" menuItemId="%s" class="btn btn-simple btn-info btn-icon"><i class="material-icons">visibility</i></span>', $result['itemId'], $result['itemId']);
@@ -262,14 +149,34 @@ class Recipemanagement extends Backend_Controller
 		// 	});
 		// }
 
+		
+		if ($recipeId > 0)
+		{
+			foreach($results['data'] as $resultIndex => $result)
+			{
+				if ($result['isRecipeConfigured'] == 0)
+				{
+					unset($results['data'][$resultIndex]);
+				}
+			}
 
-		if ($return)
+			usort($results['data'], function($a, $b) {
+				return $a['isRecipeConfigured'] < $b['isRecipeConfigured']; 
+			});
+		}
+
+		if ($return == true)
 		{
 			return $results;
 		}
 
 		responseJson(true, null, $results, false);
     }
+
+	public function fetchRecipe()
+	{
+
+	}
 
 	private function getRecipeData(array $recipes)
 	{
@@ -300,6 +207,7 @@ class Recipemanagement extends Backend_Controller
 		$this->form_validation->set_rules('menuItemQty', 'Item Quantity', 'trim');
 		$this->form_validation->set_rules('menuItemRecipeData[]', 'Recipe', 'required|trim');
 		
+		
 		if ($this->form_validation->run())
 		{
 
@@ -318,6 +226,7 @@ class Recipemanagement extends Backend_Controller
 
 			if (!empty($menuItemRecipeData))
 			{
+				$updateRecipeId = intval($this->input->post("updateRecipeId"));
 				$insertData = [
 					'userId' => $this->loggedInUserId,
 					'menuItemId' => $this->input->post("menuItemId"),
@@ -325,12 +234,29 @@ class Recipemanagement extends Backend_Controller
 					'menuItemRecipe' => json_encode($recipes),
 				];
 				
-				if($this->recipe->insert($insertData))
-				{
-					$status = true;
-					$message = "Recipe created successfully.";
+				try
+				{	
+					if ($updateRecipeId > 0)
+					{
+						unset($insertData['menuItemId']);
+						unset($insertData['userId']);
+
+						$this->recipe->update($updateRecipeId, $insertData);
+
+						$status = true;
+						$message = "Recipe updated successfully.";
+						$response['redirectUrl'] = base_url('backend/recipemanagement');
+					}
+					else
+					{
+						if($this->recipe->insert($insertData))
+						{
+							$status = true;
+							$message = "Recipe created successfully.";
+						}
+					}
 				}
-				else
+				catch(Exception $e)
 				{
 					$response['errorMessage'] = 'Something went wrong';
 				}
