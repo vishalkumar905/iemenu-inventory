@@ -319,7 +319,7 @@ class Recipemanagement extends Backend_Controller
 				$stockQtyIndex = array_search('Stock Qty', $results[0]);
 				$stockUnitIndex = array_search('Stock Unit', $results[0]);
 								
-				if ($isColumnMissing === false)
+				if ($isColumnMissing == false)
 				{
 					$this->load->model('ExcelImportModel', 'excelimport');
 					
@@ -360,38 +360,39 @@ class Recipemanagement extends Backend_Controller
 								'itemUnit' => trim($itemUnit),
 							];
 
+							if (isset($restaurantRecipes[$itemId]) || isset($restaurantRecipes[$lastItemId]))
+							{
+								$itemInfo['errorMessage'] = 'Recipe already configured';
+							}
+
 							$lastItemInfo = $itemInfo;
 						}
 
-						
-						if (!isset($restaurantRecipes[$itemId]) || !isset($restaurantRecipes[$lastItemId]))
-						{
-							if ($stockItem && $stockQty && $stockUnit)
-							{
-								$recipe = [
-									'productName' => trim($stockItem),
-									'productQty' => $stockQty,
-									'productUnit' => trim($stockUnit),
-								];
+						$recipe = [
+							'productName' => trim($stockItem),
+							'productQty' => $stockQty,
+							'productUnit' => trim($stockUnit),
+						];
 	
-								$siUnitNames[] = strtolower($stockQty);
-								$productNames[] = strtolower($stockItem);
-		
-								$itemData = $lastItemInfo;
-								$itemData['recipes'] = [$recipe];
-		
-								if ($itemId)
-								{
-									$excelData[$itemId] = $itemData;
-								}
-								else if (!isset($excelData[$lastItemId]))
-								{
-									$excelData[$lastItemId] = $itemData;
-								}
-								else if ($lastItemId)
-								{
-									$excelData[$lastItemId]['recipes'][] = $recipe;
-								}
+						$siUnitNames[] = strtolower($stockQty);
+						$productNames[] = strtolower($stockItem);
+	
+						$itemData = $lastItemInfo;	
+						$itemData['recipes'] = !empty($recipe['productName']) ? [$recipe] : [];
+	
+						if ($itemId)
+						{
+							$excelData[$itemId] = $itemData;
+						}
+						else if (!isset($excelData[$lastItemId]))
+						{
+							$excelData[$lastItemId] = $itemData;
+						}
+						else if ($lastItemId)
+						{
+							if (!empty($recipe['productName']))
+							{
+								$excelData[$lastItemId]['recipes'][] = $recipe;
 							}
 						}
 					}
@@ -466,7 +467,6 @@ class Recipemanagement extends Backend_Controller
 						}
 					}
 
-
 					$insertData = [];
 					$isErrorFoundInRecipe = false;
 
@@ -492,13 +492,16 @@ class Recipemanagement extends Backend_Controller
 
 						if (!$isErrorMessageFound)
 						{
-							$insertData[] = [
-								'userId' => $this->loggedInUserId,
-								'menuItemId' => $parsedExcelData['itemId'],
-								'menuItemQuantity' => $parsedExcelData['itemQty'],
-								'menuItemSiUnit' => $parsedExcelData['itemUnit'],
-								'menuItemRecipe' => json_encode($menuItemRecipes),
-							];
+							if (!empty($menuItemRecipes))
+							{
+								$insertData[] = [
+									'userId' => $this->loggedInUserId,
+									'menuItemId' => $parsedExcelData['itemId'],
+									'menuItemQuantity' => $parsedExcelData['itemQty'],
+									'menuItemSiUnit' => $parsedExcelData['itemUnit'],
+									'menuItemRecipe' => json_encode($menuItemRecipes),
+								];
+							}
 
 							unset($excelData[$excelDataIndex]);
 						}
@@ -527,7 +530,7 @@ class Recipemanagement extends Backend_Controller
 						$downloadRecipeErrorSheetUrl = base_url('backend/recipemanagement/downloadRecipeErrorSheet');
 						$message = sprintf('<p class="text-danger">Total %s recipes created, Error found while creating recipes.</p><a href="%s">Download Recipe Error Sheet</a>', count($insertData), $downloadRecipeErrorSheetUrl);
 					
-						$this->session->set_userdata('recipeImportErrorData', $excelData);
+						$this->session->set_userdata('recipeImportErrorData', $excelDataCopy);
 					}
 				}
 				else
@@ -665,34 +668,64 @@ class Recipemanagement extends Backend_Controller
 			];
 
 			$counter = 0;
+			
 
 			foreach($recipeImportErrorData as $data)
 			{
 				$firstRowItem = 0;
-				foreach($data['recipes'] as $row)
+
+				if (!empty($data['recipes']))
+				{
+					foreach($data['recipes'] as $row)
+					{
+						if ($firstRowItem == 0)
+						{
+							$rowData = [
+								'sn' => ++$counter,
+								'itemId' => $data['itemId'],
+								'itemName' => $data['itemName'],
+								'itemQty' => $data['itemQty'],
+								'itemUnit' => $data['itemUnit'],
+							];
+						}
+						else
+						{
+							$rowData = [
+								'sn' => '',
+								'itemId' => '',
+								'itemName' => '',
+								'itemQty' => '',
+								'itemUnit' => '',
+							];
+						}
+
+						$rowData['productName'] = $row['productName'];
+						$rowData['productQty'] = $row['productQty'];
+						$rowData['productUnit'] = $row['productUnit'];
+						$rowData['errorMessage'] = isset($data['errorMessage']) ? $data['errorMessage'] : (isset($row['errorMessage']) ? $row['errorMessage'] : '');
+	
+						$results[] = $rowData;
+	
+						++$firstRowItem;
+					}
+				}
+				else
 				{
 					$rowData = [
-						'sn' => '',
+						'sn' => ++$counter,
 						'itemId' => $data['itemId'],
 						'itemName' => $data['itemName'],
 						'itemQty' => $data['itemQty'],
 						'itemUnit' => $data['itemUnit'],
-						'productName' => $row['productName'],
-						'productQty' => $row['productQty'],
-						'productUnit' => $row['productUnit']
+						'productName' => '',
+						'productQty' => '',
+						'productUnit' => '',
+						'errorMessage' => isset($data['errorMessage']) ? $data['errorMessage'] : ''
 					];
-
-					if ($firstRowItem == 0)
-					{
-						$rowData['sn'] = ++$counter;
-					}
-
-					$rowData['errorMessage'] = isset($row['errorMessage']) ? $row['errorMessage'] : '';
-
+		
 					$results[] = $rowData;
-
-					++$firstRowItem;
-				} 
+				}
+				
 			}
 
 			$data['extension'] = 'excel';
@@ -700,7 +733,7 @@ class Recipemanagement extends Backend_Controller
 			$data['columns'] = $excelColumns;
 			$data['results'] = $results;
 			$data['redirectUrl'] = base_url() . 'backend/recipemanagement';
-	
+
 			$this->phpexcel->setAlignment = false;
 			$this->phpexcel->setHorizontal = 'left';
 			$this->phpexcel->setContentCenter = false;
