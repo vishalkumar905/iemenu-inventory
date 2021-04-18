@@ -5,6 +5,7 @@
 				<h4 class="card-title">Manage Recipes</h4>
 				<input type="button" name="exportData" id="exportData" value="CSV" class="btn btn-info btn-sm">
 				<input type="button" name="exportData" id="exportData" value="EXCEL" class="btn btn-info btn-sm">
+				<button type="button" name="exportData" id="exportData" value="MENU" class="btn btn-info btn-sm">MENU EXCEL</button>
 			</div>
 			<div class="toolbar mb-10">
 

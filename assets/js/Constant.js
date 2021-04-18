@@ -63,6 +63,10 @@ const FETCH_MENU_ITEMS = BASE_URL + 'api/menu/fetchMenuItems';
 
 const SAVE_RECIPE = BASE_URL + 'backend/recipemanagement/saveRecipe';
 
+
+const EXPORT_MENU_ITEMS = BASE_URL + 'backend/menuitem/export/';
+
+
 // API- End
 
 

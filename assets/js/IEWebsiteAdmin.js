@@ -4395,6 +4395,11 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 			{
 				window.location.href = EXPORT_RECIPES + exportType;
 			}
+			
+			if (exportType == 'menu')
+			{
+				window.location.href = EXPORT_MENU_ITEMS;
+			}
 		});
 
 		$('#recipeManagementData').DataTable({
