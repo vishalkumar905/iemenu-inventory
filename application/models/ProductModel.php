@@ -265,6 +265,110 @@ class ProductModel extends CI_Model
         //     $this->db->order_by(key($order), $order[key($order)]);
         // }
 	}
+
+	public function fetchProducts()
+	{
+		$condition = [
+			'p.userId' => $this->loggedInUserId,
+			// 'p.isDeleted IS NOT NULL' => NULL
+		];
+
+		$productQuery = $this->db->select([
+			'p.id AS productId',
+			'p.productName',
+			'p.productName',
+			'p.productCode',
+			'p.productType',
+			'p.productImage',
+			'p.productUnit',
+			'p.categoryId',
+			'p.productSiUnits',
+			'p.hsnCode',
+			'p.createdOn',
+			'p.shelfLife',
+			'c.categoryName AS categoryName',
+			'c1.categoryName AS subCategoryName',
+		])->from('ie_products p')->join(
+			'ie_categories c', 'c.id = p.categoryId', 'LEFT'
+		)->join(
+			'ie_categories c1', 'c1.id = c.parentId', 'LEFT'
+		)->where($condition);
+
+		$products = $productQuery->get()->result_array();
+
+		$siUnitIds = $this->extractSiUnitIdsFromProducts($products);
+		$siUnits = [];
+
+		if (!empty($siUnitIds))
+		{
+			$siUnits = $this->changeArrayIndexByColumnValue($this->siunit->getWhereCustom(['id', 'unitName'], null, null, [
+				'field' => 'id',
+				'values' => $siUnitIds
+			])->result_array(), 'id');
+		}
+
+		foreach($products as &$product)
+		{
+			$productSiUnitInfo = [];
+			if (!empty($product['productSiUnits']))
+			{
+				$unserializedSiUnits = unserialize($product['productSiUnits']);
+				
+				foreach($unserializedSiUnits as $unserializedSiUnitId)
+				{
+					if (isset($siUnits[$unserializedSiUnitId]))
+					{
+						$productSiUnitInfo[$unserializedSiUnitId] = $siUnits[$unserializedSiUnitId]['unitName'];
+					}
+				}
+			}
+
+			$product['productSiUnits'] = $productSiUnitInfo;   
+		}
+
+		return $products;
+	}
+
+	private function extractSiUnitIdsFromProducts(array $products): array
+	{
+		$siUnitIds = [];
+
+		if (empty($products))
+		{
+			return $siUnitIds;
+		}
+
+		foreach($products as $product)
+		{
+			if (!empty($product['productSiUnits']))
+			{
+				$unserializedSiUnits = unserialize($product['productSiUnits']);	
+
+				foreach($unserializedSiUnits as $siUnitId)
+				{
+					$siUnitIds[$siUnitId] = $siUnitId;
+				}
+			}
+		}
+
+		return $siUnitIds;
+	}
+
+
+	public function changeArrayIndexByColumnValue($data, $columnName): array
+	{
+		$results = [];
+		if (!empty($data) && !empty($columnName) && isset($data[0][$columnName]))
+		{
+			foreach($data as $row)
+			{
+				$results[$row[$columnName]] = $row;
+			}
+		}
+
+		return $results;
+	}
 }
+
 
 ?>

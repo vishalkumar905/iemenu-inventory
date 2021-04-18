@@ -444,7 +444,7 @@ class Products extends Backend_Controller
 
 		$counter = 0;
 		$columns = [];
-		$results = $this->product->get('id desc')->result_array();
+		$results = $this->product->fetchProducts();
 
 		foreach ($results as $productIndex => &$result)
 		{
@@ -455,6 +455,8 @@ class Products extends Backend_Controller
 					['title' => 'Product Code', 'name' => 'productCode'],
 					['title' => 'Product Name', 'name' => 'productName'],
 					['title' => 'Product Type', 'name' => 'productType'],
+					['title' => 'Category Name', 'name' => 'categoryName'],
+					['title' => 'Subcategory Name', 'name' => 'subCategoryName'],
 					['title' => 'Shelf Life', 'name' => 'shelfLife'],
 					['title' => 'Date', 'name' => 'createdOn']
 				];
@@ -466,7 +468,7 @@ class Products extends Backend_Controller
 		}
 
 		$data['extension'] = $extension;
-		$data['fileName'] = 'products_';
+		$data['fileName'] = 'products';
 		$data['columns'] = $columns;
 		$data['results'] = $results;
 		$data['redirectUrl'] = base_url() . 'backend/products';

@@ -803,9 +803,8 @@ class Recipemanagement extends Backend_Controller
 						++$firstRowItem;
 					} 
 				}
-				
 			}
-
+			
 			$data['extension'] = $extension;
 			$data['fileName'] = 'all-recipes';
 			$data['columns'] = $excelColumns;
