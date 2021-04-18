@@ -785,7 +785,7 @@ class Recipemanagement extends Backend_Controller
 							'itemUnit' => '',
 							'productName' => $row['productName'],
 							'productQty' => $row['productQty'],
-							'productUnit' => $row['productUnit'],
+							'productUnit' => $row['unitName'],
 							'createdOn' => '',
 						];
 	
