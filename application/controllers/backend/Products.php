@@ -457,6 +457,7 @@ class Products extends Backend_Controller
 					['title' => 'Product Type', 'name' => 'productType'],
 					['title' => 'Category Name', 'name' => 'categoryName'],
 					['title' => 'Subcategory Name', 'name' => 'subCategoryName'],
+					['title' => 'Unit', 'name' => 'productSiUnitName'],
 					['title' => 'Shelf Life', 'name' => 'shelfLife'],
 					['title' => 'Date', 'name' => 'createdOn']
 				];
@@ -465,6 +466,7 @@ class Products extends Backend_Controller
 			$result['sn'] = ++$counter;
 			$result['createdOn'] = date('Y-m-d H:i:s', $result['createdOn']);
 			$result['productType'] = $this->getProductTypeName($result['productType']);
+			$result['productSiUnitName'] = !empty($result['productSiUnits'])  && is_array($result['productSiUnits']) ? implode(', ', $result['productSiUnits']) : '';
 		}
 
 		$data['extension'] = $extension;
