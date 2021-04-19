@@ -703,7 +703,12 @@ class Recipemanagement extends Backend_Controller
 						$rowData['productQty'] = $row['productQty'];
 						$rowData['productUnit'] = $row['productUnit'];
 						$rowData['errorMessage'] = isset($data['errorMessage']) ? $data['errorMessage'] : (isset($row['errorMessage']) ? $row['errorMessage'] : '');
-	
+
+						if ($firstRowItem > 0 && isset($data['errorMessage']) )
+						{
+							$rowData['errorMessage'] = '';
+						}
+
 						$results[] = $rowData;
 	
 						++$firstRowItem;
@@ -726,6 +731,17 @@ class Recipemanagement extends Backend_Controller
 					$results[] = $rowData;
 				}
 				
+				$results[] = [
+					'sn' => '',
+					'itemId' => '',
+					'itemName' => '',
+					'itemQty' => '',
+					'itemUnit' => '',
+					'productName' => '',
+					'productQty' => '',
+					'productUnit' => '',
+					'errorMessage' => ''
+				];
 			}
 
 			$data['extension'] = 'excel';
