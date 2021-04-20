@@ -156,3 +156,10 @@ define('RECEIVER_STATUS_REJECT', 2);
 
 define('IMPORT_PRODUCTS', 1);
 define('IMPORT_RECIPES', 2);
+
+// 0='open',1='confirm',2='close',3='void bill',4='Complementary Bill'
+define('ORDER_STATUS_OPEN', 0);
+define('ORDER_STATUS_CONFIRM', 1);
+define('ORDER_STATUS_CLOSED', 2);
+define('ORDER_STATUS_VOID_BILL', 3);
+define('ORDER_STATUS_COMPLEMETNTARY', 4);
