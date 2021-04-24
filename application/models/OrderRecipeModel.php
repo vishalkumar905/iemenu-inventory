@@ -1,8 +1,8 @@
 <?php
 
-class OrderProductModel extends CI_Model
+class OrderRecipeModel extends CI_Model
 {
-	private $tableName = 'ie_order_products';
+	private $tableName = 'ie_order_recipes';
 	private $primaryKey = 'id';
     private $columnSearch = array(''); //set column field database for datatable searchable 
 	
