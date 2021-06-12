@@ -1,13 +1,12 @@
 <?php
 
+header('Access-Control-Allow-Origin: *');
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
 class Recipe extends CI_Controller
 {
     public function __construct()
     {
         parent::__construct();   
-
-		header('Access-Control-Allow-Origin: *');
-		header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
     } 
 
     public function saveOrderRecipe(int $userId, string $orderId)
