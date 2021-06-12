@@ -1810,6 +1810,8 @@ IEWebsiteAdmin.MasterReport = (function() {
 			'<td>' + row.purchaseInventoryAmt + '</td>' +
 			'<td>' + row.wastageInventoryQty + '</td>' +
 			'<td>' + row.wastageInventoryAmt + '</td>' +
+			'<td>' + row.recipeQty + '</td>' +
+			// '<td>' + row.recipeAmt + '</td>' +
 			'<td>' + row.transferQtyIn + '</td>' +
 			'<td>' + row.transferQtyOut + '</td>' +
 			'<td>' + row.currentInventoryQty + '</td>' +

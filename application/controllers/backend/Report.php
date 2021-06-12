@@ -128,16 +128,17 @@ class Report extends Backend_Controller
 		$openingStocks = $this->getOpeningStocks($startDate, $endDate, $categoryIds);
 		$closingStocks = $this->getClosingWithPurchaseStocks($startDate, $endDate, $categoryIds);
 		$purchaseStocks = $this->getPurchaseStocks($startDate, $endDate, $categoryIds);
+		$recipeStocks = $this->getRecipeStocks($startDate, $endDate, $categoryIds);
 		
 		$wastageStocks = $this->getWastageStocks($startDate, $endDate, $categoryIds);
 		$previousWastageStocks = $this->getWastageStocks($startDate, $endDate, $categoryIds, true);
 
 		$wastageStocksWithProduct = $this->changeArrayIndexByColumnValue($wastageStocks, 'productId');
 		$previousWastageStocksWithProduct = $this->changeArrayIndexByColumnValue($previousWastageStocks, 'productId');
-
 		
 		$previousClosingStocks = $this->getClosingWithPurchaseStocks($startDate, $endDate, $categoryIds, true);
 		$previousPurchaseStocks = $this->getPurchaseStocks($startDate, $endDate, $categoryIds, true);
+		$previousRecipeStocks = $this->getRecipeStocks($startDate, $endDate, $categoryIds, true);
 
 		$previousClosingStockWithProduct = $this->changeArrayIndexByColumnValue($previousClosingStocks, 'productId');
 		$previousPurchaseStockWithProduct = $this->changeArrayIndexByColumnValue($previousPurchaseStocks, 'productId');
@@ -146,6 +147,8 @@ class Report extends Backend_Controller
 
 		$closingStocksWithProduct = $this->changeArrayIndexByColumnValue($closingStocks, 'productId');
 		$purchaseStocksWithProduct = $this->changeArrayIndexByColumnValue($purchaseStocks, 'productId');
+		$recipeStocksWithProduct = $this->changeArrayIndexByColumnValue($recipeStocks, 'productId');
+		$previousRecipeStocksWithProduct = $this->changeArrayIndexByColumnValue($previousRecipeStocks, 'productId');
 
 		$combinedStocks = [
 			'purchaseStocksWithProduct' => $purchaseStocksWithProduct, 
@@ -158,6 +161,8 @@ class Report extends Backend_Controller
 			'previousTranferStocksOutWithProduct' => $previousTranferStocksOut,
 			'wastageStocksWithProduct' => $wastageStocksWithProduct,
 			'previousWastageStocksWithProduct' => $previousWastageStocksWithProduct,
+			'recipeStocksWithProduct' => $recipeStocksWithProduct,
+			'previousRecipeStocksWithProduct' => $previousRecipeStocksWithProduct,
 		];
 
 		$openingStockProductIds = [];
@@ -218,6 +223,8 @@ class Report extends Backend_Controller
 			'consumptionAmt' => 0,
 			'transferQtyIn' => 0,
 			'transferQtyOut' => 0,
+			'recipeQty' => 0,
+			'recipeAmt' => 0,
 		];
 	
 		$purchaseStocksWithProduct = $combinedStocks['purchaseStocksWithProduct']; 
@@ -230,6 +237,8 @@ class Report extends Backend_Controller
 		$previousTranferStocksOutWithProduct = $combinedStocks['previousTranferStocksOutWithProduct'];
 		$wastageStocksWithProduct = $combinedStocks['wastageStocksWithProduct'];
 		$previousWastageStocksWithProduct = $combinedStocks['previousWastageStocksWithProduct'];
+		$recipeStocksWithProduct = $combinedStocks['recipeStocksWithProduct'];
+		$previousRecipeStocksWithProduct = $combinedStocks['previousRecipeStocksWithProduct'];
 		
 		$data = $sampleArray;
 	
@@ -278,6 +287,11 @@ class Report extends Backend_Controller
 		if (!empty($wastageStocksWithProduct[$productId]))
 		{
 			$data['wastageInventoryQty'] = $wastageStocksWithProduct[$productId]['productQuantityConversion'];
+		}
+		
+		if (!empty($recipeStocksWithProduct[$productId]))
+		{
+			$data['recipeQty'] = $recipeStocksWithProduct[$productId]['productQuantityConversion'];
 		}
 	
 		// if (!empty($this->siBaseUnits) && !is_null($inventoryStock['siUnitParentId']) && isset($this->siBaseUnits[$inventoryStock['siUnitParentId']]))
@@ -337,9 +351,17 @@ class Report extends Backend_Controller
 		$data['openingInventoryQty'] = ($data['openingInventoryQty'] + $previousStockInQty) - $previousStockOutQty;
 	
 		// If we have closing then don't subtract the wastage
-		if (empty($previousClosingStockWithProduct) && !empty($previousWastageStocksWithProduct[$productId]))
+		if (empty($previousClosingStockWithProduct))
 		{
-			$data['openingInventoryQty'] = $data['openingInventoryQty'] - $previousWastageStocksWithProduct[$productId]['productQuantityConversion'];
+			if (!empty($previousWastageStocksWithProduct[$productId]))
+			{
+				$data['openingInventoryQty'] = $data['openingInventoryQty'] - $previousWastageStocksWithProduct[$productId]['productQuantityConversion'];
+			}
+			
+			if (!empty($previousRecipeStocksWithProduct[$productId]))
+			{
+				$data['openingInventoryQty'] = $data['openingInventoryQty'] - $previousRecipeStocksWithProduct[$productId]['productQuantityConversion'];
+			}
 		}
 	
 		// Check do we have any purchase stock in the specified date range
@@ -360,7 +382,7 @@ class Report extends Backend_Controller
 			$data['closingInventoryAmt'] = $closingInventoryData['productUnitPrice'];
 		}
 	
-		$data['currentInventoryQty'] = (floatval($data['openingInventoryQty']) + floatval($data['purchaseInventoryQty']) + $data['transferQtyIn']) - $data['transferQtyOut'] - $data['wastageInventoryQty'];
+		$data['currentInventoryQty'] = (floatval($data['openingInventoryQty']) + floatval($data['purchaseInventoryQty']) + $data['transferQtyIn']) - $data['transferQtyOut'] - $data['wastageInventoryQty'] - $data['recipeQty'];
 		$data['currentInventoryAmt'] = floatval($data['openingInventoryAmt']) + floatval($data['purchaseInventoryAmt']);
 	
 		if ($data['closingInventoryQty'] > 0)
@@ -383,6 +405,9 @@ class Report extends Backend_Controller
 		
 		$data['wastageInventoryQty'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['wastageInventoryQty'] / $productUnitConversion : $data['wastageInventoryQty']));
 		$data['wastageInventoryAmt'] = truncateNumber($data['wastageInventoryAmt']); 
+	
+		$data['recipeQty'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['recipeQty'] / $productUnitConversion : $data['recipeQty']));
+		$data['recipeAmt'] = truncateNumber($data['recipeAmt']); 
 		
 		$data['transferQtyIn'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['transferQtyIn'] / $productUnitConversion : $data['transferQtyIn']));
 		$data['transferQtyOut'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['transferQtyOut'] / $productUnitConversion : $data['transferQtyOut']));
@@ -422,6 +447,7 @@ class Report extends Backend_Controller
 	
 		return $data;
 	}
+
 	private function getClosingStocks($startDate, $endDate, $categoryIds, $previousDay = false)
 	{
 		$closingStockSubQueryCondition = [
@@ -931,6 +957,78 @@ class Report extends Backend_Controller
 		])->order_by('cs1.productId', 'ASC')->get()->result_array();
 
 		return $closingStocks;
+	}
+
+	private function getRecipeStocks($startDate, $endDate, $categoryIds, $previousDay = false)
+	{
+		$recipeStockCondition['or.userId'] = $this->loggedInUserId;
+		$recipeStockCondition['or.openingStockNumber'] = $this->openingStockNumber;
+		
+		if ($previousDay)
+		{
+			$recipeStockCondition[sprintf('or.createdOn <= %s', $startDate)] = NULL;
+		}
+		else
+		{
+			$recipeStockCondition[sprintf('(or.createdOn >= %s AND or.createdOn <= %s)', $startDate, $endDate)] = NULL;
+		}
+	
+		$recipeStocks = $this->db->select([
+			'SUM(or.productQuantity) AS productQuantity',
+			'SUM(or.productQuantityConversion) AS productQuantityConversion',
+			'or.productId',
+			'or.openingStockNumber',
+			'or.productUnitPrice',
+			'or.productSiUnitId',
+			'or.productTax',
+			'su.parentId as siUnitParentId',
+			'or.comment',
+			'p.productName',
+			'p.productCode'
+		])->from('ie_order_recipes or')->join(
+			'ie_products p', 'p.id = or.productId', 'inner'
+		)->join(
+			'ie_si_units su', 'su.id = or.productSiUnitId', 'inner'
+		)->where($recipeStockCondition);
+	
+		if (!empty($categoryIds))
+		{
+			$recipeStocks->where_in('p.categoryId', $categoryIds);
+		}
+	
+		$like = [
+			'fields' => ['p.productName', 'p.productCode'],
+			'search' => $this->input->post('search'),
+			'side' => 'both'
+		];
+		
+		if (!empty($like['fields']) && !empty($like['search']) && !empty($like['side']) && is_array($like['fields']))
+		{
+			foreach ($like['fields'] as $key => $field)
+			{
+				if ($key == 0) 
+				{
+					$recipeStocks->group_start();
+					$recipeStocks->like($field, $like['search'], $like['side']);
+				}
+				else
+				{
+					$recipeStocks->or_like($field, $like['search'], $like['side']);
+				}
+
+				
+				if (($key + 1) == count($like['fields']))
+				{
+					$recipeStocks->group_end();
+				}
+			}
+		}
+
+
+		$recipeStocks = $recipeStocks->group_by('or.productId')->order_by('or.productId', 'ASC')->get()->result_array();
+	
+		// die($this->db->last_query());
+		return $recipeStocks;
 	}
 
 	public function export($extension)

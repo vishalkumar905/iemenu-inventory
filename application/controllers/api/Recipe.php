@@ -29,14 +29,17 @@ class Recipe extends CI_Controller
 			$orderItems = json_decode($order->item_details, true);
 			$orderItemIds = [];
 
-			if (!empty($orderItems))
+			if (!empty($orderItems) && $order->order_status == ORDER_STATUS_CLOSED)
 			{
 				foreach($orderItems as $orderItemId => $orderItemData)
 				{
 					$orderItemDataKey = key($orderItemData);
 					$orderItem = $orderItemData[$orderItemDataKey];
 					
-					$orderItemIds[$orderItemId] = ['orderItemId' => $orderItemId, 'orderItemQty' => $orderItem['itemQty']];
+					$orderItemIds[$orderItemId] = [
+						'orderItemId' => $orderItemId, 
+						'orderItemQty' => $orderItem['itemQty'],
+					];
 				}
 
 				if (!empty($orderItemIds))
@@ -77,7 +80,8 @@ class Recipe extends CI_Controller
 										'productSubtotal' => 0,
 										'openingStockNumber' => $this->openingstock->getCurrentOpeningStockNumber($userId),
 										'createdOn' => time(),
-										'userId' => $userId
+										'userId' => $userId,
+										'orderStatus' => $order->order_status
 									];
                                     
 									$this->orderrecipe->insert($insertData);
@@ -94,7 +98,7 @@ class Recipe extends CI_Controller
 		{
             log_message('error', sprintf('Error found in Recipemanagement@saveOrderRecipe for userId: %s orderId: %s. Error message is %s', $userId, $orderId, $e->getMessage()));
 		}
-
+		
         $successMessage = '';
 
         if ($isOrderRecipeProductSaved)
