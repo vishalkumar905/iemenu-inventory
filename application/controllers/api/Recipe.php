@@ -55,18 +55,20 @@ class Recipe extends CI_Controller
 						foreach($recipes as $recipe)
 						{
 							$orderItemData = $orderItemIds[$recipe['menuItemId']];
-
 							$menuItemRecipes = json_decode($recipe['menuItemRecipe'], true);
+							
 							if (!empty($menuItemRecipes))
 							{
 								foreach($menuItemRecipes as $menuItemRecipe)
 								{
 									$orderItemQty = $orderItemData['orderItemQty'];
+									$recipeProductQty = $menuItemRecipe['productQty'];
+									$productItemQty = $orderItemQty * $recipeProductQty;
 
 									$productQtyConversion = 0;
 									if (isset($siUnits[$menuItemRecipe['productSiUnitId']]))
 									{
-										$productQtyConversion = $siUnits[$menuItemRecipe['productSiUnitId']]['conversion'] * $orderItemQty;
+										$productQtyConversion = $siUnits[$menuItemRecipe['productSiUnitId']]['conversion'] * $orderItemQty * $recipeProductQty;
 									}
 
 									$insertData = [
@@ -74,8 +76,10 @@ class Recipe extends CI_Controller
 										'orderId' => $orderId,
 										'productSiUnitId' => $menuItemRecipe['productSiUnitId'],
 										'productUnitPrice' => 0,
-										'productQuantity' => $orderItemQty,
+										'productQuantity' => $productItemQty,
 										'productQuantityConversion' => $productQtyConversion,
+										'orderProductQuantity' => $orderItemQty,
+										'recipeProductQuantity' => $recipeProductQty,
 										'productSubtotal' => 0,
 										'openingStockNumber' => $this->openingstock->getCurrentOpeningStockNumber($userId),
 										'createdOn' => time(),
