@@ -233,8 +233,8 @@ class RecipeModel extends CI_Model
 
 		$recipes = $this->getWhereCustom([
 			'*', 
-			$jsonExtract.'(menuItemRecipe, "$[*].productId") AS productIds', 
-			$jsonExtract.'(menuItemRecipe, "$[*].productSiUnitId") AS productSiUnitIds'
+			$jsonExtract.'(menuItemRecipe, "$.*[*].productId") AS productIds', 
+			$jsonExtract.'(menuItemRecipe, "$.*[*].productSiUnitId") AS productSiUnitIds'
 		], $condition)->result_array();
 
 		$results = [];
@@ -246,6 +246,7 @@ class RecipeModel extends CI_Model
 				$results[$recipe['menuItemId']] = $recipe;
 			}
 		}
+
 
 		return $results;
 	}

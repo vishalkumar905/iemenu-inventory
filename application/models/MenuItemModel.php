@@ -186,6 +186,49 @@ class MenuItemModel extends CI_Model
 		return $ddOptions;
 	}
 
+	
+	public function getMenuItemsWithTypesDropdownOptions()
+	{
+		$ddOptions = [];
+		$menuItems = $this->iemenuDB->select([
+			'mi.item_id', 'mi.name', 'mi.price_desc'
+		])->from('menu_category mc')->join(
+			'menu_items mi', 'mi.menu_id=mc.menu_id', 'left'
+		)->where('mc.rest_id', $this->loggedInUserId)->get()->result_array();
+
+		if (!empty($menuItems))
+		{
+			$ddOptions[''] = 'Choose MenuItem';
+			foreach($menuItems as $menuItem)
+			{
+				$menuItemTypes = $menuItem['price_desc'];
+				if (!empty($menuItemTypes))
+				{
+					$menuItemTypes = json_decode($menuItemTypes, true);
+					
+					foreach($menuItemTypes as $menuItemType)
+					{
+						if (!empty(trim($menuItemType)))
+						{
+							$ddOptions[sprintf("%s-%s", $menuItem['item_id'], $menuItemType)] = sprintf("%s | %s ", $menuItem['name'], $menuItemType);
+						}
+						else
+						{
+							$ddOptions[$menuItem['item_id']] = $menuItem['name'];
+						}
+					}
+				}
+				else
+				{
+					$ddOptions[$menuItem['item_id']] = $menuItem['name'];
+				}
+
+			}
+		}
+
+		return $ddOptions;
+	}
+
 	public function getRestaurantMenuItems(array $columns, array $condition, array $like = null, ?int $limit = null, ?int $offset = null, ?array $whereIn = null): array
 	{
 		$menuItemQuery = $this->getMenuItemsQuery($columns, $condition, $like, $whereIn);

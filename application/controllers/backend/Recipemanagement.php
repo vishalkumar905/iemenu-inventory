@@ -99,6 +99,7 @@ class Recipemanagement extends Backend_Controller
 		$counter = $offset;
 		foreach($results['data'] as &$result)
 		{
+			
 			$result['sn'] = ++$counter;
 			$result['createdOn'] = '---';
 			$result['action'] = '---';
@@ -114,27 +115,26 @@ class Recipemanagement extends Backend_Controller
 
 				$recipes = $restaurantRecipes[$result['itemId']];
 
-				$recipes['menuItemQuantity'] = floatval($recipes['menuItemQuantity']);
+				$recipeMenuItemQuantity = json_decode($recipes['menuItemQuantity'], true);
 				$menuItemRecipeData = json_decode($recipes['menuItemRecipe'], true);
 				
 				if (!empty($menuItemRecipeData))
 				{
-					foreach($menuItemRecipeData as &$menuItemRecipe)
+					foreach($menuItemRecipeData as $recipeMenuItemTypeName => &$menuItemRecipeRow)
 					{
-						$menuItemRecipe['productName'] = $products[$menuItemRecipe['productId']]['productName'];
-						$menuItemRecipe['unitName'] = $siUnits[$menuItemRecipe['productSiUnitId']]['unitName'];
+						foreach($menuItemRecipeRow as &$menuItemRecipe)
+						{
+							$menuItemRecipe['productName'] = $products[$menuItemRecipe['productId']]['productName'];
+							$menuItemRecipe['unitName'] = $siUnits[$menuItemRecipe['productSiUnitId']]['unitName'];
+							$menuItemRecipe['menuItemQty'] = $recipeMenuItemQuantity[$recipeMenuItemTypeName] ?? 0;
+						}
 					}
 				}
 
-				$recipes['menuItemRecipe'] = json_encode($menuItemRecipeData);
-				
-
-				$result['action'] = sprintf('
-					<a href="%s%s" id="updateRecipeDetail-%s" menuItemId="%s" class="btn btn-simple btn-info btn-icon"><i class="material-icons">edit</i></a>
-				', $updateRecipeUrl, $recipes['recipeId'], $result['itemId'], $result['itemId']);
+				$recipes['menuItemRecipe'] = json_encode($menuItemRecipeData);				
+				$result['updateRecipeUrl'] = $updateRecipeUrl;
 
 				$result['recipes'] = $recipes;
-				$result['action'] .= sprintf('<span href="javascript::void()" id="viewRecipeDetail-%s" menuItemId="%s" class="btn btn-simple btn-info btn-icon"><i class="material-icons">visibility</i></span>', $result['itemId'], $result['itemId']);
 				$result['createdOn'] = Date('Y-m-d H:i A', $recipes['createdOn']);
 				$result['isRecipeConfigured'] = 1;
 			}
@@ -181,8 +181,8 @@ class Recipemanagement extends Backend_Controller
 
 	private function getRecipeData(array $recipes)
 	{
-		$productIds = $productSiUnitIds = [];
-
+		$productIds = $productSiUnitIds = $menuItemRecipeTypes = [];
+		
 		if (!empty($recipes))
 		{
 			foreach($recipes as $recipe)
@@ -211,27 +211,62 @@ class Recipemanagement extends Backend_Controller
 		
 		if ($this->form_validation->run())
 		{
+			$menuItemType = $this->input->post('menuItemType');
+			$updateRecipeId = intval($this->input->post("updateRecipeId"));
 
 			$menuItemRecipeData = json_decode(json_encode($this->input->post("menuItemRecipeData")), true);
+			
 			$recipes = [];
+
 			if (!empty($menuItemRecipeData))
 			{
 				foreach($menuItemRecipeData as $menuItemRecipeIndex => $menuItemRecipe)
 				{
 					if (!empty($menuItemRecipe['productId']) && !empty($menuItemRecipe['productQty']))
 					{
-						$recipes[] = $menuItemRecipe;
+						if (!empty($menuItemType))
+						{
+							$recipes[$menuItemType][] = $menuItemRecipe; 
+						}
+						else
+						{
+							$recipes[][] = $menuItemRecipe;
+						}
 					}
 				}
 			}
 
+			$menuItemQty = $this->input->post("menuItemQty");
+			
+			$recipeMenuItemQty = !empty($menuItemType) ? [$menuItemType => $menuItemQty] : [$menuItemQty];
+
+
+
+			$existingRecipeData = $this->recipe->getWhereCustom('*', [
+				'userId' => $this->loggedInUserId,
+				'menuItemId' => $this->input->post("menuItemId")
+			])->result_array();
+
+			if (!empty($existingRecipeData))
+			{
+				$existingRecipeData = $existingRecipeData[0];
+				$updateRecipeId = $existingRecipeData['recipeId'];
+				
+				$existingRecipeMenuItem = json_decode($existingRecipeData['menuItemRecipe'], true);
+				$existingRecipeMenuItemQty = json_decode($existingRecipeData['menuItemQuantity'], true);
+
+				$recipes = array_merge($recipes, $existingRecipeMenuItem);
+				$recipeMenuItemQty = array_merge($recipeMenuItemQty, $existingRecipeMenuItemQty);
+			}
+
+
 			if (!empty($menuItemRecipeData))
 			{
-				$updateRecipeId = intval($this->input->post("updateRecipeId"));
+				
 				$insertData = [
 					'userId' => $this->loggedInUserId,
 					'menuItemId' => $this->input->post("menuItemId"),
-					'menuItemQuantity' => $this->input->post("menuItemQty"),
+					'menuItemQuantity' => json_encode($recipeMenuItemQty),
 					'menuItemRecipe' => json_encode($recipes),
 				];
 				

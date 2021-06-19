@@ -4422,9 +4422,63 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 			columns: [
 				{data: 'sn', width: "5%"},
 				{data: 'itemName'},
+				{
+					data: 'recipeDetail',
+					render: function (data, type, row, meta ) {
+						let recipeTable = "";
+						let recipes = row.recipes || false;
+
+						if (recipes)
+						{
+							let menuItemRecipesWithType = JSON.parse(row.recipes.menuItemRecipe);	
+
+							let recipeTableData = '';
+							
+							console.log(menuItemRecipesWithType);
+							
+
+							for(menuItemType in menuItemRecipesWithType)
+							{
+								if (menuItemRecipesWithType[menuItemType])
+								{
+									let { itemId, updateRecipeUrl } = row;
+
+									updateRecipeUrl += itemId;
+
+									if (menuItemType)
+									{
+										updateRecipeUrl += `?menuItemType=${menuItemType}`;
+									}
+
+									recipeTableData += `<tr>
+										<td>${menuItemType}</td>
+										<td>
+											<a href="${updateRecipeUrl}" id="updateRecipeDetail-${itemId}" menuItemId="${itemId}" class="btn btn-simple btn-info btn-icon"><i class="material-icons">edit</i></a>
+											<span href="javascript::void();" id="viewRecipeDetail-${itemId}" menuItemId="${itemId}" menuItemType="${menuItemType}" class="btn btn-simple btn-info btn-icon"><i class="material-icons">visibility</i></span>
+										</td>
+									</tr>`;
+								}
+							}
+
+	
+							recipeTable = `<table class="dataTable" cellspacing="0" width="100%" style="width:100%">
+								<thead>
+									<tr>
+										<th>Item Type</th>
+										<th>Action</th>
+									</tr>
+								</thead>
+								<tbody>
+									${recipeTableData}
+								</tbody>
+							</table>`;
+						}
+
+						return recipeTable;
+					}
+				},
 				{data: 'isConfigured'},
 				{data: 'createdOn'},
-				{data: 'action', width: "10%"},
 			],
 			// "pagingType": "full_numbers",
 			"lengthMenu": [
@@ -4439,7 +4493,18 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 
 		$("#saveRecipe").click(function(e) {
 			
-			let menuItemId = parseInt($("#menuItem").val()) || 0;
+			let menuItemIdWithType = $("#menuItem").val();
+			let menuItemId = 0;
+			let menuItemType = '';
+
+			if (isNaN(menuItemIdWithType))
+			{
+				let splitMenuItemIdWithType = menuItemIdWithType.split('-');
+				
+				menuItemId = splitMenuItemIdWithType[0];
+				menuItemType = splitMenuItemIdWithType[1];
+			}
+
 			let menuItemQty = parseFloat($("#menuItemQty").val()) || 0;
 			
 
@@ -4451,7 +4516,7 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 
 				IEWebsite.Utils.ShowLoadingScreen();
 				IEWebsite.Utils.AjaxPost(SAVE_RECIPE, {
-					menuItemId, menuItemQty, menuItemRecipeData, updateRecipeId
+					menuItemId, menuItemQty, menuItemRecipeData, updateRecipeId, menuItemType
 				}, function(resp) {
 					
 					IEWebsite.Utils.HideLoadingScreen();
@@ -4562,14 +4627,18 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 
 	var viewRecipeDetail = function() {
 		let menuItemId = parseInt($(this).attr("menuItemId")) || 0;
+		let menuItemType = $(this).attr("menuItemType");
+
 		if (menuItemId)
 		{
-			let menuItemRecipe = getMenuItemRecipe(menuItemId);
-			let recipes = JSON.parse(menuItemRecipe.recipes.menuItemRecipe);
-			
 			let menuItemRecipeRows = '';
+			let menuItemRecipe = getMenuItemRecipe(menuItemId);
+			let recipes = JSON.parse(menuItemRecipe.recipes.menuItemRecipe)[menuItemType];	
+			let menuItemQty = 0;
 
 			recipes.forEach((row) => {
+				menuItemQty = row.menuItemQty;
+
 				menuItemRecipeRows += `<tr>
 					<td>${row.productName}</td>
 					<td>${row.unitName}</td>
@@ -4580,7 +4649,7 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 			let menuItemRecipeTable = `<table class="table table-bordered custom-table">
 				<thead>
 					<tr>
-						<th colspan="3"><b>Item Name:</b> ${menuItemRecipe.itemName} <b>Qty:</b>  ${menuItemRecipe.recipes.menuItemQuantity}</th>
+						<th colspan="3"><b>Item Name:</b> ${menuItemRecipe.itemName} <b>Qty:</b>  ${menuItemQty}</th>
 					</tr>
 					<tr>
 						<th><b>Product Name</b></th>
@@ -4629,7 +4698,21 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 
 				$menuItemDropdown.append(`<option value="">Choose Item</option>`);
 				restaurantMenuItems.forEach((row) => {
-					$menuItemDropdown.append(`<option value="${row.itemId}">${row.itemName}</option>`);
+
+					let menuItemTypes = row.itemTypes;
+
+					if ($.trim(menuItemTypes) && menuItemTypes.length > 0)
+					{
+						menuItemTypes = JSON.parse(menuItemTypes);
+
+						menuItemTypes.forEach((menuItemType) => {
+							$menuItemDropdown.append(`<option value="${row.itemId}-${menuItemType}">${row.itemName} ${menuItemType}</option>`);
+						});
+					}
+					else
+					{
+						$menuItemDropdown.append(`<option value="${row.itemId}">${row.itemName}</option>`);
+					}
 				});
 
 				$menuItemDropdown.selectpicker('refresh');

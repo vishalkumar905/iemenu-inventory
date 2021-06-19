@@ -19,14 +19,14 @@ class Menu extends Backend_Controller
 			'mi.item_id as itemId', 'mi.name as itemName', 'price_desc as priceDesc'
 		];
 
-		$restauarntRecipes = !$includeRecipeMenuItems ? $this->recipe->getWhereCustom(['recipeId', 'menuItemId'], ['userId' => $this->loggedInUserId])->result_array() : [];
+		$restauarntRecipes = !$includeRecipeMenuItems ? $this->recipe->getWhereCustom(['recipeId', 'menuItemId', 'menuItemRecipe'], ['userId' => $this->loggedInUserId])->result_array() : [];
 		$results = $this->menuitem->getRestaurantMenuItems($columns, $condition, [], -1);
 		
 		$data = [];
 
 		if (!empty($results))
 		{
-			foreach($results as $result)
+			foreach($results as &$result)
 			{
 				$isRecipeCreatedForMenuItem = false;
 
@@ -36,15 +36,45 @@ class Menu extends Backend_Controller
 					{
 						if ($restaurantRecipe['menuItemId'] == $result['itemId'])
 						{
-							$isRecipeCreatedForMenuItem = true;
-							break;
+							$recipeMenuItemRecipes = json_decode($restaurantRecipe['menuItemRecipe'], true);
+
+							if (!empty($recipeMenuItemRecipes))
+							{
+								$recipeMenuItemTypes = array_keys($recipeMenuItemRecipes);
+								$menuItemTypes = $result['priceDesc'];
+
+								if (!empty(trim($menuItemTypes)))
+								{
+									$menuItemTypes = json_decode($menuItemTypes);
+									foreach($menuItemTypes as $menuItemTypeKey => $menuItemType)
+									{
+										if (in_array($menuItemType, $recipeMenuItemTypes))
+										{
+											unset($menuItemTypes[$menuItemTypeKey]);
+										}
+									}
+									
+									if (empty($menuItemTypes))
+									{
+										$isRecipeCreatedForMenuItem = true;
+										break;
+									}
+									else
+									{
+										$menuItemTypes = array_flip($menuItemTypes);
+										$menuItemTypes = array_keys($menuItemTypes);
+									}
+
+									$result['priceDesc'] = json_encode($menuItemTypes);
+								}
+							}
 						}
 					}
 				}
 
 				if (!$isRecipeCreatedForMenuItem)
 				{
-					$result['itemTypes'] = json_decode($result['priceDesc'], true) ?? [];
+					$result['itemTypes'] = $result['priceDesc'] ?? [];
 					unset($result['priceDesc']);
 
 					$data[] = $result;
