@@ -4330,6 +4330,7 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 		updateRecipeId = parseInt(IEWebsite.Uri.Segment(4)) || 0
 		isRestaurantProductsFetched = false,
 		isRestaurantMenuItemRecipesFetched = false;
+	var editRecipeMenuItemType = IEWebsite.Uri.GetURLParam('menuItemType');
 
 	var init = function()
 	{
@@ -4425,37 +4426,43 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 				{
 					data: 'recipeDetail',
 					render: function (data, type, row, meta ) {
-						let recipeTable = "";
-						let recipes = row.recipes || false;
+						let recipeTable = "", 
+							recipes = row.recipes || false, 
+							recipeManageBtn = '',
+							showOnlyBtns = false;
 
 						if (recipes)
 						{
 							let menuItemRecipesWithType = JSON.parse(row.recipes.menuItemRecipe);	
 
-							let recipeTableData = '';
-							
-							console.log(menuItemRecipesWithType);
-							
+							let recipeTableData = '';							
 
 							for(menuItemType in menuItemRecipesWithType)
 							{
 								if (menuItemRecipesWithType[menuItemType])
 								{
 									let { itemId, updateRecipeUrl } = row;
+									let recipeId = recipes.recipeId;
 
-									updateRecipeUrl += itemId;
+									updateRecipeUrl += recipeId;
 
 									if (menuItemType)
 									{
 										updateRecipeUrl += `?menuItemType=${menuItemType}`;
 									}
+									else if (!showOnlyBtns)
+									{
+										showOnlyBtns = true;
+									}
+
+									recipeManageBtn = `
+										<a href="${updateRecipeUrl}" id="updateRecipeDetail-${recipeId}" menuItemId="${itemId}" class="btn btn-simple btn-info btn-icon"><i class="material-icons">edit</i></a>
+										<span href="javascript::void();" id="viewRecipeDetail-${recipeId}" menuItemId="${itemId}" menuItemType="${menuItemType}" class="btn btn-simple btn-info btn-icon"><i class="material-icons">visibility</i></span>
+									`;
 
 									recipeTableData += `<tr>
 										<td>${menuItemType}</td>
-										<td>
-											<a href="${updateRecipeUrl}" id="updateRecipeDetail-${itemId}" menuItemId="${itemId}" class="btn btn-simple btn-info btn-icon"><i class="material-icons">edit</i></a>
-											<span href="javascript::void();" id="viewRecipeDetail-${itemId}" menuItemId="${itemId}" menuItemType="${menuItemType}" class="btn btn-simple btn-info btn-icon"><i class="material-icons">visibility</i></span>
-										</td>
+										<td>${recipeManageBtn}</td>
 									</tr>`;
 								}
 							}
@@ -4472,6 +4479,11 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 									${recipeTableData}
 								</tbody>
 							</table>`;
+						}
+
+						if (showOnlyBtns)
+						{
+							return recipeManageBtn;
 						}
 
 						return recipeTable;
@@ -4494,7 +4506,7 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 		$("#saveRecipe").click(function(e) {
 			
 			let menuItemIdWithType = $("#menuItem").val();
-			let menuItemId = 0;
+			let menuItemId = parseInt($("#menuItem").val()) || 0;
 			let menuItemType = '';
 
 			if (isNaN(menuItemIdWithType))
@@ -4502,11 +4514,10 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 				let splitMenuItemIdWithType = menuItemIdWithType.split('-');
 				
 				menuItemId = splitMenuItemIdWithType[0];
-				menuItemType = splitMenuItemIdWithType[1];
+				menuItemType = splitMenuItemIdWithType[1] || menuItemType;
 			}
 
 			let menuItemQty = parseFloat($("#menuItemQty").val()) || 0;
-			
 
 			if (menuItemId && menuItemQty && menuItemRecipeData)
 			{
@@ -4542,6 +4553,11 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 					}
 				});
 			}
+			else
+			{
+				IEWebsite.Utils.Notification("Something went wrong", 'error');
+				return false;
+			}
 		});
 
 		$("#menuItemDropdown").change(function() {
@@ -4574,18 +4590,30 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 				if (resp.data)
 				{
 					let $menuItemDropdown = $("#menuItem");
+						$menuItemDropdown.find('option').remove().end();
+				
 					let recipeData = resp.data[0];
 					let menuItemId = recipeData.itemId;
 					let recipes = recipeData.recipes;
+					let menuItemRecipes = JSON.parse(recipes.menuItemRecipe);
+						menuItemRecipes = menuItemRecipes[editRecipeMenuItemType];
+					
+					let menuItemOptionValue = menuItemId;
+					let menuItemOptionText = recipeData.itemName
+						
 
-					$menuItemDropdown.append(`<option value="${menuItemId}">${recipeData.itemName}</option>`);
+					if (editRecipeMenuItemType)
+					{
+						menuItemOptionValue = `${menuItemId}-${editRecipeMenuItemType}`;
+						menuItemOptionText = `${recipeData.itemName} ${editRecipeMenuItemType}`;
+					}
+
+					$menuItemDropdown.append(`<option value="${menuItemOptionValue}">${menuItemOptionText}</option>`);
 					$menuItemDropdown.val(menuItemId);
 					$menuItemDropdown.attr('disabled', true);
 					$menuItemDropdown.selectpicker('refresh');
 
-					$("#menuItemQty").val(recipes.menuItemQuantity);
-
-					let menuItemRecipes = JSON.parse(recipes.menuItemRecipe);
+					$("#menuItemQty").val(menuItemRecipes[0].menuItemQty);
 
 					let menuItemRecipeCounter = 0;
 
@@ -4706,7 +4734,14 @@ IEWebsiteAdmin.RecipeManagementPage = (function() {
 						menuItemTypes = JSON.parse(menuItemTypes);
 
 						menuItemTypes.forEach((menuItemType) => {
-							$menuItemDropdown.append(`<option value="${row.itemId}-${menuItemType}">${row.itemName} ${menuItemType}</option>`);
+							if (!_.isEmpty($.trim(menuItemType)))
+							{
+								$menuItemDropdown.append(`<option value="${row.itemId}-${menuItemType}">${row.itemName} ${menuItemType}</option>`);
+							}
+							else
+							{
+								$menuItemDropdown.append(`<option value="${row.itemId}">${row.itemName}</option>`);
+							}
 						});
 					}
 					else

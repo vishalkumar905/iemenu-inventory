@@ -7,12 +7,12 @@ class Recipe extends CI_Controller
     public function __construct()
     {
         parent::__construct();   
+		$this->load->model('OrderRecipeModel', 'orderrecipe');
     } 
 
     public function saveOrderRecipe(int $userId, string $orderId)
 	{
 		$this->load->model('OrderModel', 'order');
-		$this->load->model('OrderRecipeModel', 'orderrecipe');
         $this->load->model('OpeningStockModel', 'openingstock');
         $this->load->model('MenuItemModel', 'menuitem');
 		$this->load->model('RecipeModel', 'recipe');
@@ -41,6 +41,7 @@ class Recipe extends CI_Controller
 					];
 				}
 
+
 				if (!empty($orderItemIds))
 				{
 					$recipes = $this->changeArrayIndexByColumnValue($this->recipe->getWhereCustom('*', ['userId' => $userId], null, [
@@ -54,45 +55,51 @@ class Recipe extends CI_Controller
 
 						foreach($recipes as $recipe)
 						{
-							$orderItemData = $orderItemIds[$recipe['menuItemId']];
 							$menuItemRecipes = json_decode($recipe['menuItemRecipe'], true);
 							
-							if (!empty($menuItemRecipes))
+							foreach($orderItems as $orderItemId => $orderItemsData)
 							{
-								foreach($menuItemRecipes as $menuItemRecipe)
+								foreach($orderItemsData as $orderMenuItemType => $orderItemData)
 								{
-									$orderItemQty = $orderItemData['orderItemQty'];
-									$recipeProductQty = $menuItemRecipe['productQty'];
-									$productItemQty = $orderItemQty * $recipeProductQty;
-
-									$productQtyConversion = 0;
-									if (isset($siUnits[$menuItemRecipe['productSiUnitId']]))
+									if (!empty($menuItemRecipes) && isset($menuItemRecipes[$orderMenuItemType]))
 									{
-										$productQtyConversion = $siUnits[$menuItemRecipe['productSiUnitId']]['conversion'] * $orderItemQty * $recipeProductQty;
+										$menuItemRecipesData = $menuItemRecipes[$orderMenuItemType];
+	
+										foreach($menuItemRecipesData as $menuItemRecipe)
+										{
+											$orderItemQty = $orderItemData['itemQty'];
+											$recipeProductQty = $menuItemRecipe['productQty'];
+											$productItemQty = $orderItemQty * $recipeProductQty;
+		
+											$productQtyConversion = 0;
+											if (isset($siUnits[$menuItemRecipe['productSiUnitId']]))
+											{
+												$productQtyConversion = $siUnits[$menuItemRecipe['productSiUnitId']]['conversion'] * $orderItemQty * $recipeProductQty;
+											}
+		
+											$insertData = [
+												'productId' => $menuItemRecipe['productId'],
+												'orderId' => $orderId,
+												'productSiUnitId' => $menuItemRecipe['productSiUnitId'],
+												'productUnitPrice' => 0,
+												'productQuantity' => $productItemQty,
+												'productQuantityConversion' => $productQtyConversion,
+												'orderProductQuantity' => $orderItemQty,
+												'recipeProductQuantity' => $recipeProductQty,
+												'productSubtotal' => 0,
+												'openingStockNumber' => $this->openingstock->getCurrentOpeningStockNumber($userId),
+												'createdOn' => time(),
+												'userId' => $userId,
+												'orderStatus' => $order->order_status
+											];
+											
+											$this->orderrecipe->insert($insertData);
+											$isOrderRecipeProductSaved = true;
+										}
 									}
-
-									$insertData = [
-										'productId' => $menuItemRecipe['productId'],
-										'orderId' => $orderId,
-										'productSiUnitId' => $menuItemRecipe['productSiUnitId'],
-										'productUnitPrice' => 0,
-										'productQuantity' => $productItemQty,
-										'productQuantityConversion' => $productQtyConversion,
-										'orderProductQuantity' => $orderItemQty,
-										'recipeProductQuantity' => $recipeProductQty,
-										'productSubtotal' => 0,
-										'openingStockNumber' => $this->openingstock->getCurrentOpeningStockNumber($userId),
-										'createdOn' => time(),
-										'userId' => $userId,
-										'orderStatus' => $order->order_status
-									];
-                                    
-									$this->orderrecipe->insert($insertData);
-                                    $isOrderRecipeProductSaved = true;
-								}
+								}		
 							}
 						}
-
 					}
 				}
 			}
@@ -110,6 +117,38 @@ class Recipe extends CI_Controller
         }
 
 		responseJson(true, $successMessage, [], false);
+	}
+
+	public function updateOrderRecipe(int $userId, string $orderId, int $orderStatus = ORDER_STATUS_CONFIRM)
+	{
+		$isOrderRecipeProductUpdated = false;
+
+		try
+		{
+			$conditon = [
+				'userId' => $userId,
+				'orderId' => $orderId
+			];
+
+			$this->orderrecipe->updateWithCustom([
+				'orderStatus' => $orderStatus
+			], $conditon);
+
+			$isOrderRecipeProductUpdated = true;
+		}	
+		catch(Exception $e)
+		{
+			log_message('error', sprintf('Error found in Recipemanagement@updateOrderRecipe for userId: %s orderId: %s. Error message is %s', $userId, $orderId, $e->getMessage()));
+		}
+
+		$successMessage = 'Something went wrong';
+
+        if ($isOrderRecipeProductUpdated)
+        {
+            $successMessage = 'Order status updated successfully'; 
+        }
+
+		responseJson(true, $successMessage, []);
 	}
 
     public function changeArrayIndexByColumnValue($data, $columnName): array

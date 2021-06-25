@@ -961,6 +961,7 @@ class Report extends Backend_Controller
 
 	private function getRecipeStocks($startDate, $endDate, $categoryIds, $previousDay = false)
 	{
+		$recipeStockCondition['or.orderStatus'] = ORDER_STATUS_CLOSED;
 		$recipeStockCondition['or.userId'] = $this->loggedInUserId;
 		$recipeStockCondition['or.openingStockNumber'] = $this->openingStockNumber;
 		

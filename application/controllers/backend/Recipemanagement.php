@@ -49,7 +49,7 @@ class Recipemanagement extends Backend_Controller
 
     public function fetchRecipes($return = false)
     {
-		$recipeId = $this->input->get('recipe');
+		$recipeId = (int)$this->input->get('recipe');
 		$results = ['recordsTotal' => 0, "recordsFiltered" => 0, "data" => []];
 		$limit = $this->input->post('length') ? $this->input->post('length') : 10;
 		$offset = $this->input->post('length') > 0 ? $this->input->post('start') : 0;
@@ -62,6 +62,11 @@ class Recipemanagement extends Backend_Controller
 		$columns = [
 			'mi.item_id as itemId', 'mi.name as itemName', 'price_desc as priceDesc'
 		];
+
+		if ($recipeId > 0)
+		{
+			$limit = -1;
+		}
 
 		$like = [];
 
@@ -77,9 +82,8 @@ class Recipemanagement extends Backend_Controller
 		// $whereIn['values'] = $this->recipe->getMenuItemIdsFromRestaurantRecipes($this->loggedInUserId);
 
 		$restaurantRecipes = $this->recipe->getRestaurantRecipes($this->loggedInUserId, $recipeId);
-
 		$recipeProductInfo = $this->getRecipeData($restaurantRecipes);
-
+		
 		$products = $this->changeArrayIndexByColumnValue($this->product->getWhereCustom(['id AS productId', 'productName'], ['userId' => $this->loggedInUserId], null, [
 			'field' => 'id',
 			'values' => $recipeProductInfo['productIds'],
@@ -126,7 +130,7 @@ class Recipemanagement extends Backend_Controller
 						{
 							$menuItemRecipe['productName'] = $products[$menuItemRecipe['productId']]['productName'];
 							$menuItemRecipe['unitName'] = $siUnits[$menuItemRecipe['productSiUnitId']]['unitName'];
-							$menuItemRecipe['menuItemQty'] = $recipeMenuItemQuantity[$recipeMenuItemTypeName] ?? 0;
+							$menuItemRecipe['menuItemQty'] = isset($recipeMenuItemQuantity[$recipeMenuItemTypeName]) ? $recipeMenuItemQuantity[$recipeMenuItemTypeName] : ($recipeMenuItemQuantity[0] ?? 0);
 						}
 					}
 				}
@@ -230,7 +234,7 @@ class Recipemanagement extends Backend_Controller
 						}
 						else
 						{
-							$recipes[][] = $menuItemRecipe;
+							$recipes[""][] = $menuItemRecipe;
 						}
 					}
 				}
@@ -241,21 +245,29 @@ class Recipemanagement extends Backend_Controller
 			$recipeMenuItemQty = !empty($menuItemType) ? [$menuItemType => $menuItemQty] : [$menuItemQty];
 
 
-
 			$existingRecipeData = $this->recipe->getWhereCustom('*', [
 				'userId' => $this->loggedInUserId,
 				'menuItemId' => $this->input->post("menuItemId")
 			])->result_array();
+
 
 			if (!empty($existingRecipeData))
 			{
 				$existingRecipeData = $existingRecipeData[0];
 				$updateRecipeId = $existingRecipeData['recipeId'];
 				
-				$existingRecipeMenuItem = json_decode($existingRecipeData['menuItemRecipe'], true);
+				$existingRecipeMenuItemData = json_decode($existingRecipeData['menuItemRecipe'], true);
 				$existingRecipeMenuItemQty = json_decode($existingRecipeData['menuItemQuantity'], true);
 
-				$recipes = array_merge($recipes, $existingRecipeMenuItem);
+
+				foreach($existingRecipeMenuItemData as $existingRecipeMenuItemType =>  $existingRecipeMenuItem)
+				{
+					if ($existingRecipeMenuItemType != $menuItemType)
+					{
+						$recipes[$existingRecipeMenuItemType] = $existingRecipeMenuItem;
+					}
+				}
+
 				$recipeMenuItemQty = array_merge($recipeMenuItemQty, $existingRecipeMenuItemQty);
 			}
 
