@@ -370,9 +370,11 @@ class Report extends Backend_Controller
 			$purchaseInventoryData = $purchaseStocksWithProduct[$productId];
 	
 			$data['purchaseInventoryQty'] = $purchaseInventoryData['productQuantityConversion'];
-			$data['purchaseInventoryAmt'] = $purchaseInventoryData['productUnitPrice'];
+			$data['purchaseInventoryAmt'] = isset($purchaseInventoryData['purchasedWeightedAveragePrice']) ? $purchaseInventoryData['purchasedWeightedAveragePrice'] : $purchaseInventoryData['productUnitPrice'];
 		}
 		
+
+
 		// Check the last closing stock in the specified date range 
 		if (isset($closingStocksWithProduct[$productId]))
 		{
@@ -390,24 +392,28 @@ class Report extends Backend_Controller
 			$data['consumptionQty'] = $data['currentInventoryQty'] - $data['closingInventoryQty'];
 			$data['consumptionAmt'] = $data['currentInventoryAmt'] - $data['closingInventoryAmt'];
 		}
+
+		$weightedAveragePrice = $this->calculateWeightedAverageBaseUnitPrice($inventoryStock, $combinedStocks) * $productUnitConversion;
 	
+		$data['averagePrice'] = truncateNumber($weightedAveragePrice, 6);
+
 		$data['currentInventoryQty'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['currentInventoryQty'] / $productUnitConversion : $data['currentInventoryQty']));
-		$data['currentInventoryAmt'] = truncateNumber($data['currentInventoryAmt']);
+		$data['currentInventoryAmt'] = truncateNumber($data['currentInventoryQty'] * $weightedAveragePrice);
 		
 		$data['openingInventoryQty'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['openingInventoryQty'] / $productUnitConversion : $data['openingInventoryQty']));
-		$data['openingInventoryAmt'] = truncateNumber($data['openingInventoryAmt']);
+		$data['openingInventoryAmt'] = truncateNumber($data['openingInventoryQty'] * $weightedAveragePrice);
 		
 		$data['purchaseInventoryQty'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['purchaseInventoryQty'] / $productUnitConversion : $data['purchaseInventoryQty']));
-		$data['purchaseInventoryAmt'] = truncateNumber($data['purchaseInventoryAmt']);
+		$data['purchaseInventoryAmt'] = truncateNumber($data['purchaseInventoryQty'] * $weightedAveragePrice);
 	
 		$data['closingInventoryQty'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['closingInventoryQty'] / $productUnitConversion : $data['closingInventoryQty']));
-		$data['closingInventoryAmt'] = truncateNumber($data['closingInventoryAmt']);
+		$data['closingInventoryAmt'] = truncateNumber($data['closingInventoryQty'] * $weightedAveragePrice);
 		
 		$data['wastageInventoryQty'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['wastageInventoryQty'] / $productUnitConversion : $data['wastageInventoryQty']));
-		$data['wastageInventoryAmt'] = truncateNumber($data['wastageInventoryAmt']); 
+		$data['wastageInventoryAmt'] = truncateNumber($data['wastageInventoryQty'] * $weightedAveragePrice); 
 	
 		$data['recipeQty'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['recipeQty'] / $productUnitConversion : $data['recipeQty']));
-		$data['recipeAmt'] = truncateNumber($data['recipeAmt']); 
+		$data['recipeAmt'] = truncateNumber($data['recipeQty'] / $weightedAveragePrice); 
 		
 		$data['transferQtyIn'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['transferQtyIn'] / $productUnitConversion : $data['transferQtyIn']));
 		$data['transferQtyOut'] = truncateNumber((floatval($productUnitConversion) != 0 ? $data['transferQtyOut'] / $productUnitConversion : $data['transferQtyOut']));
@@ -418,6 +424,32 @@ class Report extends Backend_Controller
 		return $data;
 	}
 	
+	private function calculateWeightedAverageBaseUnitPrice($inventoryStock, $combinedStocks)
+	{
+		// weightAndBaseUnitPrice
+		$purchaseStocksWithProduct = $combinedStocks['purchaseStocksWithProduct']; 
+		$previousPurchaseStockWithProduct = $combinedStocks['previousPurchaseStockWithProduct']; 
+				
+		$productId = $inventoryStock['productId'];
+
+		$productQuantityConversion = $inventoryStock['productQuantityConversion'];
+		$productWeightedAverageBaseUnitPrice = $inventoryStock['weightAndBaseUnitPrice'];
+		
+		if (isset($purchaseStocksWithProduct[$productId]))
+		{
+			$productQuantityConversion += $purchaseStocksWithProduct[$productId]['productQuantityConversion'];
+			$productWeightedAverageBaseUnitPrice += $purchaseStocksWithProduct[$productId]['weightAndBaseUnitPrice'];
+		}
+
+		if (isset($previousPurchaseStockWithProduct[$productId]))
+		{
+			$productQuantityConversion += $previousPurchaseStockWithProduct[$productId]['productQuantityConversion'];
+			$productWeightedAverageBaseUnitPrice += $previousPurchaseStockWithProduct[$productId]['weightAndBaseUnitPrice'];
+		}
+		
+		return $productWeightedAverageBaseUnitPrice / $productQuantityConversion;
+	}
+
 	private function getItemOpeningStock($productId, $openingStock, $previousPurchaseStockWithProduct, $previousClosingStockWithProduct)
 	{
 		$data = [];
@@ -548,6 +580,9 @@ class Report extends Backend_Controller
 			'os.productQuantity',
 			'os.productQuantityConversion',
 			'os.productUnitPrice',
+			'SUM(os.productQuantityConversion) AS totalProductQuantityConversion',
+			'(os.productUnitPrice / (os.productQuantityConversion / os.productQuantity)) AS baseUnitPrice',			
+			'((os.productUnitPrice / (os.productQuantityConversion / os.productQuantity)) * os.productQuantityConversion) AS weightAndBaseUnitPrice',
 			'su.parentId as siUnitParentId',
 			'su.unitName',
 			'su.conversion as unitConversion',
@@ -619,6 +654,8 @@ class Report extends Backend_Controller
 			'ps.productId',
 			'ps.openingStockNumber',
 			'ps.productUnitPrice',
+			'SUM((ps.productUnitPrice / (ps.productQuantityConversion / ps.productQuantity))) AS baseUnitPrice',			
+			'SUM((ps.productUnitPrice / (ps.productQuantityConversion / ps.productQuantity)) * ps.productQuantityConversion) AS weightAndBaseUnitPrice',
 			'ps.productSiUnitId',
 			'ps.productTax',
 			'su.parentId as siUnitParentId',
